@@ -43,6 +43,18 @@ enum perf_level {
 #define MASK_FURTHER_CPUFREQ            0x30
 /* With 0x00(NOCHANGE), it depends on the previous "further" status */
 
+/* For cpu-freq driver */
+struct s5pv210_cpufreq_voltage {
+	unsigned int	freq;	/* kHz */
+	unsigned long	varm;	/* uV */
+	unsigned long	vint;	/* uV */
+};
+
+struct s5pv210_cpufreq_data {
+	struct s5pv210_cpufreq_voltage	*volt;
+	unsigned int			size;
+};
+
 #ifdef CONFIG_DVFS_LIMIT
 enum {
 	DVFS_LOCK_TOKEN_1 = 0,	//	(MFC)
@@ -57,8 +69,10 @@ enum {
 	DVFS_LOCK_TOKEN_NUM
 };
 
-extern int s5pv210_lock_dvfs_high_level(uint nToken, uint perf_level);
-extern int s5pv210_unlock_dvfs_high_level(unsigned int nToken);
+extern void s5pv210_lock_dvfs_high_level(uint nToken, uint perf_level);
+extern void s5pv210_unlock_dvfs_high_level(unsigned int nToken);
 #endif
+
+extern void s5pv210_cpufreq_set_platdata(struct s5pv210_cpufreq_data *pdata);
 
 #endif /* __ASM_ARCH_CPU_FREQ_H */
