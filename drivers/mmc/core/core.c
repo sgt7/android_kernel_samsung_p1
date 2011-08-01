@@ -1475,7 +1475,7 @@ int mmc_pm_notify(struct notifier_block *notify_block,
 		}
 		host->rescan_disable = 0;
 		spin_unlock_irqrestore(&host->lock, flags);
-		if (!host->card || host->card->type != MMC_TYPE_SDIO) 
+		if (!host->card || host->card->type != MMC_TYPE_SDIO)
 			mmc_detect_change(host, 0);
 
 	}
