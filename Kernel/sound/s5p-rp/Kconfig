@@ -1,0 +1,14 @@
+config SND_S5P_RP
+	tristate "Samsung SoC Audio - RP"
+	depends on (ARCH_S5PC1XX || ARCH_S5PC11X || ARCH_S5PV210) && !S5P_INTERNAL_DMA && SND_S3C_I2SV2_SOC
+	default n
+	help
+	  Say Y or M if you want to add support for Audio RP.
+
+config SND_S5P_RP_DEBUG
+    bool "Enable debug message for Audio - RP"
+    depends on SND_S5P_RP
+    default n
+    help
+      Say Y or M if you want to add debug message for Audio RP.
+

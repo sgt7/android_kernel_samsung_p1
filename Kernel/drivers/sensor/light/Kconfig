@@ -1,0 +1,19 @@
+#
+# LIGHT Sensor Configuration
+#
+
+config LIGHT
+	bool "LIGHT Sensors"
+	default y
+	help
+	  This option enables sensors
+
+
+config LIGHT_BH1721
+	depends on LIGHT
+	tristate "BH1721 driver for s5pc11x"
+	default y
+	help
+	  This option enables light sensors using BH1721 driver
+	  It is optimized for s5pc11x
+	  
