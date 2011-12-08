@@ -393,6 +393,9 @@ extern struct cpufreq_governor cpufreq_gov_interactive;
 #elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_SMOOTHASS)
 extern struct cpufreq_governor cpufreq_gov_smoothass;
 #define CPUFREQ_DEFAULT_GOVERNOR  (&cpufreq_gov_smoothass)
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_GREASELIGHTNING)
+extern struct cpufreq_governor cpufreq_gov_greaselightning;
+#define CPUFREQ_DEFAULT_GOVERNOR  (&cpufreq_gov_greaselightning)
 #endif
 
 
