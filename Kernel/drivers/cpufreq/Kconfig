@@ -218,6 +218,12 @@ config CPU_FREQ_DEFAULT_GOV_SUPERBAD
 	help
 	Use the CPUFreq Governor 'superbad' as default.
 
+config CPU_FREQ_DEFAULT_GOV_SCARY
+	bool "scary"
+	select CPU_FREQ_GOV_SCARY
+	help
+		Use the CPUFreq governor 'scary' as default.
+
 endchoice
 
 config CPU_FREQ_GOV_PERFORMANCE
@@ -390,5 +396,13 @@ config CPU_FREQ_GOV_SUPERBAD
 	depends on CPU_FREQ
 	help
 	  'superbad' - a "superbad" optimized governor
+
+config CPU_FREQ_GOV_SCARY
+	tristate "'scary' cpufreq governor"
+	depends on CPU_FREQ
+	help
+		scary - a governor for cabbages
+
+		If in doubt, say N.
 
 endif	# CPU_FREQ
