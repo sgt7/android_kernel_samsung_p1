@@ -339,6 +339,7 @@ static struct android_usb_function ptp_function = {
 
 struct rndis_function_config {
 	u8      ethaddr[ETH_ALEN];
+	u32     dummy; // rndis_ethaddr_store will corrupt this variable due to casting (char *) as (int *)
 	u32     vendorID;
 	char	manufacturer[256];
 	bool	wceis;
