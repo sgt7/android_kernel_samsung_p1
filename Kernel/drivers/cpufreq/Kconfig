@@ -191,6 +191,20 @@ config CPU_FREQ_DEFAULT_GOV_INTERACTIVE
 	 Use the 'interactive' governor as default. This gets full cpu frequency
 	 scaling for workloads that are latency sensitive, typically interactive
 	 workloads..
+
+config CPU_FREQ_DEFAULT_GOV_SMOOTHASS
+  bool "smoothass"
+  select CPU_FREQ_GOV_SMOOTHASS
+  help
+    Use the CPUFreq governor 'smoothass' as default.
+
+config CPU_FREQ_DEFAULT_GOV_DARKSIDE
+	bool "darkside"
+	select CPU_FREQ_GOV_DARKSIDE
+	help
+	  Use the CPUFreq governor 'DARKSIDE' as default.
+	  If in doubt, say N.
+
 endchoice
 
 config CPU_FREQ_GOV_PERFORMANCE
@@ -337,5 +351,13 @@ config CPU_FREQ_GOV_CONSERVATIVE
 	  For details, take a look at linux/Documentation/cpu-freq.
 
 	  If in doubt, say N.
+
+config CPU_FREQ_GOV_SMOOTHASS
+    tristate "'smoothass' cpufreq governor"
+    depends on CPU_FREQ
+    help
+        smoothass - a slightly more agressive smart optimized governor!
+ 
+	  If in doubt, say Y.
 
 endif	# CPU_FREQ
