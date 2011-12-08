@@ -373,4 +373,10 @@ config CPU_FREQ_GOV_GREASELIGHTNING
 	help
 	'greaselightning' - a "greaselightning" optimized governor
 
+config CPU_FREQ_GOV_DARKSIDE
+	tristate "'darkside' cpufreq governor"
+	depends on CPU_FREQ
+	help
+	  'darkside' - a "slightly more agressive smart" optimized governor!
+
 endif	# CPU_FREQ
