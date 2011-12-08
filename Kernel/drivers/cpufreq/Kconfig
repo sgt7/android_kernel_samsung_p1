@@ -212,6 +212,12 @@ config CPU_FREQ_DEFAULT_GOV_GREASELIGHTNING
 	help
 	Use the CPUFreq Governor 'greaselightning' as default.
 
+config CPU_FREQ_DEFAULT_GOV_SUPERBAD
+	bool "superbad"
+	select CPU_FREQ_GOV_SUPERBAD
+	help
+	Use the CPUFreq Governor 'superbad' as default.
+
 endchoice
 
 config CPU_FREQ_GOV_PERFORMANCE
@@ -378,5 +384,11 @@ config CPU_FREQ_GOV_DARKSIDE
 	depends on CPU_FREQ
 	help
 	  'darkside' - a "slightly more agressive smart" optimized governor!
+
+config CPU_FREQ_GOV_SUPERBAD
+	tristate "'superbad' cpufreq governor"
+	depends on CPU_FREQ
+	help
+	  'superbad' - a "superbad" optimized governor
 
 endif	# CPU_FREQ
