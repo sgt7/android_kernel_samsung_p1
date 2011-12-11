@@ -1,5 +1,4 @@
 config WIRELESS_EXT
-	def_bool y
 	bool
 
 config WEXT_CORE
@@ -15,7 +14,6 @@ config WEXT_SPY
 	bool
 
 config WEXT_PRIV
-	def_bool y
 	bool
 
 config CFG80211
@@ -97,7 +95,7 @@ config CFG80211_DEBUGFS
 	  If unsure, say N.
 
 config CFG80211_INTERNAL_REGDB
-	bool "use statically compiled regulatory rules database" if EMBEDDED
+	bool "use statically compiled regulatory rules database" if EXPERT
 	default n
 	depends on CFG80211
 	---help---
@@ -161,3 +159,14 @@ config LIB80211_DEBUG
 	  from lib80211.
 
 	  If unsure, say N.
+
+config CFG80211_ALLOW_RECONNECT
+	bool "Allow reconnect while already connected"
+	depends on CFG80211
+	default n
+	help
+	  cfg80211 stack doesn't allow to connect if you are already
+	  connected. This option allows to make a connection in this case.
+
+	  Select this option ONLY for wlan drivers that are specifically
+	  built for such purposes.
