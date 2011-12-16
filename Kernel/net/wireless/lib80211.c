@@ -13,8 +13,6 @@
  *
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-
 #include <linux/module.h>
 #include <linux/ctype.h>
 #include <linux/ieee80211.h>
@@ -226,8 +224,8 @@ int lib80211_unregister_crypto_ops(struct lib80211_crypto_ops *ops)
 	return -EINVAL;
 
       found:
-	printk(KERN_DEBUG "lib80211_crypt: unregistered algorithm '%s'\n",
-	       ops->name);
+	printk(KERN_DEBUG "lib80211_crypt: unregistered algorithm "
+	       "'%s'\n", ops->name);
 	list_del(&alg->list);
 	spin_unlock_irqrestore(&lib80211_crypto_lock, flags);
 	kfree(alg);
@@ -272,7 +270,7 @@ static struct lib80211_crypto_ops lib80211_crypt_null = {
 
 static int __init lib80211_init(void)
 {
-	pr_info(DRV_DESCRIPTION "\n");
+	printk(KERN_INFO DRV_NAME ": " DRV_DESCRIPTION "\n");
 	return lib80211_register_crypto_ops(&lib80211_crypt_null);
 }
 

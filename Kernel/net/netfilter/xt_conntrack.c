@@ -123,12 +123,11 @@ conntrack_mt(const struct sk_buff *skb, struct xt_action_param *par,
 
 	ct = nf_ct_get(skb, &ctinfo);
 
-	if (ct) {
-		if (nf_ct_is_untracked(ct))
-			statebit = XT_CONNTRACK_STATE_UNTRACKED;
-		else
-			statebit = XT_CONNTRACK_STATE_BIT(ctinfo);
-	} else
+	if (ct == &nf_conntrack_untracked)
+		statebit = XT_CONNTRACK_STATE_UNTRACKED;
+	else if (ct != NULL)
+		statebit = XT_CONNTRACK_STATE_BIT(ctinfo);
+	else
 		statebit = XT_CONNTRACK_STATE_INVALID;
 
 	if (info->match_flags & XT_CONNTRACK_STATE) {

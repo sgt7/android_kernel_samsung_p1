@@ -37,7 +37,6 @@
 #include "debug.h"
 #include "base.h"
 
-
 /*********\
 * Receive *
 \*********/
@@ -49,6 +48,7 @@
  */
 void ath5k_hw_start_rx_dma(struct ath5k_hw *ah)
 {
+	ATH5K_TRACE(ah->ah_sc);
 	ath5k_hw_reg_write(ah, AR5K_CR_RXE, AR5K_CR);
 	ath5k_hw_reg_read(ah, AR5K_CR);
 }
@@ -58,10 +58,11 @@ void ath5k_hw_start_rx_dma(struct ath5k_hw *ah)
  *
  * @ah:	The &struct ath5k_hw
  */
-static int ath5k_hw_stop_rx_dma(struct ath5k_hw *ah)
+int ath5k_hw_stop_rx_dma(struct ath5k_hw *ah)
 {
 	unsigned int i;
 
+	ATH5K_TRACE(ah->ah_sc);
 	ath5k_hw_reg_write(ah, AR5K_CR_RXD, AR5K_CR);
 
 	/*
@@ -70,11 +71,7 @@ static int ath5k_hw_stop_rx_dma(struct ath5k_hw *ah)
 	for (i = 1000; i > 0 &&
 			(ath5k_hw_reg_read(ah, AR5K_CR) & AR5K_CR_RXE) != 0;
 			i--)
-		udelay(100);
-
-	if (!i)
-		ATH5K_DBG(ah->ah_sc, ATH5K_DEBUG_DMA,
-				"failed to stop RX DMA !\n");
+		udelay(10);
 
 	return i ? 0 : -EBUSY;
 }
@@ -95,18 +92,13 @@ u32 ath5k_hw_get_rxdp(struct ath5k_hw *ah)
  * @ah: The &struct ath5k_hw
  * @phys_addr: RX descriptor address
  *
- * Returns -EIO if rx is active
+ * XXX: Should we check if rx is enabled before setting rxdp ?
  */
-int ath5k_hw_set_rxdp(struct ath5k_hw *ah, u32 phys_addr)
+void ath5k_hw_set_rxdp(struct ath5k_hw *ah, u32 phys_addr)
 {
-	if (ath5k_hw_reg_read(ah, AR5K_CR) & AR5K_CR_RXE) {
-		ATH5K_DBG(ah->ah_sc, ATH5K_DEBUG_DMA,
-				"tried to set RXDP while rx was active !\n");
-		return -EIO;
-	}
+	ATH5K_TRACE(ah->ah_sc);
 
 	ath5k_hw_reg_write(ah, phys_addr, AR5K_RXDP);
-	return 0;
 }
 
 
@@ -133,11 +125,12 @@ int ath5k_hw_start_tx_dma(struct ath5k_hw *ah, unsigned int queue)
 {
 	u32 tx_queue;
 
+	ATH5K_TRACE(ah->ah_sc);
 	AR5K_ASSERT_ENTRY(queue, ah->ah_capabilities.cap_queues.q_tx_num);
 
 	/* Return if queue is declared inactive */
 	if (ah->ah_txq[queue].tqi_type == AR5K_TX_QUEUE_INACTIVE)
-		return -EINVAL;
+		return -EIO;
 
 	if (ah->ah_version == AR5K_AR5210) {
 		tx_queue = ath5k_hw_reg_read(ah, AR5K_CR);
@@ -185,19 +178,20 @@ int ath5k_hw_start_tx_dma(struct ath5k_hw *ah, unsigned int queue)
  *
  * Stop DMA transmit on a specific hw queue and drain queue so we don't
  * have any pending frames. Returns -EBUSY if we still have pending frames,
- * -EINVAL if queue number is out of range or inactive.
+ * -EINVAL if queue number is out of range.
  *
  */
-static int ath5k_hw_stop_tx_dma(struct ath5k_hw *ah, unsigned int queue)
+int ath5k_hw_stop_tx_dma(struct ath5k_hw *ah, unsigned int queue)
 {
 	unsigned int i = 40;
 	u32 tx_queue, pending;
 
+	ATH5K_TRACE(ah->ah_sc);
 	AR5K_ASSERT_ENTRY(queue, ah->ah_capabilities.cap_queues.q_tx_num);
 
 	/* Return if queue is declared inactive */
 	if (ah->ah_txq[queue].tqi_type == AR5K_TX_QUEUE_INACTIVE)
-		return -EINVAL;
+		return -EIO;
 
 	if (ah->ah_version == AR5K_AR5210) {
 		tx_queue = ath5k_hw_reg_read(ah, AR5K_CR);
@@ -223,31 +217,12 @@ static int ath5k_hw_stop_tx_dma(struct ath5k_hw *ah, unsigned int queue)
 		ath5k_hw_reg_write(ah, tx_queue, AR5K_CR);
 		ath5k_hw_reg_read(ah, AR5K_CR);
 	} else {
-
-		/*
-		 * Enable DCU early termination to quickly
-		 * flush any pending frames from QCU
-		 */
-		AR5K_REG_ENABLE_BITS(ah, AR5K_QUEUE_MISC(queue),
-					AR5K_QCU_MISC_DCU_EARLY);
-
 		/*
 		 * Schedule TX disable and wait until queue is empty
 		 */
 		AR5K_REG_WRITE_Q(ah, AR5K_QCU_TXD, queue);
 
-		/* Wait for queue to stop */
-		for (i = 1000; i > 0 &&
-		(AR5K_REG_READ_Q(ah, AR5K_QCU_TXE, queue) != 0);
-		i--)
-			udelay(100);
-
-		if (AR5K_REG_READ_Q(ah, AR5K_QCU_TXE, queue))
-			ATH5K_DBG(ah->ah_sc, ATH5K_DEBUG_DMA,
-				"queue %i didn't stop !\n", queue);
-
-		/* Check for pending frames */
-		i = 1000;
+		/*Check for pending frames*/
 		do {
 			pending = ath5k_hw_reg_read(ah,
 				AR5K_QUEUE_STATUS(queue)) &
@@ -275,15 +250,15 @@ static int ath5k_hw_stop_tx_dma(struct ath5k_hw *ah, unsigned int queue)
 
 			/* Force channel idle high */
 			AR5K_REG_ENABLE_BITS(ah, AR5K_DIAG_SW_5211,
-					AR5K_DIAG_SW_CHANNEL_IDLE_HIGH);
+					AR5K_DIAG_SW_CHANEL_IDLE_HIGH);
 
 			/* Wait a while and disable mechanism */
-			udelay(400);
+			udelay(200);
 			AR5K_REG_DISABLE_BITS(ah, AR5K_QUIET_CTL1,
 						AR5K_QUIET_CTL1_QT_EN);
 
 			/* Re-check for pending frames */
-			i = 100;
+			i = 40;
 			do {
 				pending = ath5k_hw_reg_read(ah,
 					AR5K_QUEUE_STATUS(queue)) &
@@ -292,51 +267,16 @@ static int ath5k_hw_stop_tx_dma(struct ath5k_hw *ah, unsigned int queue)
 			} while (--i && pending);
 
 			AR5K_REG_DISABLE_BITS(ah, AR5K_DIAG_SW_5211,
-					AR5K_DIAG_SW_CHANNEL_IDLE_HIGH);
-
-			if (pending)
-				ATH5K_DBG(ah->ah_sc, ATH5K_DEBUG_DMA,
-					"quiet mechanism didn't work q:%i !\n",
-					queue);
+					AR5K_DIAG_SW_CHANEL_IDLE_HIGH);
 		}
-
-		/*
-		 * Disable DCU early termination
-		 */
-		AR5K_REG_DISABLE_BITS(ah, AR5K_QUEUE_MISC(queue),
-					AR5K_QCU_MISC_DCU_EARLY);
 
 		/* Clear register */
 		ath5k_hw_reg_write(ah, 0, AR5K_QCU_TXD);
-		if (pending) {
-			ATH5K_DBG(ah->ah_sc, ATH5K_DEBUG_DMA,
-					"tx dma didn't stop (q:%i, frm:%i) !\n",
-					queue, pending);
+		if (pending)
 			return -EBUSY;
-		}
 	}
 
 	/* TODO: Check for success on 5210 else return error */
-	return 0;
-}
-
-/**
- * ath5k_hw_stop_beacon_queue - Stop beacon queue
- *
- * @ah The &struct ath5k_hw
- * @queue The queue number
- *
- * Returns -EIO if queue didn't stop
- */
-int ath5k_hw_stop_beacon_queue(struct ath5k_hw *ah, unsigned int queue)
-{
-	int ret;
-	ret = ath5k_hw_stop_tx_dma(ah, queue);
-	if (ret) {
-		ATH5K_DBG(ah->ah_sc, ATH5K_DEBUG_DMA,
-				"beacon queue didn't stop !\n");
-		return -EIO;
-	}
 	return 0;
 }
 
@@ -357,6 +297,7 @@ u32 ath5k_hw_get_txdp(struct ath5k_hw *ah, unsigned int queue)
 {
 	u16 tx_reg;
 
+	ATH5K_TRACE(ah->ah_sc);
 	AR5K_ASSERT_ENTRY(queue, ah->ah_capabilities.cap_queues.q_tx_num);
 
 	/*
@@ -399,6 +340,7 @@ int ath5k_hw_set_txdp(struct ath5k_hw *ah, unsigned int queue, u32 phys_addr)
 {
 	u16 tx_reg;
 
+	ATH5K_TRACE(ah->ah_sc);
 	AR5K_ASSERT_ENTRY(queue, ah->ah_capabilities.cap_queues.q_tx_num);
 
 	/*
@@ -443,11 +385,11 @@ int ath5k_hw_set_txdp(struct ath5k_hw *ah, unsigned int queue, u32 phys_addr)
  *
  * This function increases/decreases the tx trigger level for the tx fifo
  * buffer (aka FIFO threshold) that is used to indicate when PCU flushes
- * the buffer and transmits its data. Lowering this results sending small
+ * the buffer and transmits it's data. Lowering this results sending small
  * frames more quickly but can lead to tx underruns, raising it a lot can
  * result other problems (i think bmiss is related). Right now we start with
  * the lowest possible (64Bytes) and if we get tx underrun we increase it using
- * the increase flag. Returns -EIO if we have reached maximum/minimum.
+ * the increase flag. Returns -EIO if we have have reached maximum/minimum.
  *
  * XXX: Link this with tx DMA size ?
  * XXX: Use it to save interrupts ?
@@ -457,6 +399,8 @@ int ath5k_hw_update_tx_triglevel(struct ath5k_hw *ah, bool increase)
 {
 	u32 trigger_level, imr;
 	int ret = -EIO;
+
+	ATH5K_TRACE(ah->ah_sc);
 
 	/*
 	 * Disable interrupts by setting the mask
@@ -493,7 +437,6 @@ done:
 	return ret;
 }
 
-
 /*******************\
 * Interrupt masking *
 \*******************/
@@ -508,6 +451,7 @@ done:
  */
 bool ath5k_hw_is_intr_pending(struct ath5k_hw *ah)
 {
+	ATH5K_TRACE(ah->ah_sc);
 	return ath5k_hw_reg_read(ah, AR5K_INTPEND) == 1 ? 1 : 0;
 }
 
@@ -530,6 +474,8 @@ bool ath5k_hw_is_intr_pending(struct ath5k_hw *ah)
 int ath5k_hw_get_isr(struct ath5k_hw *ah, enum ath5k_int *interrupt_mask)
 {
 	u32 data;
+
+	ATH5K_TRACE(ah->ah_sc);
 
 	/*
 	 * Read interrupt status from the Interrupt Status register
@@ -755,92 +701,3 @@ enum ath5k_int ath5k_hw_set_imr(struct ath5k_hw *ah, enum ath5k_int new_mask)
 	return old_mask;
 }
 
-
-/********************\
- Init/Stop functions
-\********************/
-
-/**
- * ath5k_hw_dma_init - Initialize DMA unit
- *
- * @ah: The &struct ath5k_hw
- *
- * Set DMA size and pre-enable interrupts
- * (driver handles tx/rx buffer setup and
- * dma start/stop)
- *
- * XXX: Save/restore RXDP/TXDP registers ?
- */
-void ath5k_hw_dma_init(struct ath5k_hw *ah)
-{
-	/*
-	 * Set Rx/Tx DMA Configuration
-	 *
-	 * Set standard DMA size (128). Note that
-	 * a DMA size of 512 causes rx overruns and tx errors
-	 * on pci-e cards (tested on 5424 but since rx overruns
-	 * also occur on 5416/5418 with madwifi we set 128
-	 * for all PCI-E cards to be safe).
-	 *
-	 * XXX: need to check 5210 for this
-	 * TODO: Check out tx triger level, it's always 64 on dumps but I
-	 * guess we can tweak it and see how it goes ;-)
-	 */
-	if (ah->ah_version != AR5K_AR5210) {
-		AR5K_REG_WRITE_BITS(ah, AR5K_TXCFG,
-			AR5K_TXCFG_SDMAMR, AR5K_DMASIZE_128B);
-		AR5K_REG_WRITE_BITS(ah, AR5K_RXCFG,
-			AR5K_RXCFG_SDMAMW, AR5K_DMASIZE_128B);
-	}
-
-	/* Pre-enable interrupts on 5211/5212*/
-	if (ah->ah_version != AR5K_AR5210)
-		ath5k_hw_set_imr(ah, ah->ah_imr);
-
-}
-
-/**
- * ath5k_hw_dma_stop - stop DMA unit
- *
- * @ah: The &struct ath5k_hw
- *
- * Stop tx/rx DMA and interrupts. Returns
- * -EBUSY if tx or rx dma failed to stop.
- *
- * XXX: Sometimes DMA unit hangs and we have
- * stuck frames on tx queues, only a reset
- * can fix that.
- */
-int ath5k_hw_dma_stop(struct ath5k_hw *ah)
-{
-	int i, qmax, err;
-	err = 0;
-
-	/* Disable interrupts */
-	ath5k_hw_set_imr(ah, 0);
-
-	/* Stop rx dma */
-	err = ath5k_hw_stop_rx_dma(ah);
-	if (err)
-		return err;
-
-	/* Clear any pending interrupts
-	 * and disable tx dma */
-	if (ah->ah_version != AR5K_AR5210) {
-		ath5k_hw_reg_write(ah, 0xffffffff, AR5K_PISR);
-		qmax = AR5K_NUM_TX_QUEUES;
-	} else {
-		/* PISR/SISR Not available on 5210 */
-		ath5k_hw_reg_read(ah, AR5K_ISR);
-		qmax = AR5K_NUM_TX_QUEUES_NOQCU;
-	}
-
-	for (i = 0; i < qmax; i++) {
-		err = ath5k_hw_stop_tx_dma(ah, i);
-		/* -EINVAL -> queue inactive */
-		if (err && err != -EINVAL)
-			return err;
-	}
-
-	return 0;
-}

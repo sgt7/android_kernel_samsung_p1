@@ -27,7 +27,7 @@
 #define ATH5K_ANI_RSSI_THR_HIGH		40
 #define ATH5K_ANI_RSSI_THR_LOW		7
 
-/* maximum available levels */
+/* maximum availabe levels */
 #define ATH5K_ANI_MAX_FIRSTEP_LVL	2
 #define ATH5K_ANI_MAX_NOISE_IMM_LVL	1
 
@@ -75,7 +75,10 @@ struct ath5k_ani_state {
 	unsigned int		cck_errors;
 
 	/* debug/statistics only: numbers from last ANI calibration */
-	struct ath_cycle_counters last_cc;
+	unsigned int		pfc_tx;
+	unsigned int		pfc_rx;
+	unsigned int		pfc_busy;
+	unsigned int		pfc_cycles;
 	unsigned int		last_listen;
 	unsigned int		last_ofdm_errors;
 	unsigned int		last_cck_errors;

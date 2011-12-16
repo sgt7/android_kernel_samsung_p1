@@ -986,7 +986,7 @@ struct net_device {
 	struct timer_list	watchdog_timer;
 
 	/* Number of references to this device */
-	int __percpu		*pcpu_refcnt;
+	atomic_t		refcnt ____cacheline_aligned_in_smp;
 
 	/* delayed register/unregister */
 	struct list_head	todo_list;
@@ -1291,7 +1291,6 @@ static inline void unregister_netdevice(struct net_device *dev)
 	unregister_netdevice_queue(dev, NULL);
 }
 
-extern int 		netdev_refcnt_read(const struct net_device *dev);
 extern void		free_netdev(struct net_device *dev);
 extern void		synchronize_net(void);
 extern int 		register_netdevice_notifier(struct notifier_block *nb);
@@ -1731,7 +1730,7 @@ extern void netdev_run_todo(void);
  */
 static inline void dev_put(struct net_device *dev)
 {
-	irqsafe_cpu_dec(*dev->pcpu_refcnt);
+	atomic_dec(&dev->refcnt);
 }
 
 /**
@@ -1742,7 +1741,7 @@ static inline void dev_put(struct net_device *dev)
  */
 static inline void dev_hold(struct net_device *dev)
 {
-	irqsafe_cpu_inc(*dev->pcpu_refcnt);
+	atomic_inc(&dev->refcnt);
 }
 
 /* Carrier loss detection, dial on demand. The functions netif_carrier_on
@@ -2151,8 +2150,6 @@ extern void dev_seq_stop(struct seq_file *seq, void *v);
 extern int netdev_class_create_file(struct class_attribute *class_attr);
 extern void netdev_class_remove_file(struct class_attribute *class_attr);
 
-extern struct kobj_ns_type_operations net_ns_type_operations;
-
 extern char *netdev_drivername(const struct net_device *dev, char *buffer, int len);
 
 extern void linkwatch_run_queue(void);
@@ -2346,10 +2343,6 @@ do {								\
 	0;							\
 })
 #endif
-
-#define MODULE_ALIAS_NETDEV(device) \
-	MODULE_ALIAS("netdev-" device)
-
 
 #endif /* __KERNEL__ */
 

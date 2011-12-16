@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2011 Atheros Communications Inc.
+ * Copyright (c) 2010 Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,8 +17,8 @@
 #include "htc.h"
 
 static int htc_issue_send(struct htc_target *target, struct sk_buff* skb,
-			  u16 len, u8 flags, u8 epid)
-
+			  u16 len, u8 flags, u8 epid,
+			  struct ath9k_htc_tx_ctl *tx_ctl)
 {
 	struct htc_frame_hdr *hdr;
 	struct htc_endpoint *endpoint = &target->endpoint[epid];
@@ -30,8 +30,8 @@ static int htc_issue_send(struct htc_target *target, struct sk_buff* skb,
 	hdr->flags = flags;
 	hdr->payload_len = cpu_to_be16(len);
 
-	status = target->hif->send(target->hif_dev, endpoint->ul_pipeid, skb);
-
+	status = target->hif->send(target->hif_dev, endpoint->ul_pipeid, skb,
+				   tx_ctl);
 	return status;
 }
 
@@ -89,6 +89,7 @@ static void htc_process_target_rdy(struct htc_target *target,
 	struct htc_endpoint *endpoint;
 	struct htc_ready_msg *htc_ready_msg = (struct htc_ready_msg *) buf;
 
+	target->credits = be16_to_cpu(htc_ready_msg->credits);
 	target->credit_size = be16_to_cpu(htc_ready_msg->credit_size);
 
 	endpoint = &target->endpoint[ENDPOINT0];
@@ -158,11 +159,11 @@ static int htc_config_pipe_credits(struct htc_target *target)
 
 	cp_msg->message_id = cpu_to_be16(HTC_MSG_CONFIG_PIPE_ID);
 	cp_msg->pipe_id = USB_WLAN_TX_PIPE;
-	cp_msg->credits = target->credits;
+	cp_msg->credits = 28;
 
 	target->htc_flags |= HTC_OP_CONFIG_PIPE_CREDITS;
 
-	ret = htc_issue_send(target, skb, skb->len, 0, ENDPOINT0);
+	ret = htc_issue_send(target, skb, skb->len, 0, ENDPOINT0, NULL);
 	if (ret)
 		goto err;
 
@@ -197,7 +198,7 @@ static int htc_setup_complete(struct htc_target *target)
 
 	target->htc_flags |= HTC_OP_START_WAIT;
 
-	ret = htc_issue_send(target, skb, skb->len, 0, ENDPOINT0);
+	ret = htc_issue_send(target, skb, skb->len, 0, ENDPOINT0, NULL);
 	if (ret)
 		goto err;
 
@@ -268,7 +269,7 @@ int htc_connect_service(struct htc_target *target,
 	conn_msg->dl_pipeid = endpoint->dl_pipeid;
 	conn_msg->ul_pipeid = endpoint->ul_pipeid;
 
-	ret = htc_issue_send(target, skb, skb->len, 0, ENDPOINT0);
+	ret = htc_issue_send(target, skb, skb->len, 0, ENDPOINT0, NULL);
 	if (ret)
 		goto err;
 
@@ -286,33 +287,35 @@ err:
 	return ret;
 }
 
-int htc_send(struct htc_target *target, struct sk_buff *skb)
+int htc_send(struct htc_target *target, struct sk_buff *skb,
+	     enum htc_endpoint_id epid, struct ath9k_htc_tx_ctl *tx_ctl)
 {
-	struct ath9k_htc_tx_ctl *tx_ctl;
-
-	tx_ctl = HTC_SKB_CB(skb);
-	return htc_issue_send(target, skb, skb->len, 0, tx_ctl->epid);
-}
-
-int htc_send_epid(struct htc_target *target, struct sk_buff *skb,
-		  enum htc_endpoint_id epid)
-{
-	return htc_issue_send(target, skb, skb->len, 0, epid);
+	return htc_issue_send(target, skb, skb->len, 0, epid, tx_ctl);
 }
 
 void htc_stop(struct htc_target *target)
 {
-	target->hif->stop(target->hif_dev);
+	enum htc_endpoint_id epid;
+	struct htc_endpoint *endpoint;
+
+	for (epid = ENDPOINT0; epid < ENDPOINT_MAX; epid++) {
+		endpoint = &target->endpoint[epid];
+		if (endpoint->service_id != 0)
+			target->hif->stop(target->hif_dev, endpoint->ul_pipeid);
+	}
 }
 
 void htc_start(struct htc_target *target)
 {
-	target->hif->start(target->hif_dev);
-}
+	enum htc_endpoint_id epid;
+	struct htc_endpoint *endpoint;
 
-void htc_sta_drain(struct htc_target *target, u8 idx)
-{
-	target->hif->sta_drain(target->hif_dev, idx);
+	for (epid = ENDPOINT0; epid < ENDPOINT_MAX; epid++) {
+		endpoint = &target->endpoint[epid];
+		if (endpoint->service_id != 0)
+			target->hif->start(target->hif_dev,
+					   endpoint->ul_pipeid);
+	}
 }
 
 void ath9k_htc_txcompletion_cb(struct htc_target *htc_handle,
@@ -358,7 +361,7 @@ ret:
  * HTC Messages are handled directly here and the obtained SKB
  * is freed.
  *
- * Service messages (Data, WMI) passed to the corresponding
+ * Sevice messages (Data, WMI) passed to the corresponding
  * endpoint RX handlers, which have to free the SKB.
  */
 void ath9k_htc_rx_msg(struct htc_target *htc_handle,
@@ -460,10 +463,9 @@ void ath9k_htc_hw_free(struct htc_target *htc)
 }
 
 int ath9k_htc_hw_init(struct htc_target *target,
-		      struct device *dev, u16 devid,
-		      char *product, u32 drv_info)
+		      struct device *dev, u16 devid)
 {
-	if (ath9k_htc_probe_device(target, dev, devid, product, drv_info)) {
+	if (ath9k_htc_probe_device(target, dev, devid)) {
 		printk(KERN_ERR "Failed to initialize the device\n");
 		return -ENODEV;
 	}

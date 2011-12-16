@@ -101,7 +101,7 @@ typedef struct {
 	u8 device_id;
 	u8 flags;
 	u32 length;
-} __packed
+} __attribute__ ((packed))
 pimfor_header_t;
 
 /* A received and interrupt-processed management frame, either for

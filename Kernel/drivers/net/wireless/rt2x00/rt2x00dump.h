@@ -20,12 +20,7 @@
 
 /*
 	Module: rt2x00dump
-	Abstract:
-		Data structures for the rt2x00debug & userspace.
-
-		The declarations in this file can be used by both rt2x00
-		and userspace and therefore should be kept together in
-		this file.
+	Abstract: Data structures for the rt2x00debug & userspace.
  */
 
 #ifndef RT2X00DUMP_H
@@ -51,7 +46,7 @@
  *   [rt2x00dump header][hardware descriptor][ieee802.11 frame]
  *
  * rt2x00dump header: The description of the dumped frame, as well as
- *	additional information useful for debugging. See &rt2x00dump_hdr.
+ *	additional information usefull for debugging. See &rt2x00dump_hdr.
  * hardware descriptor: Descriptor that was used to receive or transmit
  *	the frame.
  * ieee802.11 frame: The actual frame that was received or transmitted.
@@ -116,7 +111,7 @@ struct rt2x00dump_hdr {
 
 	__le16 chip_rt;
 	__le16 chip_rf;
-	__le16 chip_rev;
+	__le32 chip_rev;
 
 	__le16 type;
 	__u8 queue_index;

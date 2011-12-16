@@ -17,7 +17,7 @@
 #include "nl80211.h"
 #include "wext-compat.h"
 
-#define IEEE80211_SCAN_RESULT_EXPIRE	(3 * HZ)
+#define IEEE80211_SCAN_RESULT_EXPIRE	(15 * HZ)
 
 void ___cfg80211_scan_done(struct cfg80211_registered_device *rdev, bool leak)
 {
@@ -93,69 +93,6 @@ void cfg80211_scan_done(struct cfg80211_scan_request *request, bool aborted)
 }
 EXPORT_SYMBOL(cfg80211_scan_done);
 
-void __cfg80211_sched_scan_results(struct work_struct *wk)
-{
-	struct cfg80211_registered_device *rdev;
-
-	rdev = container_of(wk, struct cfg80211_registered_device,
-			    sched_scan_results_wk);
-
-	mutex_lock(&rdev->sched_scan_mtx);
-
-	/* we don't have sched_scan_req anymore if the scan is stopping */
-	if (rdev->sched_scan_req)
-		nl80211_send_sched_scan_results(rdev,
-						rdev->sched_scan_req->dev);
-
-	mutex_unlock(&rdev->sched_scan_mtx);
-}
-
-void cfg80211_sched_scan_results(struct wiphy *wiphy)
-{
-	/* ignore if we're not scanning */
-	if (wiphy_to_dev(wiphy)->sched_scan_req)
-		queue_work(cfg80211_wq,
-			   &wiphy_to_dev(wiphy)->sched_scan_results_wk);
-}
-EXPORT_SYMBOL(cfg80211_sched_scan_results);
-
-void cfg80211_sched_scan_stopped(struct wiphy *wiphy)
-{
-	struct cfg80211_registered_device *rdev = wiphy_to_dev(wiphy);
-
-	mutex_lock(&rdev->sched_scan_mtx);
-	__cfg80211_stop_sched_scan(rdev, true);
-	mutex_unlock(&rdev->sched_scan_mtx);
-}
-EXPORT_SYMBOL(cfg80211_sched_scan_stopped);
-
-int __cfg80211_stop_sched_scan(struct cfg80211_registered_device *rdev,
-			       bool driver_initiated)
-{
-	int err;
-	struct net_device *dev;
-
-	lockdep_assert_held(&rdev->sched_scan_mtx);
-
-	if (!rdev->sched_scan_req)
-		return 0;
-
-	dev = rdev->sched_scan_req->dev;
-
-	if (!driver_initiated) {
-		err = rdev->ops->sched_scan_stop(&rdev->wiphy, dev);
-		if (err)
-			return err;
-	}
-
-	nl80211_send_sched_scan(rdev, dev, NL80211_CMD_SCHED_SCAN_STOPPED);
-
-	kfree(rdev->sched_scan_req);
-	rdev->sched_scan_req = NULL;
-
-	return err;
-}
-
 static void bss_release(struct kref *ref)
 {
 	struct cfg80211_internal_bss *bss;
@@ -187,15 +124,6 @@ void cfg80211_bss_age(struct cfg80211_registered_device *dev,
 }
 
 /* must hold dev->bss_lock! */
-static void __cfg80211_unlink_bss(struct cfg80211_registered_device *dev,
-				  struct cfg80211_internal_bss *bss)
-{
-	list_del_init(&bss->list);
-	rb_erase(&bss->rbn, &dev->bss_tree);
-	kref_put(&bss->ref, bss_release);
-}
-
-/* must hold dev->bss_lock! */
 void cfg80211_bss_expire(struct cfg80211_registered_device *dev)
 {
 	struct cfg80211_internal_bss *bss, *tmp;
@@ -206,7 +134,9 @@ void cfg80211_bss_expire(struct cfg80211_registered_device *dev)
 			continue;
 		if (!time_after(jiffies, bss->ts + IEEE80211_SCAN_RESULT_EXPIRE))
 			continue;
-		__cfg80211_unlink_bss(dev, bss);
+		list_del(&bss->list);
+		rb_erase(&bss->rbn, &dev->bss_tree);
+		kref_put(&bss->ref, bss_release);
 		expired = true;
 	}
 
@@ -267,35 +197,13 @@ static bool is_bss(struct cfg80211_bss *a,
 	return memcmp(ssidie + 2, ssid, ssid_len) == 0;
 }
 
-static bool is_mesh_bss(struct cfg80211_bss *a)
-{
-	const u8 *ie;
-
-	if (!WLAN_CAPABILITY_IS_STA_BSS(a->capability))
-		return false;
-
-	ie = cfg80211_find_ie(WLAN_EID_MESH_ID,
-			      a->information_elements,
-			      a->len_information_elements);
-	if (!ie)
-		return false;
-
-	ie = cfg80211_find_ie(WLAN_EID_MESH_CONFIG,
-			      a->information_elements,
-			      a->len_information_elements);
-	if (!ie)
-		return false;
-
-	return true;
-}
-
 static bool is_mesh(struct cfg80211_bss *a,
 		    const u8 *meshid, size_t meshidlen,
 		    const u8 *meshcfg)
 {
 	const u8 *ie;
 
-	if (!WLAN_CAPABILITY_IS_STA_BSS(a->capability))
+	if (!is_zero_ether_addr(a->bssid))
 		return false;
 
 	ie = cfg80211_find_ie(WLAN_EID_MESH_ID,
@@ -333,7 +241,11 @@ static int cmp_bss(struct cfg80211_bss *a,
 	if (a->channel != b->channel)
 		return b->channel->center_freq - a->channel->center_freq;
 
-	if (is_mesh_bss(a) && is_mesh_bss(b)) {
+	r = memcmp(a->bssid, b->bssid, ETH_ALEN);
+	if (r)
+		return r;
+
+	if (is_zero_ether_addr(a->bssid)) {
 		r = cmp_ies(WLAN_EID_MESH_ID,
 			    a->information_elements,
 			    a->len_information_elements,
@@ -347,10 +259,6 @@ static int cmp_bss(struct cfg80211_bss *a,
 			       b->information_elements,
 			       b->len_information_elements);
 	}
-
-	r = memcmp(a->bssid, b->bssid, ETH_ALEN);
-	if (r)
-		return r;
 
 	return cmp_ies(WLAN_EID_SSID,
 		       a->information_elements,
@@ -479,6 +387,7 @@ cfg80211_bss_update(struct cfg80211_registered_device *dev,
 		    struct cfg80211_internal_bss *res)
 {
 	struct cfg80211_internal_bss *found = NULL;
+	const u8 *meshid, *meshcfg;
 
 	/*
 	 * The reference to "res" is donated to this function.
@@ -490,6 +399,22 @@ cfg80211_bss_update(struct cfg80211_registered_device *dev,
 	}
 
 	res->ts = jiffies;
+
+	if (is_zero_ether_addr(res->pub.bssid)) {
+		/* must be mesh, verify */
+		meshid = cfg80211_find_ie(WLAN_EID_MESH_ID,
+					  res->pub.information_elements,
+					  res->pub.len_information_elements);
+		meshcfg = cfg80211_find_ie(WLAN_EID_MESH_CONFIG,
+					   res->pub.information_elements,
+					   res->pub.len_information_elements);
+		if (!meshid || !meshcfg ||
+		    meshcfg[1] != sizeof(struct ieee80211_meshconf_ie)) {
+			/* bogus mesh */
+			kref_put(&res->ref, bss_release);
+			return NULL;
+		}
+	}
 
 	spin_lock_bh(&dev->bss_lock);
 
@@ -539,9 +464,6 @@ cfg80211_bss_update(struct cfg80211_registered_device *dev,
 		if (res->pub.beacon_ies) {
 			size_t used = dev->wiphy.bss_priv_size + sizeof(*res);
 			size_t ielen = res->pub.len_beacon_ies;
-			bool information_elements_is_beacon_ies =
-				(found->pub.information_elements ==
-				 found->pub.beacon_ies);
 
 			if (found->pub.beacon_ies &&
 			    !found->beacon_ies_allocated &&
@@ -564,14 +486,6 @@ cfg80211_bss_update(struct cfg80211_registered_device *dev,
 					found->pub.beacon_ies = ies;
 					found->pub.len_beacon_ies = ielen;
 				}
-			}
-
-			/* Override IEs if they were from a beacon before */
-			if (information_elements_is_beacon_ies) {
-				found->pub.information_elements =
-					found->pub.beacon_ies;
-				found->pub.len_information_elements =
-					found->pub.len_beacon_ies;
 			}
 		}
 
@@ -660,22 +574,15 @@ cfg80211_inform_bss_frame(struct wiphy *wiphy,
 	struct cfg80211_internal_bss *res;
 	size_t ielen = len - offsetof(struct ieee80211_mgmt,
 				      u.probe_resp.variable);
-	size_t privsz;
-
-	if (WARN_ON(!mgmt))
-		return NULL;
-
-	if (WARN_ON(!wiphy))
-		return NULL;
+	size_t privsz = wiphy->bss_priv_size;
 
 	if (WARN_ON(wiphy->signal_type == CFG80211_SIGNAL_TYPE_UNSPEC &&
 	            (signal < 0 || signal > 100)))
 		return NULL;
 
-	if (WARN_ON(len < offsetof(struct ieee80211_mgmt, u.probe_resp.variable)))
+	if (WARN_ON(!mgmt || !wiphy ||
+		    len < offsetof(struct ieee80211_mgmt, u.probe_resp.variable)))
 		return NULL;
-
-	privsz = wiphy->bss_priv_size;
 
 	res = kzalloc(sizeof(*res) + privsz + ielen, gfp);
 	if (!res)
@@ -744,8 +651,11 @@ void cfg80211_unlink_bss(struct wiphy *wiphy, struct cfg80211_bss *pub)
 
 	spin_lock_bh(&dev->bss_lock);
 	if (!list_empty(&bss->list)) {
-		__cfg80211_unlink_bss(dev, bss);
+		list_del_init(&bss->list);
 		dev->bss_generation++;
+		rb_erase(&bss->rbn, &dev->bss_tree);
+
+		kref_put(&bss->ref, bss_release);
 	}
 	spin_unlock_bh(&dev->bss_lock);
 }

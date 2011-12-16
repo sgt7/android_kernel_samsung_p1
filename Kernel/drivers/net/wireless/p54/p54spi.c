@@ -32,13 +32,10 @@
 #include <linux/slab.h>
 
 #include "p54spi.h"
+#include "p54spi_eeprom.h"
 #include "p54.h"
 
 #include "lmac.h"
-
-#ifdef CONFIG_P54_SPI_DEFAULT_EEPROM
-#include "p54spi_eeprom.h"
-#endif /* CONFIG_P54_SPI_DEFAULT_EEPROM */
 
 MODULE_FIRMWARE("3826.arm");
 MODULE_ALIAS("stlc45xx");
@@ -198,13 +195,9 @@ static int p54spi_request_eeprom(struct ieee80211_hw *dev)
 
 	ret = request_firmware(&eeprom, "3826.eeprom", &priv->spi->dev);
 	if (ret < 0) {
-#ifdef CONFIG_P54_SPI_DEFAULT_EEPROM
 		dev_info(&priv->spi->dev, "loading default eeprom...\n");
 		ret = p54_parse_eeprom(dev, (void *) p54spi_eeprom,
 				       sizeof(p54spi_eeprom));
-#else
-		dev_err(&priv->spi->dev, "Failed to request user eeprom\n");
-#endif /* CONFIG_P54_SPI_DEFAULT_EEPROM */
 	} else {
 		dev_info(&priv->spi->dev, "loading user eeprom...\n");
 		ret = p54_parse_eeprom(dev, (void *) eeprom->data,
@@ -287,7 +280,7 @@ static void p54spi_power_on(struct p54s_priv *priv)
 	enable_irq(gpio_to_irq(p54spi_gpio_irq));
 
 	/*
-	 * need to wait a while before device can be accessed, the length
+	 * need to wait a while before device can be accessed, the lenght
 	 * is just a guess
 	 */
 	msleep(10);
@@ -649,7 +642,8 @@ static int __devinit p54spi_probe(struct spi_device *spi)
 		goto err_free_common;
 	}
 
-	irq_set_irq_type(gpio_to_irq(p54spi_gpio_irq), IRQ_TYPE_EDGE_RISING);
+	set_irq_type(gpio_to_irq(p54spi_gpio_irq),
+		     IRQ_TYPE_EDGE_RISING);
 
 	disable_irq(gpio_to_irq(p54spi_gpio_irq));
 
@@ -703,7 +697,9 @@ static int __devexit p54spi_remove(struct spi_device *spi)
 
 static struct spi_driver p54spi_driver = {
 	.driver = {
-		.name		= "p54spi",
+		/* use cx3110x name because board-n800.c uses that for the
+		 * SPI port */
+		.name		= "cx3110x",
 		.bus		= &spi_bus_type,
 		.owner		= THIS_MODULE,
 	},
@@ -737,4 +733,3 @@ module_exit(p54spi_exit);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Christian Lamparter <chunkeey@web.de>");
 MODULE_ALIAS("spi:cx3110x");
-MODULE_ALIAS("spi:p54spi");

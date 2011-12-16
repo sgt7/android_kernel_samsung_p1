@@ -785,13 +785,12 @@ static const void *net_netlink_ns(struct sock *sk)
 	return sock_net(sk);
 }
 
-struct kobj_ns_type_operations net_ns_type_operations = {
+static struct kobj_ns_type_operations net_ns_type_operations = {
 	.type = KOBJ_NS_TYPE_NET,
 	.current_ns = net_current_ns,
 	.netlink_ns = net_netlink_ns,
 	.initial_ns = net_initial_ns,
 };
-EXPORT_SYMBOL_GPL(net_ns_type_operations);
 
 static void net_kobj_ns_exit(struct net *net)
 {

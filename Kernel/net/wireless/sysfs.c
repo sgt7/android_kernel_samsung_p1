@@ -35,14 +35,6 @@ SHOW_FMT(index, "%d", wiphy_idx);
 SHOW_FMT(macaddress, "%pM", wiphy.perm_addr);
 SHOW_FMT(address_mask, "%pM", wiphy.addr_mask);
 
-static ssize_t name_show(struct device *dev,
-			 struct device_attribute *attr,
-			 char *buf) {
-	struct wiphy *wiphy = &dev_to_rdev(dev)->wiphy;
-	return sprintf(buf, "%s\n", dev_name(&wiphy->dev));
-}
-
-
 static ssize_t addresses_show(struct device *dev,
 			      struct device_attribute *attr,
 			      char *buf)
@@ -65,7 +57,6 @@ static struct device_attribute ieee80211_dev_attrs[] = {
 	__ATTR_RO(macaddress),
 	__ATTR_RO(address_mask),
 	__ATTR_RO(addresses),
-	__ATTR_RO(name),
 	{}
 };
 
@@ -93,7 +84,7 @@ static int wiphy_suspend(struct device *dev, pm_message_t state)
 
 	if (rdev->ops->suspend) {
 		rtnl_lock();
-		ret = rdev->ops->suspend(&rdev->wiphy, rdev->wowlan);
+		ret = rdev->ops->suspend(&rdev->wiphy);
 		rtnl_unlock();
 	}
 
@@ -119,13 +110,6 @@ static int wiphy_resume(struct device *dev)
 	return ret;
 }
 
-static const void *wiphy_namespace(struct device *d)
-{
-	struct wiphy *wiphy = container_of(d, struct wiphy, dev);
-
-	return wiphy_net(wiphy);
-}
-
 struct class ieee80211_class = {
 	.name = "ieee80211",
 	.owner = THIS_MODULE,
@@ -136,8 +120,6 @@ struct class ieee80211_class = {
 #endif
 	.suspend = wiphy_suspend,
 	.resume = wiphy_resume,
-	.ns_type = &net_ns_type_operations,
-	.namespace = wiphy_namespace,
 };
 
 int wiphy_sysfs_init(void)

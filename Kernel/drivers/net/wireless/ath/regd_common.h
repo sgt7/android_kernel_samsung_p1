@@ -86,7 +86,6 @@ enum EnumRd {
 	WOR9_WORLD = 0x69,
 	WORA_WORLD = 0x6A,
 	WORB_WORLD = 0x6B,
-	WORC_WORLD = 0x6C,
 
 	MKK3_MKKB = 0x80,
 	MKK3_MKKA2 = 0x81,
@@ -196,7 +195,6 @@ static struct reg_dmn_pair_mapping regDomainPairs[] = {
 	{APL9_WORLD, CTL_ETSI, CTL_ETSI},
 
 	{APL3_FCCA, CTL_FCC, CTL_FCC},
-	{APL7_FCCA, CTL_FCC, CTL_FCC},
 	{APL1_ETSIC, CTL_FCC, CTL_ETSI},
 	{APL2_ETSIC, CTL_FCC, CTL_ETSI},
 	{APL2_APLD, CTL_FCC, NO_CTL},
@@ -283,7 +281,6 @@ static struct reg_dmn_pair_mapping regDomainPairs[] = {
 	{WOR9_WORLD, NO_CTL, NO_CTL},
 	{WORA_WORLD, NO_CTL, NO_CTL},
 	{WORB_WORLD, NO_CTL, NO_CTL},
-	{WORC_WORLD, NO_CTL, NO_CTL},
 };
 
 static struct country_code_to_enum_rd allCountries[] = {

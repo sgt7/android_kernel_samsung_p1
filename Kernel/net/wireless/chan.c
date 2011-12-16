@@ -35,9 +35,8 @@ rdev_freq_to_chan(struct cfg80211_registered_device *rdev,
 		if (!ht_cap->ht_supported)
 			return NULL;
 
-		if (channel_type != NL80211_CHAN_HT20 &&
-		    (!(ht_cap->cap & IEEE80211_HT_CAP_SUP_WIDTH_20_40) ||
-		    ht_cap->cap & IEEE80211_HT_CAP_40MHZ_INTOLERANT))
+		if (!(ht_cap->cap & IEEE80211_HT_CAP_SUP_WIDTH_20_40) ||
+		    ht_cap->cap & IEEE80211_HT_CAP_40MHZ_INTOLERANT)
 			return NULL;
 	}
 
@@ -104,8 +103,7 @@ int cfg80211_set_freq(struct cfg80211_registered_device *rdev,
 	if (wdev && (wdev->iftype == NL80211_IFTYPE_ADHOC ||
 		     wdev->iftype == NL80211_IFTYPE_AP ||
 		     wdev->iftype == NL80211_IFTYPE_AP_VLAN ||
-		     wdev->iftype == NL80211_IFTYPE_MESH_POINT ||
-		     wdev->iftype == NL80211_IFTYPE_P2P_GO)) {
+		     wdev->iftype == NL80211_IFTYPE_MESH_POINT)) {
 		switch (channel_type) {
 		case NL80211_CHAN_HT40PLUS:
 		case NL80211_CHAN_HT40MINUS:

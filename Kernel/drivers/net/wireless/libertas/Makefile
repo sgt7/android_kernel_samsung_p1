@@ -1,3 +1,4 @@
+libertas-y += assoc.o
 libertas-y += cfg.o
 libertas-y += cmd.o
 libertas-y += cmdresp.o
@@ -5,7 +6,9 @@ libertas-y += debugfs.o
 libertas-y += ethtool.o
 libertas-y += main.o
 libertas-y += rx.o
+libertas-y += scan.o
 libertas-y += tx.o
+libertas-y += wext.o
 libertas-$(CONFIG_LIBERTAS_MESH) += mesh.o
 
 usb8xxx-objs += if_usb.o

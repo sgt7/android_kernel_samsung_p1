@@ -543,20 +543,8 @@ static int genl_rcv_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
 	info.userhdr = nlmsg_data(nlh) + GENL_HDRLEN;
 	info.attrs = family->attrbuf;
 	genl_info_net_set(&info, net);
-	memset(&info.user_ptr, 0, sizeof(info.user_ptr));
 
-	if (family->pre_doit) {
-		err = family->pre_doit(ops, skb, &info);
-		if (err)
-			return err;
-	}
-
-	err = ops->doit(skb, &info);
-
-	if (family->post_doit)
-		family->post_doit(ops, skb, &info);
-
-	return err;
+	return ops->doit(skb, &info);
 }
 
 static void genl_rcv(struct sk_buff *skb)

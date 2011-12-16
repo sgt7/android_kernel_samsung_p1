@@ -2,8 +2,13 @@
 #include <linux/ethtool.h>
 #include <linux/delay.h>
 
+#include "host.h"
 #include "decl.h"
+#include "defs.h"
+#include "dev.h"
+#include "wext.h"
 #include "cmd.h"
+#include "mesh.h"
 
 
 static void lbs_ethtool_get_drvinfo(struct net_device *dev,
@@ -20,8 +25,7 @@ static void lbs_ethtool_get_drvinfo(struct net_device *dev,
 	strcpy(info->version, lbs_driver_version);
 }
 
-/*
- * All 8388 parts have 16KiB EEPROM size at the time of writing.
+/* All 8388 parts have 16KiB EEPROM size at the time of writing.
  * In case that changes this needs fixing.
  */
 #define LBS_EEPROM_LEN 16384
@@ -65,10 +69,13 @@ static void lbs_ethtool_get_wol(struct net_device *dev,
 {
 	struct lbs_private *priv = dev->ml_priv;
 
-	wol->supported = WAKE_UCAST|WAKE_MCAST|WAKE_BCAST|WAKE_PHY;
-
-	if (priv->wol_criteria == EHS_REMOVE_WAKEUP)
+	if (priv->wol_criteria == 0xffffffff) {
+		/* Interface driver didn't configure wake */
+		wol->supported = wol->wolopts = 0;
 		return;
+	}
+
+	wol->supported = WAKE_UCAST|WAKE_MCAST|WAKE_BCAST|WAKE_PHY;
 
 	if (priv->wol_criteria & EHS_WAKE_ON_UNICAST_DATA)
 		wol->wolopts |= WAKE_UCAST;
@@ -84,22 +91,23 @@ static int lbs_ethtool_set_wol(struct net_device *dev,
 			       struct ethtool_wolinfo *wol)
 {
 	struct lbs_private *priv = dev->ml_priv;
+	uint32_t criteria = 0;
 
 	if (wol->wolopts & ~(WAKE_UCAST|WAKE_MCAST|WAKE_BCAST|WAKE_PHY))
 		return -EOPNOTSUPP;
 
-	priv->wol_criteria = 0;
 	if (wol->wolopts & WAKE_UCAST)
-		priv->wol_criteria |= EHS_WAKE_ON_UNICAST_DATA;
+		criteria |= EHS_WAKE_ON_UNICAST_DATA;
 	if (wol->wolopts & WAKE_MCAST)
-		priv->wol_criteria |= EHS_WAKE_ON_MULTICAST_DATA;
+		criteria |= EHS_WAKE_ON_MULTICAST_DATA;
 	if (wol->wolopts & WAKE_BCAST)
-		priv->wol_criteria |= EHS_WAKE_ON_BROADCAST_DATA;
+		criteria |= EHS_WAKE_ON_BROADCAST_DATA;
 	if (wol->wolopts & WAKE_PHY)
-		priv->wol_criteria |= EHS_WAKE_ON_MAC_EVENT;
+		criteria |= EHS_WAKE_ON_MAC_EVENT;
 	if (wol->wolopts == 0)
-		priv->wol_criteria |= EHS_REMOVE_WAKEUP;
-	return 0;
+		criteria |= EHS_REMOVE_WAKEUP;
+
+	return lbs_host_sleep_cfg(priv, criteria, (struct wol_config *)NULL);
 }
 
 const struct ethtool_ops lbs_ethtool_ops = {
