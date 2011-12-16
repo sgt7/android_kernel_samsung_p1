@@ -20,13 +20,12 @@ loglevel 9
     export LD_LIBRARY_PATH /vendor/lib:/system/lib
     export ANDROID_BOOTLOGO 1
     export ANDROID_CACHE /cache
-    export DOWNLOAD_CACHE /data/cache/download
     export ANDROID_ROOT /system
     export ANDROID_ASSETS /system/app
     export ANDROID_DATA /data
     export EXTERNAL_STORAGE /mnt/sdcard
-    export EXTERNAL_STORAGE2 /mnt/sdcard/external_sd
-    export PHONE_STORAGE /mnt/sdcard
+    export DOWNLOAD_CACHE /data/cache_download
+    export PHONE_STORAGE /mnt/sdcard/external_sd
     export USBHOST_STORAGE /mnt/sdcard/otg_disk
     export ASEC_MOUNTPOINT /mnt/asec
     export SD_EXT_DIRECTORY /sd-ext
@@ -197,8 +196,8 @@ on fs
 
 # Cache
 
-mount rfs /dev/block/stl3 /efs nosuid nodev check=no
-mount ext4 /dev/block/stl11 /cache nosuid nodev noatime nodiratime errors=continue nobh data=writeback barrier=0 noauto_da_alloc
+    mount rfs /dev/block/stl3 /efs nosuid nodev check=no
+    mount ext4 /dev/block/stl11 /cache nosuid nodev noatime nodiratime errors=continue nobh data=writeback barrier=0 noauto_da_alloc
 
 # Allow everybody to read the xt_qtaguid resource tracking misc dev.
 # This is needed by any process that uses socket tagging.
@@ -334,9 +333,9 @@ on post-fs
     chown radio radio /efs
     chmod 0771 /efs
 
-    mkdir /data/cache/download 0771 system cache
-    chown system cache /data/cache/download
-    chmod 0771 /data/cache/download
+    mkdir /data/cache_download 0771 system cache
+    chown system cache /data/cache_download
+    chmod 0771 /data/cache_download
 
 # Permission changes
     chown system radio /sys/devices/platform/s3c2440-i2c.2/i2c-2/2-004a/update_fw
