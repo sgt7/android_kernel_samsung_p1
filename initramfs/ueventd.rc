@@ -71,6 +71,7 @@
 /dev/qmi0                 0640   radio      radio
 /dev/qmi1                 0640   radio      radio
 /dev/qmi2                 0640   radio      radio
+/dev/mtp_usb              0660   root       mtp
 /dev/bus/usb/*            0660   root       usb
 /dev/usb_accessory        0660   root       usb
 /dev/xt_qtaguid           0644   system     system
@@ -80,18 +81,24 @@
 /dev/video2               0660   system     camera
 /dev/s3c-jpg              0660   system     camera
 /dev/s3c-mem              0660   system     system
-/dev/s3c-mfc              0660   system     graphics
+/dev/s3c-mfc              0660   media      media
 
 #tv
 /dev/dmb		  0660   system     system
 /de/s3c-tsi		  0660   system     system
 
+
+/dev/pvrsrvkm             0666   system     system
+/dev/uwibro               0660   system     system
+/dev/swmxctl              0660   system     system
 /dev/modem_ctl            0660   radio      radio
 /dev/modem_fmt            0660   radio      radio
 /dev/modem_rfs            0660   radio      radio
 /dev/s3c2410_serial3      0660   radio      radio
 /dev/block/mtdblock5      0660   radio      radio
 /dev/mtd/mtd5ro           0660   radio      radio
+/dev/mtd/mtd5             0660   radio      radio
+
 
 # for Sensor HAL
 /dev/yamaha_compass       0660   system     system
@@ -102,7 +109,7 @@
 /dev/s3c2410_serial1      0600   gps        gps
 
 # for FM Radio
-/dev/radio0               0666   system     audio
+#/dev/radio0               0666   system     audio
 
 
 # CDMA radio interface MUX
