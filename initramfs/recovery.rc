@@ -356,6 +356,9 @@ service adbd /sbin/adbd recovery
 on property:persist.service.adb.enable=1
     start adbd
 
+on property:ro.debuggable=1
+    start adbd
+
 on property:persist.service.adb.enable=0
     stop adbd
 
