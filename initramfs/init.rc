@@ -345,6 +345,11 @@ on post-fs
     chown system cache /data/cache_download
     chmod 0771 /data/cache_download
 
+# Devices
+    chown root input /dev/i2c-5
+    chown root input /dev/i2c-6
+    chown root input /dev/i2c-10
+
 # Include extra init file
     import init.s5pc110.rc
 
