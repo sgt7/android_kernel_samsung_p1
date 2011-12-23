@@ -501,10 +501,9 @@ on boot
     chmod 660 /sys/class/sec/uart_switch/UART_SEL/value
 
 # create data/gps for GPS demon
-    mkdir /data/gps 770 gps system
-    chown gps system /data/gps
-    chown gps root /sys/class/sec/gps/GPS_PWR_EN/value
-    chmod 660 /sys/class/sec/gps/GPS_PWR_EN/value
+	mkdir /data/gps 771 gps system
+	chown gps system /data/gps
+	chmod 0777 /system/vendor/bin/gpsd
 
 # Change permission for compass
     chown compass input /sys/class/input/input3/offsets
@@ -702,12 +701,10 @@ service debuggerd /system/bin/debuggerd
 #    user system
 #    group system audio camera graphics inet net_bt net_bt_admin net_raw sdcard_rw
 
-service gpsd /system/bin/gpsd -c /system/etc/gps.xml
+service gps-daemon /system/vendor/bin/gpsd
     class main
-    socket gps seqpacket 0660 gps system
-    user gps
+    user system
     group system inet
-
 
 # adbd on at boot in emulator
 on property:ro.kernel.qemu=1
