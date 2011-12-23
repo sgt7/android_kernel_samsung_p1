@@ -474,6 +474,16 @@ on boot
     write /sys/class/block/stl10/queue/iosched/low_latency 0
     write /sys/class/block/stl9/queue/iosched/low_latency 0
 
+# Sensor light
+    write /sys/class/input/input3/enable 1
+    chown root input /sys/class/input/input3/enable
+    chmod 660 /sys/class/input/input3/enable
+
+# Gyro
+    write /sys/class/input/input4/enable 1
+    chown root input /sys/class/input/input4/enable
+    chmod 660 /sys/class/input/input4/enable
+
 # Change permission for uart_switch
     chown system radio /sys/class/sec/switch/usb_state
     chown system radio /sys/class/sec/switch/usb_sel
