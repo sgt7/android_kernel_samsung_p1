@@ -314,26 +314,18 @@ struct platform_device s3c_device_rndis = {
 	},
 };
 #ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
+// Ugly hack to inject device serial into /proc/cmdline
 void __init s3c_usb_set_serial(void)
 {
-# ifdef CONFIG_USB_ANDROID_RNDIS
-	int i;
-	char *src;
-# endif
+	char *new_command_line;
+	int size;
 
-	sprintf(device_serial, "%08X%08X", system_serial_high,
-			system_serial_low);
-# ifdef CONFIG_USB_ANDROID_RNDIS
-	/* create a fake MAC address from our serial number.
-	 * first byte is 0x02 to signify locally administered.
-	 */
-	src = device_serial;
-	rndis_pdata.ethaddr[0] = 0x02;
-	for (i = 0; *src; i++) {
-		/* XOR the USB serial across the remaining bytes */
-		rndis_pdata.ethaddr[i % (ETH_ALEN - 1) + 1] ^= *src++;
-	}
-# endif
+	size = strlen(boot_command_line);
+	new_command_line = kmalloc(size + 40, GFP_KERNEL);
+	strcpy(new_command_line, saved_command_line);
+	sprintf(new_command_line + size, " androidboot.serialno=%08X%08X",
+		system_serial_high, system_serial_low);
+	saved_command_line = new_command_line;
 }
 #endif /* CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE */
 
