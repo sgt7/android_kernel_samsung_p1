@@ -13,22 +13,24 @@ sysclktz 0
 loglevel 9
 
 # Setup the global environment
-    export PATH /sbin:/vendor/bin:/system/sbin:/bin:/system/bin:/system/xbin
+    export PATH /sbin:/vendor/bin:/system/sbin:/system/bin:/system/xbin
     export LD_LIBRARY_PATH /vendor/lib:/system/lib
     export ANDROID_BOOTLOGO 1
     export ANDROID_CACHE /cache
     export ANDROID_ROOT /system
     export ANDROID_ASSETS /system/app
     export ANDROID_DATA /data
-    export EXTERNAL_STORAGE /mnt/sdcard
+    export PHONE_STORAGE /mnt/sdcard
+    export EXTERNAL_STORAGE /mnt/emmc
     export ASEC_MOUNTPOINT /mnt/asec
     export SD_EXT_DIRECTORY /sd-ext
+    export USBHOST_STORAGE /mnt/sdcard/otg_disk
     export BOOTCLASSPATH /system/framework/core.jar:/system/framework/core-junit.jar:/system/framework/bouncycastle.jar:/system/framework/ext.jar:/system/framework/framework.jar:/system/framework/android.policy.jar:/system/framework/services.jar:/system/framework/apache-xml.jar:/system/framework/filterfw.jar
     export LOOP_MOUNTPOINT /mnt/obb 
     export TMPDIR /data/local/tmp
     export TERMINFO /system/etc/terminfo
     export DOWNLOAD_CACHE /data/cache_download
-    export PHONE_STORAGE /mnt/sdcard/external_sd
+    export PHONE_STORAGE /mnt/sdcard
 
 # Modules
     insmod /lib/modules/vibrator.ko
@@ -39,7 +41,6 @@ loglevel 9
     insmod /lib/modules/jbd2.ko 
     insmod /lib/modules/ext4.ko
     insmod /lib/modules/j4fs.ko
-    insmod /lib/modules/param.ko
     insmod /lib/modules/fuse.ko
     insmod /lib/modules/storage.ko
 
@@ -49,6 +50,9 @@ loglevel 9
     symlink /sys/kernel/debug /d
     symlink /mnt/emmc /emmc
 
+    symlink /mnt/emmc /sd-ext
+    chown system system /sd-ext
+	chmod 0771 /sd-ext
 
 # Right now vendor lives on the same filesystem as system,
 # but someday that may change.
@@ -84,8 +88,6 @@ loglevel 9
     mkdir /mnt/obb 0700 root system
     mount tmpfs tmpfs /mnt/obb mode=0755,gid=1000
 
-    mkdir /sd-ext 0771 system system
-
     write /proc/sys/kernel/panic_on_oops 1
     write /proc/sys/kernel/hung_task_timeout_secs 0
     write /proc/cpu/alignment 4
@@ -120,10 +122,6 @@ loglevel 9
     chmod 0777 /dev/cpuctl/bg_non_interactive/tasks
     # 5.0 %
     write /dev/cpuctl/bg_non_interactive/cpu.shares 52
-
-# Allow everybody to read the xt_qtaguid resource tracking misc dev.
-# This is needed by any process that uses socket tagging.
-    chmod 0644 /dev/xt_qtaguid
 
 # Change permissions on vmallocinfo so we can grab it from bugreports
     chown root log /proc/vmallocinfo
@@ -184,6 +182,7 @@ on fs
 # System
     mount ext4 /dev/block/stl9 /system wait nodev noatime nodiratime noauto_da_alloc
     mount ext4 /dev/block/platform/s3c-sdhci.0/by-name/system /system wait ro
+    mount rfs /dev/block/stl9 /system check=no
 
 # Data
     mount ext4 /dev/block/mmcblk0p2 /data  wait nosuid nodev noatime nodiratime noauto_da_alloc
@@ -202,8 +201,9 @@ on fs
     chmod 770 /efs/imei
 
 # Cache
-
-    mount ext4 /dev/block/stl11 /cache nosuid nodev noatime nodiratime errors=continue nobh data=writeback barrier=0 noauto_da_alloc
+	mount ext4 /dev/block/stl11 /cache nosuid nodev noatime nodiratime errors=continue nobh data=writeback barrier=0 noauto_da_alloc
+    mount ext4 /dev/block/mmcblk0p1 /cache nosuid nodev noatime nodiratime noauto_da_alloc
+    mount rfs /dev/block/mmcblk0p1 /cache nosuid nodev check=no
 
 # Allow everybody to read the xt_qtaguid resource tracking misc dev.
 # This is needed by any process that uses socket tagging.
@@ -215,6 +215,7 @@ on post-fs
 
 # Modules
     # now we can load modules
+    insmod /lib/modules/param.ko
     insmod /lib/modules/ansi_cprng.ko
     insmod /lib/modules/bthid.ko
     insmod /lib/modules/scsi_wait_scan.ko
@@ -338,12 +339,17 @@ on post-fs
     mkdir /data/radio 0775 radio radio
     mkdir /data/radio/log 0775 radio radio
 
+    # create resource-cache and double-check the perms
+    mkdir /data/resource-cache 0771 system system
+    chown system system /data/resource-cache
+    chmod 0771 /data/resource-cache
+
     mkdir /data/cache_download 0771 system cache
     chown system cache /data/cache_download
     chmod 0771 /data/cache_download
 
 # Include extra init file
-    import init.s5pc110.usb.rc
+    import init.s5pc110.rc
 
 # ===============================================================================
 on boot
@@ -499,6 +505,7 @@ on boot
 
 
 # Permissions for bluetooth.
+    setprop ro.bt.bdaddr_path "/efs/bluetooth/bt_addr"
     chown bluetooth bluetooth /efs/bluetooth
     chown bluetooth bluetooth ro.bt.bdaddr_path
     chown bluetooth bluetooth /dev/s3c2410_serial0
@@ -632,7 +639,7 @@ service netd /system/bin/netd
 
 # for usb tethering
 service dnsmasq /system/bin/logwrapper /system/bin/dnsmasq -d
-    class core
+    class main
     disabled
 
 service ril-daemon /system/bin/rild -l /system/lib/libsec-ril.so -- -d /dev/ttyS0
@@ -738,7 +745,7 @@ service wlandutservice /system/bin/wlandutservice
     oneshot
 
 service hciattach /system/bin/brcm_patchram_plus -d --enable_hci --enable_lpm \ 
-    --baudrate 3000000 --patchram /etc/bluetooth/bcm4329.hcd /dev/s3c2410_serial0
+    --baudrate 3000000 --patchram /system/vendor/firmware/bcm4329.hcd /dev/s3c2410_serial0
 	class main
     user bluetooth
     group bluetooth net_bt_admin
