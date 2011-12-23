@@ -160,9 +160,6 @@ on post-fs-data
     chown radio system /sys/class/lcd/s5p_lcd/lcd_power
 
 #bluetooth
-    setprop ro.bt.bdaddr_path "/efs/bluetooth/bt_addr"
-    chown bluetooth bluetooth /efs/bluetooth
-    chown bluetooth bluetooth ro.bt.bdaddr_path
     chown bluetooth bluetooth /dev/s3c2410_serial0
     chmod 0600 /dev/s3c2410_serial0
     chmod 0660 /sys/class/rfkill/rfkill0/state

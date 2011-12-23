@@ -322,11 +322,11 @@ on post-fs
     chown root root /cache/lost+found
     chmod 0770 /cache/lost+found
 
-    # This may have been created by the recovery system with odd permissions
+# This may have been created by the recovery system with odd permissions
     chown system cache /cache/recovery
     chmod 0770 /cache/recovery
 
-    # create system dalvik cache, it is unused anyway
+# Create system dalvik cache, it is unused anyway
     mkdir /cache/dalvik-cache 0771 system system
     chown system system /cache/dalvik-cache
     chmod 0771 /cache/dalvik-cache
@@ -336,7 +336,7 @@ on post-fs
     mkdir /data/radio 0775 radio radio
     mkdir /data/radio/log 0775 radio radio
 
-    # create resource-cache and double-check the perms
+# Create resource-cache and double-check the perms
     mkdir /data/resource-cache 0771 system system
     chown system system /data/resource-cache
     chmod 0771 /data/resource-cache
@@ -512,9 +512,6 @@ on boot
 
 
 # Permissions for bluetooth.
-    setprop ro.bt.bdaddr_path "/efs/bluetooth/bt_addr"
-    chown bluetooth bluetooth /efs/bluetooth
-    chown bluetooth bluetooth ro.bt.bdaddr_path
     chown bluetooth bluetooth /dev/s3c2410_serial0
     chmod 0600 /dev/s3c2410_serial0
     chmod 0660 /sys/class/rfkill/rfkill0/state
@@ -751,9 +748,9 @@ service wlandutservice /system/bin/wlandutservice
     disabled
     oneshot
 
-service hciattach /system/bin/brcm_patchram_plus -d --enable_hci --enable_lpm \ 
-    --baudrate 3000000 --patchram /system/vendor/firmware/bcm4329.hcd /dev/s3c2410_serial0
-	class main
+service hciattach /system/bin/brcm_patchram_plus -d --enable_hci --baudrate 3000000  \
+	--patchram /system/bin/BCM4329B1_002.002.023.0534.0590.hcd /dev/s3c2410_serial0
+    class main
     user bluetooth
     group bluetooth net_bt_admin
     disabled
