@@ -36,6 +36,17 @@ obj-$(CONFIG_MACH_HERRING)	+= herring-touchkey-led.o
 
 obj-$(CONFIG_MACH_HERRING)	+= dev-herring-phone.o
 
+obj-$(CONFIG_MACH_ARIES)	+= mach-aries.o aries-rfkill.o
+obj-$(CONFIG_MACH_ARIES)	+= aries-vibrator.o
+obj-$(CONFIG_MACH_ARIES)	+= aries-btlpm.o
+obj-$(CONFIG_MACH_ARIES)	+= aries-watchdog.o
+obj-$(CONFIG_MACH_ARIES)	+= aries-panel.o
+obj-$(CONFIG_PHONE_ARIES)	+= dev-s1-phone.o
+obj-$(CONFIG_PHONE_ARIES)	+= level.o
+obj-$(CONFIG_PHONE_ARIES_CDMA)	+= dev-s1-phone.o
+obj-$(CONFIG_PHONE_ARIES_CDMA)	+= level.o
+obj-$(CONFIG_PHONE_CRESPO)	+= dev-aries-phone.o
+
 # device support
 
 obj-y				+= dev-audio.o
