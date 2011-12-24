@@ -482,7 +482,6 @@ enum v4l2_slow_ae_mode {
 
 #ifdef CONFIG_SAMSUNG_FASCINATE
 #define V4L2_CID_CAMERA_LENS_SOFTLANDING        (V4L2_CID_PRIVATE_BASE + 120)
-#define V4L2_CID_CAMERA_AE_AWB_DISABLE_LOCK	(V4L2_CID_PRIVATE_BASE + 121)
 #endif
 
 /* Pixel format FOURCC depth Description */

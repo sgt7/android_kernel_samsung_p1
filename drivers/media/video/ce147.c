@@ -4158,7 +4158,9 @@ static int ce147_set_face_lock(struct v4l2_subdev *sd,
 
 static int ce147_finish_auto_focus(struct v4l2_subdev *sd)
 {
+	int err;
 	struct ce147_state *state = to_state(sd);
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
 #if defined(CONFIG_ARIES_NTT) || defined(CONFIG_SAMSUNG_FASCINATE)
 	if (!state->disable_aeawb_lock) {
 		err = ce147_set_awb_lock(sd, 1);
@@ -5262,14 +5264,10 @@ static int ce147_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		err = 0;
 		break;
 
-#if defined(CONFIG_ARIES_NTT) || defined(CONFIG_SAMSUNG_FASCINATE) /* Modify	NTTS1 */
-	case V4L2_CID_CAMERA_AE_AWB_DISABLE_LOCK:
-		state->disable_aeawb_lock = ctrl->value;
-		err = 0;
-		break;
-#endif
-
 	case V4L2_CID_CAMERA_FINISH_AUTO_FOCUS:
+#if defined(CONFIG_SAMSUNG_FASCINATE)
+		state->disable_aeawb_lock = ctrl->value;
+#endif
 		err = ce147_finish_auto_focus(sd);
 		break;
 
