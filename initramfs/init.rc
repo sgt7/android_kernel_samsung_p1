@@ -30,7 +30,6 @@ loglevel 9
     export TMPDIR /data/local/tmp
     export TERMINFO /system/etc/terminfo
     export DOWNLOAD_CACHE /data/cache_download
-    export PHONE_STORAGE /mnt/sdcard
 
 # Modules
     insmod /lib/modules/vibrator.ko

@@ -88,10 +88,11 @@ on fs
     chmod 0771 /cache
 
 on post-fs-data
-    # create data/gps for GPS demon
-    mkdir /data/gps 771 gps system
-    chown gps system /data/gps
-    chmod 0777 /system/vendor/bin/gpsd
+# create data/gps for GPS demon
+	mkdir /data/gps 771 gps system
+	chown gps system /data/gps
+    chmod 0771 /data/gps
+	chmod 0755 /system/vendor/bin/gpsd
 
 # allow system to modify cpufreq control files
     chown root system /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
@@ -215,6 +216,6 @@ service dhcpcd_eth0 /system/bin/dhcpcd -ABKL
 # end of wifi
 
 service gps-daemon /system/vendor/bin/gpsd
-    class late_start
+    class main
     user system
     group system inet
