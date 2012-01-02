@@ -179,19 +179,17 @@ on fs
     mount j4fs /dev/block/stl6 /mnt/.lfs
 
 # System
-    mount ext4 /dev/block/stl9 /system wait nodev noatime nodiratime noauto_da_alloc
-    mount ext4 /dev/block/platform/s3c-sdhci.0/by-name/system /system wait ro
+    mount ext4 /dev/block/stl9 /system noatime nodiratime nodelalloc check=none errors=continue data=writeback nobh nobarrier noauto_da_alloc discard
 
 # Data
-    mount ext4 /dev/block/mmcblk0p2 /data  wait nosuid nodev noatime nodiratime noauto_da_alloc
-    mount ext4 /dev/block/platform/s3c-sdhci.0/by-name/userdata /data wait noatime nosuid nodev nomblk_io_submit
+    mount ext4 /dev/block/mmcblk0p2 /data wait noatime nodiratime nodelalloc nosuid nodev crypt data=ordered nobarrier noauto_da_alloc
 
 # Preload
 	mkdir /preload
 	mount vfat /dev/block/mmcblk0p3 /preload ro nodev noatime nodiratime gid=0,uid=0,dmask=0022,fmask=0133,utf8,shortname=mixed
 
 # Dbdata
-    mount ext4 /dev/block/stl10 /dbdata  wait nosuid nodev noatime nodiratime noauto_da_alloc
+    mount ext4 /dev/block/stl10 /data wait noatime nodiratime nodelalloc nosuid nodev crypt data=ordered nobarrier noauto_da_alloc
 
 # EFS
     mount yaffs2 mtd@efs /efs noatime nosuid nodev
@@ -199,7 +197,7 @@ on fs
     chmod 770 /efs/imei
 
 # Cache
-    mount ext4 /dev/block/stl11 /cache nosuid nodev noatime nodiratime errors=continue nobh data=writeback barrier=0 noauto_da_alloc
+    mount ext4 /dev/block/stl11 /cache wait noatime nodiratime nosuid nodev check=none errors=continue data=writeback nobh nobarrier noauto_da_alloc discard
 
 # Allow everybody to read the xt_qtaguid resource tracking misc dev.
 # This is needed by any process that uses socket tagging.
