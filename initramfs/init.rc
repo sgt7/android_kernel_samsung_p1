@@ -627,10 +627,10 @@ service servicemanager /system/bin/servicemanager
     onrestart restart zygote
     onrestart restart media
 
-service tvout /system/bin/tvoutserver
-	class core
-	user system
-	group graphics
+#service tvout /system/bin/tvoutserver
+#	class core
+#	user system
+#	group graphics
 
 service vold /system/bin/vold
     class core
