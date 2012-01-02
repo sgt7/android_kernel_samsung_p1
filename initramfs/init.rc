@@ -347,7 +347,7 @@ on post-fs
     chown root input /dev/i2c-10
 
 # Include extra init file
-    import init.s5pc110.rc
+    import init.s5pc110.usb.rc
 
 # ===============================================================================
 on boot
