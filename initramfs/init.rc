@@ -829,10 +829,10 @@ service keystore /system/bin/keystore /data/misc/keystore
     group keystore
     socket keystore stream 666
 
-service drm /system/bin/drmserver
-    class main
-    user drm
-    group system inet drmrpc
+service drm /system/bin/logwrapper /system/bin/drmserver
+    class core
+    user drm root system
+    group root system inet drmrpc
 
 service dumpstate /system/bin/dumpstate -s
     class main
