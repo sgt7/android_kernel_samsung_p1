@@ -11,7 +11,7 @@ export LD_LIBRARY_PATH=.:${TOOLCHAIN}/../lib
 
 KERNEL_DEFCONFIG()
 {
-	make ARCH=arm p1_cm7_defconfig
+	make ARCH=arm p1_cm9_defconfig
 }
 
 KERNEL_MENUCONFIG()
