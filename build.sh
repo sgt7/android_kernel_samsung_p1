@@ -1,31 +1,74 @@
-export LOCALVERSION=
-export PROJECT_NAME=GT-P1000
-export HW_BOARD_REV="03"
-export CPU_JOB_NUM=4
+#!/bin/bash
+#
+# Script to build Galaxy Tab Kernel
+# 2012 Chirayu Desai 
 
-export TOOLCHAIN=/opt/toolchains/arm-2009q3/bin
-export TOOLCHAIN_PREFIX=arm-none-eabi-
-export ARCH=arm
+# Common defines
+txtrst='\e[0m'  # Color off
+txtred='\e[0;31m' # Red
+txtgrn='\e[0;32m' # Green
+txtylw='\e[0;33m' # Yellow
+txtblu='\e[0;34m' # Blue
 
-export LD_LIBRARY_PATH=.:${TOOLCHAIN}/../lib
+echo -e "${txtblu}##########################################"
+echo -e "${txtblu}#                                        #"
+echo -e "${txtblu}#      GALAXYTAB KERNEL BUILDSCRIPT      #"
+echo -e "${txtblu}#                                        #"
+echo -e "${txtblu}##########################################"
+echo -e "\r\n ${txtrst}"
 
-KERNEL_DEFCONFIG()
-{
-	make ARCH=arm p1_cm9_defconfig
-}
+# Starting Timer
+START=$(date +%s)
+DEVICE="$1"
+THREADS=`cat /proc/cpuinfo | grep processor | wc -l`
 
-KERNEL_MENUCONFIG()
-{
-	make -j$CPU_JOB_NUM ARCH=arm CROSS_COMPILE=$TOOLCHAIN/$TOOLCHAIN_PREFIX menuconfig
-}
+case "$DEVICE" in
+	clean)
+		make clean
+		exit
+		;;
+	p1)
+		DEFCONFIG=p1_cm9_defconfig
+		;;
+	p1c)
+		DEFCONFIG=p1c_cm9_defconfig
+		;;
+	p1l)
+		DEFCONFIG=p1l_cm9_defconfig
+		;;
+	p1n)
+		DEFCONFIG=p1n_cm9_defconfig
+		;;
+	*)
+		echo -e "${txtred}Usage: $0 device"
+		echo -e "Example: ./build.sh p1"
+		echo -e "Supported Devices: p1 p1c p1l p1n ${txtrst}"
+		;;
+esac
 
-KERNEL_BUILD()
-{
-	make -j$CPU_JOB_NUM ARCH=arm CROSS_COMPILE=$TOOLCHAIN/$TOOLCHAIN_PREFIX
-}
+# The real build starts now
+if [ ! "$1" = "" ] ; then
+make -j$THREADS ARCH=arm $DEFCONFIG
+make -j$THREADS
+fi
 
-KERNEL_BUILD_MODULES()
-{
-	make -j$CPU_JOB_NUM ARCH=arm CROSS_COMPILE=$TOOLCHAIN/$TOOLCHAIN_PREFIX modules
-}
+# Some defines
+KERNEL_DIR=`pwd`
+KERNEL_INITRD_DIR="../initramfs"
+KERNEL_INITRD_GIT="https://github.com/sgt7/p1000-initramfs-cm9.git"
 
+# Check if initramfs is present, if not, then clone it
+if [ ! -d $KERNEL_INITRD_DIR ]; then
+	cd ..
+	git clone $KERNEL_INITRD_GIT initramfs
+	cd $KERNEL_DIR
+fi
+
+# The end!
+END=$(date +%s)
+ELAPSED=$((END - START))
+E_MIN=$((ELAPSED / 60))
+E_SEC=$((ELAPSED - E_MIN * 60))
+printf "Elapsed: "
+[ $E_MIN != 0 ] && printf "%d min(s) " $E_MIN
+printf "%d sec(s)\n" $E_SEC
