@@ -17,12 +17,9 @@ load_offset=$boot_offset
 load_len=$boot_len
 
 busybox mount -t yaffs2 /dev/block/mtdblock2 /system
-busybox mount -t yaffs2 /dev/block/mtdblock3 /cache
 
-if busybox test -e /cache/.startrecovery || \
-	busybox grep -q bootmode=2 /proc/cmdline ; then
+if busybox grep -q bootmode=2 /proc/cmdline ; then
 	# recovery boot
-	busybox rm -fr /cache/.startrecovery
 
 	load_offset=$recovery_offset
 	load_len=$recovery_len
@@ -31,7 +28,6 @@ if busybox test -e /cache/.startrecovery || \
 	busybox echo 0 > /sys/class/power_supply/battery/charging_mode_booting
 elif ! busybox test -e /system/build.prop ; then
 	# emergency boot
-        busybox umount /cache
         erase_image cache
         busybox mount -t yaffs2 /dev/block/mtdblock3 /cache
         busybox mkdir /cache/recovery
@@ -44,6 +40,8 @@ elif ! busybox test -e /system/build.prop ; then
 		busybox echo "install_zip(\"`echo $UPDATE`\");" > /cache/recovery/extendedcommand
   	fi
 
+    busybox umount /cache
+
 	load_offset=$recovery_offset
 	load_len=$recovery_len
 
@@ -51,7 +49,6 @@ elif ! busybox test -e /system/build.prop ; then
 	busybox echo 0 > /sys/class/power_supply/battery/charging_mode_booting
 fi
 
-busybox umount /cache
 busybox umount /system
 busybox umount /sdcard
 busybox rmdir /sdcard
