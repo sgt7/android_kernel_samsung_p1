@@ -61,7 +61,6 @@ fi
 # .git is huge!
 mv $KERNEL_INITRD_DIR/.git DONOTLOOKATME
 
-
 # The real build starts now
 if [ ! "$1" = "" ] ; then
 make -j$THREADS ARCH=arm $DEFCONFIG
