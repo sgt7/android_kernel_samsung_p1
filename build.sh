@@ -46,12 +46,6 @@ case "$DEVICE" in
 		;;
 esac
 
-# The real build starts now
-if [ ! "$1" = "" ] ; then
-make -j$THREADS ARCH=arm $DEFCONFIG
-make -j$THREADS
-fi
-
 # Some defines
 KERNEL_DIR=`pwd`
 KERNEL_INITRD_DIR="../initramfs"
@@ -63,6 +57,19 @@ if [ ! -d $KERNEL_INITRD_DIR ]; then
 	git clone $KERNEL_INITRD_GIT initramfs
 	cd $KERNEL_DIR
 fi
+
+# .git is huge!
+mv $KERNEL_INITRD_DIR/.git DONOTLOOKATME
+
+
+# The real build starts now
+if [ ! "$1" = "" ] ; then
+make -j$THREADS ARCH=arm $DEFCONFIG
+make -j$THREADS
+fi
+
+# move it back just in case
+mv DONOTLOOKATME $KERNEL_INITRD_DIR/.git
 
 # The end!
 END=$(date +%s)
