@@ -27,16 +27,16 @@ case "$DEVICE" in
 		make clean
 		exit
 		;;
-	p1)
+	p1|P1)
 		DEFCONFIG=p1_cm9_defconfig
 		;;
-	p1c)
+	p1c|P1C)
 		DEFCONFIG=p1c_cm9_defconfig
 		;;
-	p1l)
+	p1l|P1L)
 		DEFCONFIG=p1l_cm9_defconfig
 		;;
-	p1n)
+	p1n|P1N)
 		DEFCONFIG=p1n_cm9_defconfig
 		;;
 	*)
