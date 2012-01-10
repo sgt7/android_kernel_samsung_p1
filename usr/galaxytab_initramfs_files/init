@@ -1,0 +1,54 @@
+#!/stage1/sh
+export _PATH="$PATH"
+export PATH="/stage1"
+
+insmod /lib/modules/fsr.ko
+insmod /lib/modules/fsr_stl.ko
+
+date >>/boot.txt
+exec >>/boot.txt 2>&1
+cd /
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+
+rm /init
+
+dd bs=512 if=/dev/block/bml7 of=/stage1/boot.bin
+
+eval $(grep -m 1 -A 1 BOOT_IMAGE_OFFSETS /stage1/boot.bin | tail -n 1)
+
+load_offset=$boot_offset
+load_len=$boot_len
+
+mount -t ext4 /dev/block/stl11 /cache
+
+if test -e /cache/.startrecovery || grep -q bootmode=2 /proc/cmdline ; then
+	# recovery boot
+	rm -fr /cache/.startrecovery
+	load_offset=$recovery_offset
+	load_len=$recovery_len
+
+	# disable lpm
+	echo 0 > /sys/class/power_supply/battery/charging_mode_booting
+fi
+
+umount /cache
+rm -rf /cache
+
+dd bs=512 if=/stage1/boot.bin skip=$load_offset count=$load_len | zcat | cpio -i
+
+if grep -q 1 /sys/class/power_supply/battery/charging_mode_booting ; then
+	# low power mode
+	cp lpm.rc init.rc
+fi
+
+umount /sys
+umount /proc
+date >> /boot.txt
+
+rm -rf /stage1 
+rm -rf /dev/*
+
+export PATH="${_PATH}"
+
+exec /init
