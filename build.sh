@@ -27,16 +27,16 @@ case "$DEVICE" in
 		make clean
 		exit
 		;;
-	p1)
+	p1|P1)
 		DEFCONFIG=p1_cm9_defconfig
 		;;
-	p1c)
+	p1c|P1C)
 		DEFCONFIG=p1c_cm9_defconfig
 		;;
-	p1l)
+	p1l|P1L)
 		DEFCONFIG=p1l_cm9_defconfig
 		;;
-	p1n)
+	p1n|P1N)
 		DEFCONFIG=p1n_cm9_defconfig
 		;;
 	*)
@@ -46,8 +46,17 @@ case "$DEVICE" in
 		;;
 esac
 
-# Some defines
+# The real build starts now
+if [ ! "$1" = "" ] ; then
+make -j$THREADS ARCH=arm $DEFCONFIG
+make -j$THREADS
+fi
+
+# Make it into a boot.img
+# ty nubecoder for this :)
+# defines
 KERNEL_DIR=`pwd`
+KERNEL_PATH="./arch/arm/boot/zImage"
 KERNEL_INITRD_DIR="../initramfs"
 KERNEL_INITRD_GIT="https://github.com/sgt7/p1000-initramfs-cm9.git"
 
@@ -58,17 +67,47 @@ if [ ! -d $KERNEL_INITRD_DIR ]; then
 	cd $KERNEL_DIR
 fi
 
-# .git is huge!
-mv $KERNEL_INITRD_DIR/.git DONOTLOOKATME
-
 # The real build starts now
 if [ ! "$1" = "" ] ; then
 make -j$THREADS ARCH=arm $DEFCONFIG
 make -j$THREADS
 fi
 
-# move it back just in case
-mv DONOTLOOKATME $KERNEL_INITRD_DIR/.git
+# Function
+function PACKAGE_BOOTIMG()
+{
+	if [ "$1" = "" ] || [ "$2" = "" ] ; then
+		ERROR_MSG="Error: PACKAGE_BOOTIMG - Missing args!"
+		return 2
+	fi
+	if [ ! -f "$1" ] ; then
+		ERROR_MSG="Error: PACKAGE_BOOTIMG - zImage does not exist!"
+		return 1
+	else
+		echo -e "${txtblu} Creating ramdisk.img"
+		./tools/mkbootfs $KERNEL_INITRD_DIR | ./tools/minigzip > ramdisk.img
+		if [ -f boot.img ] ; then
+			echo "removing old boot.img"
+			rm -f boot.img
+		fi
+		echo -e "${txtblu} Creating boot.img"
+		./tools/mkshbootimg.py boot.img ./arch/arm/boot/zImage ramdisk.img
+		echo -e "${txtblu} Cleaning up temp files:"
+		rm -f ramdisk.img
+		echo -e "${txtblu} Done!"
+		return 0
+	fi
+}
+
+# Main
+if [ ! "$1" = "" ] ; then
+PACKAGE_BOOTIMG "$KERNEL_PATH" "$KERNEL_INITRD_DIR"
+if [ $? != 0 ] ; then
+	echo -e "${txtred} $ERROR_MSG"
+else
+	echo -e "${txtblu} Boot.img created successfully...${txtrst}"
+fi
+fi
 
 # The end!
 END=$(date +%s)
