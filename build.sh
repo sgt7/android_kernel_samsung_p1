@@ -67,13 +67,11 @@ if [ ! -d $KERNEL_INITRD_DIR ]; then
 	cd $KERNEL_DIR
 fi
 
-# .git is huge!
-mv $KERNEL_INITRD_DIR/.git DONOTLOOKATME
-
 # The real build starts now
 if [ ! "$1" = "" ] ; then
 make -j$THREADS ARCH=arm $DEFCONFIG
 make -j$THREADS
+fi
 
 # Function
 function PACKAGE_BOOTIMG()
@@ -110,9 +108,6 @@ else
 	echo -e "${txtblu} Boot.img created successfully...${txtrst}"
 fi
 fi
-
-# move it back just in case
-mv DONOTLOOKATME $KERNEL_INITRD_DIR/.git
 
 # The end!
 END=$(date +%s)
