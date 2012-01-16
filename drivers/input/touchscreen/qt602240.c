@@ -12,6 +12,21 @@
  */
  #include "qt602240.h"
  #include <linux/bln.h>
+
+#include <linux/device.h>
+#define CONFIG_KEYPAD_CYPRESS_TOUCH_USE_BLN
+#ifdef CONFIG_KEYPAD_CYPRESS_TOUCH_USE_BLN
+#include <linux/miscdevice.h>
+#define BACKLIGHTNOTIFICATION_VERSION 8
+
+static bool bln_enabled = false; // indicates if BLN function is enabled/allowed (default: false, app enables it on boot)
+static bool BacklightNotification_ongoing = false; // indicates ongoing LED Notification
+static bool bln_blink_enabled = false;  // indicates blink is set
+static bool p1_touchkey_suspended = false;
+#endif
+
+#define _SUPPORT_TOUCH_AMPLITUDE_
+
 /******************************************************************************
 *
 *
@@ -201,6 +216,165 @@ static ssize_t key_led_store(struct device *dev, struct device_attribute *attr,
 static DEVICE_ATTR(brightness, S_IRUGO | S_IWUSR, NULL, key_led_store);
 
 #endif      //KEY_LED_CONTROL
+
+#ifdef CONFIG_KEYPAD_CYPRESS_TOUCH_USE_BLN
+/* bln start */
+
+static void enable_touchkey_backlights(void)
+{
+   init_led();
+   touch_led_on(1);
+}
+
+static void disable_touchkey_backlights(void)
+{
+   touch_led_on(false);
+}
+
+static void enable_led_notification(void)
+{
+  if (bln_enabled) {
+    enable_touchkey_backlights();
+    pr_info("%s: notification led enabled\n", __FUNCTION__);
+  }
+}
+
+static void disable_led_notification(void)
+{
+  pr_info("%s: notification led disabled\n", __FUNCTION__);
+
+  bln_blink_enabled = false;
+
+  if (p1_touchkey_suspended)
+    disable_touchkey_backlights();
+
+  BacklightNotification_ongoing = false;
+}
+
+static ssize_t backlightnotification_status_read(struct device *dev,
+						 struct device_attribute *attr, char *buf)
+{
+  return sprintf(buf, "%u\n", (bln_enabled ? 1 : 0));
+}
+
+static ssize_t backlightnotification_status_write(struct device *dev,
+						  struct device_attribute *attr, const char *buf, size_t size)
+{
+  unsigned int data;
+  if(sscanf(buf, "%u\n", &data) == 1) {
+    pr_devel("%s: %u \n", __FUNCTION__, data);
+    if(data == 0 || data == 1) {
+      if(data == 1) {
+	pr_info("%s: backlightnotification function enabled\n", __FUNCTION__);
+	bln_enabled = true;
+      }
+
+      if(data == 0) {
+	pr_info("%s: backlightnotification function disabled\n", __FUNCTION__);
+	bln_enabled = false;
+	if (BacklightNotification_ongoing)
+	  disable_led_notification();
+      }
+    } else {
+      pr_info("%s: invalid input range %u\n", __FUNCTION__, data);
+    }
+  } else {
+    pr_info("%s: invalid input\n", __FUNCTION__);
+  }
+
+  return size;
+}
+
+static ssize_t notification_led_status_read(struct device *dev,
+					    struct device_attribute *attr, char *buf)
+{
+  return sprintf(buf,"%u\n", (BacklightNotification_ongoing ? 1 : 0));
+}
+
+static ssize_t notification_led_status_write(struct device *dev,
+					     struct device_attribute *attr, const char *buf, size_t size)
+{
+  unsigned int data;
+
+  if (sscanf(buf, "%u\n", &data) == 1) {
+    if (data == 0 || data == 1) {
+      pr_devel("%s: %u \n", __FUNCTION__, data);
+      if (data == 1)
+	enable_led_notification();
+
+      if (data == 0)
+	disable_led_notification();
+    } else {
+      pr_info("%s: wrong input %u\n", __FUNCTION__, data);
+    }
+  } else {
+    pr_info("%s: input error\n", __FUNCTION__);
+  }
+
+  return size;
+}
+
+static ssize_t blink_control_read(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+  return sprintf(buf, "%u\n", (bln_blink_enabled ? 1 : 0));
+}
+
+static ssize_t blink_control_write(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
+{
+  unsigned int data;
+
+  if (sscanf(buf, "%u\n", &data) == 1) {
+    if (data == 0 || data == 1) {
+      if (BacklightNotification_ongoing) {
+	pr_devel("%s: %u \n", __FUNCTION__, data);
+	if (data == 1) {
+	  bln_blink_enabled = true;
+	  disable_touchkey_backlights();
+	}
+
+	if(data == 0) {
+	  bln_blink_enabled = false;
+	  enable_touchkey_backlights();
+	}
+      }
+    } else {
+      pr_info("%s: wrong input %u\n", __FUNCTION__, data);
+    }
+  } else {
+    pr_info("%s: input error\n", __FUNCTION__);
+  }
+
+  return size;
+}
+
+static ssize_t backlightnotification_version(struct device *dev, struct device_attribute *attr, char *buf) {
+  return sprintf(buf, "%u\n", BACKLIGHTNOTIFICATION_VERSION);
+}
+
+static DEVICE_ATTR(blink_control, S_IRUGO | S_IWUGO , blink_control_read, blink_control_write);
+static DEVICE_ATTR(enabled, S_IRUGO | S_IWUGO , backlightnotification_status_read, backlightnotification_status_write);
+static DEVICE_ATTR(notification_led, S_IRUGO | S_IWUGO , notification_led_status_read, notification_led_status_write);
+static DEVICE_ATTR(version, S_IRUGO , backlightnotification_version, NULL);
+
+static struct attribute *bln_notification_attributes[] = {
+  &dev_attr_blink_control.attr,
+  &dev_attr_enabled.attr,
+  &dev_attr_notification_led.attr,
+  &dev_attr_version.attr,
+  NULL
+};
+
+static struct attribute_group bln_notification_group = {
+  .attrs  = bln_notification_attributes,
+};
+
+static struct miscdevice backlightnotification_device = {
+  .minor = MISC_DYNAMIC_MINOR,
+  .name = "backlightnotification",
+};
+/* bln end */
+#endif
 
 #ifdef CONFIG_GENERIC_BLN
 static void p1_touchkey_bln_enable(void)
@@ -542,8 +716,8 @@ static int QT602240_Multitouch_Config_Init(struct qt602240_data *data)
     touchscreen_config.ysize = 0x0b;
 
     touchscreen_config.akscfg = 1;
-    touchscreen_config.blen = 0x00;         // Gain of the analog circuits in front of the ADC [7:4]
-    touchscreen_config.tchthr = 28;//0x27;       // touch Threshold value
+    touchscreen_config.blen = 0x0f;//0x00;         // Gain of the analog circuits in front of the ADC [7:4]
+    touchscreen_config.tchthr = 22;//0x27;       // touch Threshold value
     touchscreen_config.orient = 0x04;       // 0x4 : Invert Y, 0x2 : Invert X, 0x1 : Switch
 
     touchscreen_config.mrgtimeout = 0x00;
@@ -555,7 +729,7 @@ static int QT602240_Multitouch_Config_Init(struct qt602240_data *data)
     touchscreen_config.movfilter = 0x0b;              // Filter Limit[6:4] , Adapt threshold [3:0]
 #endif
     touchscreen_config.numtouch= 0x0a;
-    touchscreen_config.tchdi = 0x02;
+    touchscreen_config.tchdi = 0x01;
     touchscreen_config.mrghyst = 0x5;               // Merge hysteresis
     touchscreen_config.mrgthr = 0x5;//0xa            // Merge threshold
     touchscreen_config.amphyst = 0x0a;              // Amplitude hysteresis
@@ -1212,7 +1386,7 @@ static void qt602240_input_read(struct qt602240_data *data)
 			bChangeUpDn= 1;
 		} else if ((touch_status & 0xf0 ) == 0xc0) {                                  // Detect & Press  : 0x80 | 0x40
 			touch_message_flag = true;
-			s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_7, L2); // 1000MHz
+			s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_7, L3); // 800MHz
 			fingerInfo[id].pressure= 40;
 			fingerInfo[id].x= (int16_t)x;
 			fingerInfo[id].y= (int16_t)y;
@@ -1565,6 +1739,23 @@ static int qt602240_initialize(struct qt602240_data *data)
 	calibrate_chip(data);
 
 	QT602240_Multitouch_Threshold_High(data);
+
+	#ifdef CONFIG_KEYPAD_CYPRESS_TOUCH_USE_BLN
+	pr_info("%s misc_register(%s)\n", __FUNCTION__, backlightnotification_device.name);
+	ret = misc_register(&backlightnotification_device);
+	if (ret) {
+	  pr_err("%s misc_register(%s) fail\n", __FUNCTION__,
+		 backlightnotification_device.name);
+	} else {
+	  /* add the backlightnotification attributes */
+	  if (sysfs_create_group(&backlightnotification_device.this_device->kobj,
+				 &bln_notification_group) < 0) {
+	    pr_err("%s sysfs_create_group fail\n", __FUNCTION__);
+	    pr_err("Failed to create sysfs group for device (%s)!\n",
+		   backlightnotification_device.name);
+	  }
+	}
+	#endif
 
 	#ifdef CONFIG_GENERIC_BLN
 		register_bln_implementation(&p1_touchkey_bln);
@@ -2467,6 +2658,7 @@ static int qt602240_suspend(struct i2c_client *client, pm_message_t mesg)
 
 #if defined (KEY_LED_CONTROL)
     touch_led_on(false);
+    p1_touchkey_suspended = true;
 #endif      //KEY_LED_CONTROL
 
     qt_timer_state = 0;
@@ -2522,9 +2714,10 @@ static int qt602240_resume(struct i2c_client *client)
     if (led_sw == 1){
 #endif
 #if defined (KEY_LED_CONTROL)
-        init_led();
+		init_led();
+		p1_touchkey_suspended = false;
 #if defined(KEY_LED_SELF)
-    touch_led_on(255);
+		touch_led_on(255);
 #endif
 #endif      //KEY_LED_CONTROL
 #if defined (LED_SWITCH)
