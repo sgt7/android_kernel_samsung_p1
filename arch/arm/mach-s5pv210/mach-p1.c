@@ -586,14 +586,15 @@ static struct regulator_init_data crespo_ldo3_data = {
 static struct regulator_init_data crespo_ldo4_data = {
 	.constraints	= {
 		.name		= "VADC_3.3V",
-		.min_uV		= 3300000,
-		.max_uV		= 3300000,
+		.min_uV		= 3000000,
+		.max_uV		= 3000000,
 		.apply_uV	= 1,
+		.boot_on        = 1,
 		.always_on	= 1,
 		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE |
 				  REGULATOR_CHANGE_STATUS,
 		.state_mem      = {
-			.uV     = 3300000,
+			.uV     = 3000000,
 			.mode   = REGULATOR_MODE_NORMAL,
  			.disabled = 1,
  		},
@@ -720,11 +721,14 @@ static struct regulator_init_data crespo_ldo15_data = {
 static struct regulator_init_data crespo_ldo16_data = {
 	.constraints	= {
 		.name		= "MOTOR_3.0V",
-		.min_uV		= 3400000,
-		.max_uV		= 3400000,
+		.min_uV		= 3000000,
+		.max_uV		= 3000000,
 		.apply_uV	= 1,
-		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
+		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE |
+				  REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
+            .uV     = 3000000,
+            .mode   = REGULATOR_MODE_NORMAL,
 			.disabled = 1,
 		},
 	},
@@ -735,16 +739,16 @@ static struct regulator_init_data crespo_ldo16_data = {
 static struct regulator_init_data crespo_ldo17_data = {
 	.constraints	= {
 		.name		= "LVDS_VDD3.3V",
-		.min_uV		= 3300000,
-		.max_uV		= 3300000,
+		.min_uV		= 2500000,
+		.max_uV		= 2500000,
 		.apply_uV	= 1,
 		.boot_on	= 1,
 		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE |
 				  REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
-                        .uV     = 3300000,
-                        .mode   = REGULATOR_MODE_NORMAL,
-			.disabled = 1,
+            .uV     = 2500000,
+            .mode   = REGULATOR_MODE_NORMAL,
+            .disabled = 1,
 		},
 	},
 	.num_consumer_supplies	= ARRAY_SIZE(ldo17_consumer),
@@ -760,7 +764,7 @@ static struct regulator_init_data crespo_buck1_data = {
 		.valid_ops_mask	= REGULATOR_CHANGE_VOLTAGE |
 				  REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
-			.uV	= 1250000,
+			.uV	= 1500000,
 			.mode	= REGULATOR_MODE_NORMAL,
 			.disabled = 1,
 		},
@@ -779,7 +783,7 @@ static struct regulator_init_data crespo_buck2_data = {
 		.valid_ops_mask	= REGULATOR_CHANGE_VOLTAGE |
 				  REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
-			.uV	= 1100000,
+			.uV	= 1175000,
 			.mode	= REGULATOR_MODE_NORMAL,
 			.disabled = 1,
 		},
@@ -794,15 +798,15 @@ static struct regulator_init_data crespo_buck3_data = {
 		.min_uV		= 1800000,
 		.max_uV		= 1800000,
 		.apply_uV	= 1,
-		.boot_on        = 1,
+		.boot_on    = 1,
 		.always_on	= 1,
 		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE |
 		                  REGULATOR_CHANGE_STATUS,
 		.state_mem      = {
-                        .uV     = 1800000,
+            .uV     = 1800000,
 			.mode   = REGULATOR_MODE_NORMAL,
 			.disabled = 1,
-                },
+		},
 	},
         .num_consumer_supplies  = ARRAY_SIZE(buck3_consumer),
         .consumer_supplies      = buck3_consumer,
