@@ -721,14 +721,14 @@ static struct regulator_init_data crespo_ldo15_data = {
 static struct regulator_init_data crespo_ldo16_data = {
 	.constraints	= {
 		.name		= "MOTOR_3.0V",
-		.min_uV		= 3000000,
-		.max_uV		= 3000000,
+		.min_uV		= 3500000,
+		.max_uV		= 3500000,
 		.apply_uV	= 1,
 		.boot_on	= 1,
 		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE |
 				  REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
-            .uV     = 3000000,
+            .uV     = 3500000,
             .mode   = REGULATOR_MODE_NORMAL,
 			.disabled = 1,
 		},
@@ -740,14 +740,14 @@ static struct regulator_init_data crespo_ldo16_data = {
 static struct regulator_init_data crespo_ldo17_data = {
 	.constraints	= {
 		.name		= "LVDS_VDD3.3V",
-		.min_uV		= 2400000,
-		.max_uV		= 2400000,
+		.min_uV		= 3000000,
+		.max_uV		= 3000000,
 		.apply_uV	= 1,
 		.boot_on	= 1,
 		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE |
 				  REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
-            .uV     = 2400000,
+            .uV     = 3000000,
             .mode   = REGULATOR_MODE_NORMAL,
             .disabled = 1,
 		},
