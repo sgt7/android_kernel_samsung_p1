@@ -151,6 +151,9 @@ void __init s3c_usb_set_serial(void);
 
 extern struct platform_device s3c_device_rndis;
 extern struct platform_device s3c_device_usb_hsotg;
+#ifdef CONFIG_USB_S3C_OTG_HOST
+extern struct platform_device s3c_device_usb_otghcd;
+#endif
 
 extern struct platform_device s5p_device_rotator;
 extern struct platform_device s5p_device_tvout;
@@ -200,6 +203,7 @@ extern struct platform_device s5p_device_rp;
 #endif
 void __init s3c_usb_set_serial(void);
 
+extern struct platform_device s5p_device_ace;
 extern struct platform_device s5p_device_tvout;
 extern struct platform_device s5p_device_cec;
 extern struct platform_device s5p_device_hpd;
