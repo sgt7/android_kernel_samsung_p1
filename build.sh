@@ -46,12 +46,6 @@ case "$DEVICE" in
 		;;
 esac
 
-# The real build starts now
-if [ ! "$1" = "" ] ; then
-make -j$THREADS ARCH=arm $DEFCONFIG
-make -j$THREADS
-fi
-
 # Make it into a boot.img
 # ty nubecoder for this :)
 # defines
@@ -67,8 +61,19 @@ if [ ! -d $KERNEL_INITRD_DIR ]; then
 	cd $KERNEL_DIR
 fi
 
+# .git is huge!
+mv $KERNEL_INITRD_DIR/.git DONOTLOOKATME
+
 # The real build starts now
 if [ ! "$1" = "" ] ; then
+if [ "$3" = "boot.img" ] ; then
+sed -i "s|CONFIG_INITRAMFS_SOURCE="../initramfs"|CONFIG_INITRAMFS_SOURCE="usr/galaxytab_initramfs.list"|" arch/arm/configs/$DEFCONFIG
+else
+INITSOURCE=`grep CONFIG_INITRAMFS_SOURCE arch/arm/configs/$DEFCONFIG `
+if [ ! "$INITSOURCE" = "CONFIG_INITRAMFS_SOURCE="../initramfs"" ]; then
+sed -i "s|CONFIG_INITRAMFS_SOURCE="usr/galaxytab_initramfs.list"|CONFIG_INITRAMFS_SOURCE="../initramfs"|" arch/arm/configs/$DEFCONFIG
+fi
+fi
 make -j$THREADS ARCH=arm $DEFCONFIG
 make -j$THREADS
 fi
@@ -99,6 +104,7 @@ function PACKAGE_BOOTIMG()
 	fi
 }
 
+if [ "$3" = "boot.img" ] ; then
 # Main
 if [ ! "$1" = "" ] ; then
 PACKAGE_BOOTIMG "$KERNEL_PATH" "$KERNEL_INITRD_DIR"
@@ -108,6 +114,10 @@ else
 	echo -e "${txtblu} Boot.img created successfully...${txtrst}"
 fi
 fi
+fi
+
+# move it back just in case
+mv DONOTLOOKATME $KERNEL_INITRD_DIR/.git
 
 # The end!
 END=$(date +%s)
