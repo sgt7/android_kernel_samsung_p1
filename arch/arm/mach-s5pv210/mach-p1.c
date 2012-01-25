@@ -359,7 +359,7 @@ static struct s3cfb_lcd lvds = {
 		.p_width = 154,
 		.p_height = 90,
 		.bpp = 24,
-        .freq = 60,
+        .freq = 68,
 
         .timing = {
 #if defined(CONFIG_MACH_P1_GSM) || defined(CONFIG_MACH_P1_LTN)
