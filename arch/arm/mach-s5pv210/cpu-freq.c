@@ -51,7 +51,8 @@ static unsigned int apll_freq_max; /* in MHz */
 static DEFINE_MUTEX(set_freq_lock);
 
 /* UV */
-extern int exp_UV_mV[8]; 
+extern int exp_UV_mV[8];
+extern int exp_int_UV_mV[8];
 
 unsigned int freq_uv_table[8][3] = {
   {1400000, 1500, 1500},
@@ -62,6 +63,17 @@ unsigned int freq_uv_table[8][3] = {
   {400000, 1050, 1050},
   {200000, 950, 950},
   {100000, 950, 950}
+};
+
+unsigned int freq_int_uv_table[8][3] = {
+  {1400000, 1175, 1175},
+  {1200000, 1175, 1175},
+  {1000000, 1100, 1100},
+  {800000, 1100, 1100},
+  {600000, 1100, 1100},
+  {400000, 1100, 1100},
+  {200000, 1100, 1100},
+  {100000, 1000, 1000}
 };
 
 /* frequency */
@@ -75,6 +87,18 @@ static struct cpufreq_frequency_table freq_table[] = {
 	{L6, 200*1000},
 	{L7, 100*1000},
 	{0, CPUFREQ_TABLE_END},
+};
+
+/* gpu frequency */
+unsigned int gpu[8][2] = {
+  {200, 200},
+  {200, 200},
+  {200, 200},
+  {200, 200},
+  {200, 200},
+  {200, 200},
+  {200, 200},
+  {100, 100}
 };
 
 struct s5pv210_dvs_conf {
@@ -354,6 +378,9 @@ int s5pv210_lock_dvfs_high_level(uint nToken, uint perf_level)
 	if (perf_level > (MAX_PERF_LEVEL - 1))
 		return 0;
 
+	if (freq_table[perf_level].frequency > cpu_policy->max)
+		return 0;
+
 	//mutex_lock(&dvfs_high_lock);
 
 	g_dvfs_high_lock_token |= (1 << nToken);
@@ -558,7 +585,9 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 	arm_volt = (dvs_conf[index].arm_volt - (exp_UV_mV[index] * 1000));
 //	arm_volt = dvs_conf[index].arm_volt;
 	freq_uv_table[index][2] =(int) arm_volt / 1000;
-	int_volt = dvs_conf[index].int_volt;
+//	int_volt = dvs_conf[index].int_volt;
+	int_volt = (dvs_conf[index].int_volt - (exp_int_UV_mV[index]*1000));
+	freq_int_uv_table[index][2] =(int) int_volt / 1000;
 	
 	//printk("setting vdd %d for speed %d\n", arm_volt, arm_clk);
 	
@@ -577,6 +606,43 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 		}
 	}
 	cpufreq_notify_transition(&s3c_freqs.freqs, CPUFREQ_PRECHANGE);
+
+/* Yeah, this is hacky as fuck. So what? */
+	
+  switch(s3c_freqs.old.armclk) {
+    case 1400000:
+      s3c_freqs.old.hclk_msys = gpu[0][1];
+      break;
+    case 1300000:
+      s3c_freqs.old.hclk_msys = gpu[1][1];
+      break;
+    case 1200000:
+      s3c_freqs.old.hclk_msys = gpu[2][1];
+      break;
+    case 1000000:
+      s3c_freqs.old.hclk_msys = gpu[3][1];
+      break;
+    case 8000000:
+      s3c_freqs.old.hclk_msys = gpu[4][1];
+      break;
+    case 6000000:
+      s3c_freqs.old.hclk_msys = gpu[5][1];
+      break;
+    case 4000000:
+      s3c_freqs.old.hclk_msys = gpu[6][1];
+      break;
+    case 2000000:
+      s3c_freqs.old.hclk_msys = gpu[7][1];
+      break;
+    case 100000:
+      s3c_freqs.old.hclk_msys = gpu[8][1];
+      break;
+    }
+
+/* Convert to khz */  
+	
+  s3c_freqs.old.hclk_msys *= 1000;
+  s3c_freqs.new.hclk_msys = gpu[index][1]*1000;
 
 	if (s3c_freqs.new.fclk != s3c_freqs.old.fclk || first_run)
 		pll_changing = 1;
@@ -744,7 +810,7 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 			"cpufreq: Performance changed[L%d]\n", index);
 //	previous_arm_volt = dvs_conf[index].arm_volt;
 	previous_arm_volt = (dvs_conf[index].arm_volt - (exp_UV_mV[index] * 1000));
-	freq_uv_table[index][2] =(int) arm_volt / 1000;
+	freq_uv_table[index][2] = (int) previous_arm_volt / 1000;
 
 	if (first_run)
 		first_run = false;
@@ -875,19 +941,27 @@ static int __init s5pv210_cpufreq_driver_init(struct cpufreq_policy *policy)
 static int s5pv210_cpufreq_notifier_event(struct notifier_block *this,
 		unsigned long event, void *ptr)
 {
+	static int max, min;
 	int ret;
+
+	struct cpufreq_policy *policy = cpufreq_cpu_get(0);
 
 	switch (event) {
 	case PM_SUSPEND_PREPARE:
-		ret = cpufreq_driver_target(cpufreq_cpu_get(0), SLEEP_FREQ,
+		max = policy->max;
+		min = policy->min;
+		policy->max = policy->min = SLEEP_FREQ;
+		ret = cpufreq_driver_target(policy, SLEEP_FREQ,
 				DISABLE_FURTHER_CPUFREQ);
 		if (ret < 0)
 			return NOTIFY_BAD;
 		return NOTIFY_OK;
 	case PM_POST_RESTORE:
 	case PM_POST_SUSPEND:
-		cpufreq_driver_target(cpufreq_cpu_get(0), SLEEP_FREQ,
+		cpufreq_driver_target(policy, SLEEP_FREQ,
 				ENABLE_FURTHER_CPUFREQ);
+		policy->max = max;
+		policy->min = min;
 		return NOTIFY_OK;
 	}
 	return NOTIFY_DONE;
