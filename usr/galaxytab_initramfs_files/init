@@ -1,54 +1,70 @@
-#!/stage1/sh
+#!/stage1/busybox sh
 export _PATH="$PATH"
-export PATH="/stage1"
+export PATH=/stage1
 
-insmod /lib/modules/fsr.ko
-insmod /lib/modules/fsr_stl.ko
+busybox cd /
+busybox date >>boot.txt
+exec >>boot.txt 2>&1
+busybox rm init
+busybox mount -t proc proc /proc
+busybox mount -t sysfs sysfs /sys
 
-date >>/boot.txt
-exec >>/boot.txt 2>&1
-cd /
-mount -t proc proc /proc
-mount -t sysfs sysfs /sys
+bml_over_mtd dump boot 72 reservoir 2004 /stage1/boot.bin
 
-rm /init
-
-dd bs=512 if=/dev/block/bml7 of=/stage1/boot.bin
-
-eval $(grep -m 1 -A 1 BOOT_IMAGE_OFFSETS /stage1/boot.bin | tail -n 1)
+eval $(busybox grep -m 1 -A 1 BOOT_IMAGE_OFFSETS /stage1/boot.bin | busybox tail -n 1)
 
 load_offset=$boot_offset
 load_len=$boot_len
 
-mount -t ext4 /dev/block/stl11 /cache
+busybox mount -t yaffs2 /dev/block/mtdblock2 /system
+busybox mount -t yaffs2 /dev/block/mtdblock3 /cache
 
-if test -e /cache/.startrecovery || grep -q bootmode=2 /proc/cmdline ; then
+if busybox test -e /cache/.startrecovery || busybox grep -q bootmode=2 /proc/cmdline ; then
 	# recovery boot
-	rm -fr /cache/.startrecovery
+	busybox rm -fr /cache/.startrecovery
 	load_offset=$recovery_offset
 	load_len=$recovery_len
 
 	# disable lpm
-	echo 0 > /sys/class/power_supply/battery/charging_mode_booting
+	busybox echo 0 > /sys/class/power_supply/battery/charging_mode_booting
+elif ! busybox test -e /system/build.prop ; then
+	# emergency boot
+        busybox umount /cache
+        erase_image cache
+        busybox mount -t yaffs2 /dev/block/mtdblock3 /cache
+        busybox mkdir /cache/recovery
+
+	busybox mount -t vfat /dev/block/mmcblk0p1 /sdcard	
+
+	UPDATE=$(busybox cat /sdcard/cyanogenmod.cfg)
+
+	if busybox test -e $UPDATE ; then
+		busybox echo "install_zip(\"`echo $UPDATE`\");" > /cache/recovery/extendedcommand
+  	fi
+
+	load_offset=$recovery_offset
+	load_len=$recovery_len
+
+	# disable lpm
+	busybox echo 0 > /sys/class/power_supply/battery/charging_mode_booting
 fi
 
-umount /cache
-rm -rf /cache
+busybox umount /cache
+busybox umount /system
+busybox umount /sdcard
+busybox rmdir /sdcard
 
-dd bs=512 if=/stage1/boot.bin skip=$load_offset count=$load_len | zcat | cpio -i
+busybox dd bs=512 if=/stage1/boot.bin skip=$load_offset count=$load_len | busybox zcat | busybox cpio -i
 
-if grep -q 1 /sys/class/power_supply/battery/charging_mode_booting ; then
+if busybox grep -q 1 /sys/class/power_supply/battery/charging_mode_booting ; then
 	# low power mode
-	cp lpm.rc init.rc
+	busybox cp lpm.rc init.rc
+	busybox rm init.p1.rc
 fi
 
-umount /sys
-umount /proc
-date >> /boot.txt
-
-rm -rf /stage1 
-rm -rf /dev/*
-
+busybox umount /sys
+busybox umount /proc
+busybox date >>boot.txt
+busybox rm -fr /stage1 /dev/*
 export PATH="${_PATH}"
-
 exec /init
