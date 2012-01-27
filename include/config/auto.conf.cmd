@@ -184,6 +184,7 @@ deps_config := \
 	drivers/mmc/core/Kconfig \
 	drivers/mmc/Kconfig \
 	drivers/uwb/Kconfig \
+	drivers/usb/notify/Kconfig \
 	drivers/usb/otg/Kconfig \
 	drivers/usb/gadget/Kconfig \
 	drivers/usb/atm/Kconfig \
