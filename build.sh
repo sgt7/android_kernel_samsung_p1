@@ -88,10 +88,10 @@ PACKAGE_BOOTIMG()
 		minigzip < ramdisk-recovery.cpio > ramdisk-recovery.img
 		if [ -f boot.img ] ; then
 			echo "Deleting old boot.img"
-			rm -f $target_dir/boot.img
+			rm -f boot.img
 		fi
 		echo "Creating boot.img"
-		./mkshbootimg.py $target_dir/boot.img $KERNEL_PATH ramdisk-kernel.img ramdisk-recovery.img
+		./mkshbootimg.py boot.img $KERNEL_PATH ramdisk-kernel.img ramdisk-recovery.img
 		echo "Cleaning up temp files:"
 		echo "* rm -f ramdisk-kernel.img"
 		rm -f ramdisk-kernel.img
