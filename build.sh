@@ -78,6 +78,7 @@ PACKAGE_BOOTIMG()
 		ERROR_MSG="Error: PACKAGE_BOOTIMG - zImage does not exist!"
 		return 2
 	else
+		local PATH=$PATH:$KERNEL_DIR/tools
 		local KERNEL_INITRD="$2"
 		local RECOVERY_INITRD="$3"
 		echo "Creating ramdisk.img"
