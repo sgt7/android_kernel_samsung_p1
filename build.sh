@@ -38,7 +38,7 @@ build ()
     THREADS=`cat /proc/cpuinfo | grep processor | wc -l`
     make -j${THREADS} ARCH=arm ${target}_cm9_defconfig
     make -j${THREADS}
-    cp "$target_dir"/arch/arm/boot/zImage $ANDROID_BUILD_TOP/device/samsung/galaxytab/kernel
+    cp "$KERNEL_DIR"/arch/arm/boot/zImage $ANDROID_BUILD_TOP/device/samsung/galaxytab/kernel
     for module in "${MODULES[@]}" ; do
         cp "$target_dir/$module" $ANDROID_BUILD_TOP/device/samsung/galaxytab/modules
     done
