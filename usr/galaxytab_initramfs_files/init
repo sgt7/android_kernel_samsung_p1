@@ -4,7 +4,9 @@ export PATH=/stage1
 
 busybox cd /
 busybox date >>boot.txt
-exec >>boot.txt 2>&1
+busybox mount -t vfat /dev/block/mmcblk0p1 /sdcard
+busybox mv /sdcard/boot.txt /sdcard/boot-old.txt
+exec >>/sdcard/boot.txt 2>&1
 busybox rm init
 busybox mount -t proc proc /proc
 busybox mount -t sysfs sysfs /sys
@@ -19,7 +21,7 @@ load_len=$boot_len
 busybox mount -t yaffs2 /dev/block/mtdblock2 /system
 busybox mount -t yaffs2 /dev/block/mtdblock3 /cache
 
-if busybox test -e /cache/.startrecovery || busybox grep -q bootmode=2 /proc/cmdline ; then
+if busybox test -e /cache/.startrecovery || [ `busybox cat /proc/cmdline | busybox grep bootmode | busybox awk '{print $2}'` == bootmode=2 ] ; then
 	# recovery boot
 	busybox rm -fr /cache/.startrecovery
 	load_offset=$recovery_offset

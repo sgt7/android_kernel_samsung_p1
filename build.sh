@@ -28,13 +28,7 @@ setup ()
 build ()
 {
     local target=$1
-    echo "Building for $target"
-    local target_dir="$BUILD_DIR/$target"
     local module
-    rm -fr "$target_dir"
-    mkdir -p "$target_dir/usr"
-    cp "$KERNEL_DIR/usr/"*.list "$target_dir/usr"
-    sed "s|usr/|$KERNEL_DIR/usr/|g" -i "$target_dir/usr/"*.list
     THREADS=`cat /proc/cpuinfo | grep processor | wc -l`
     make -j${THREADS} ARCH=arm ${target}_cm9_defconfig
     make -j${THREADS}
@@ -47,21 +41,17 @@ build ()
 setup
 
 if [ "$1" = clean ] ; then
-    rm -fr "$BUILD_DIR"/*
+    make clean
     exit 0
 fi
 
-P1_target=$1
-targets=("$@")
-if [ 0 = "${#targets[@]}" ] ; then
-    targets=($P1_target)
-fi
+target=$1
 
 START=$(date +%s)
-
-for target in "${targets[@]}" ; do 
-    build $target
-done
+THREADS=`cat /proc/cpuinfo | grep processor | wc -l`
+make -j${THREADS} ARCH=arm $target_cm9_defconfig
+make -j${THREADS}
+cp arch/arm/boot/zImage $ANDROID_BUILD_TOP/device/samsung/galaxytab/kernel
 
 END=$(date +%s)
 ELAPSED=$((END - START))

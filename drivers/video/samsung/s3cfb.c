@@ -1336,6 +1336,7 @@ static int __devinit s3cfb_probe(struct platform_device *pdev)
 #endif 
 	s3cfb_set_window(fbdev, pdata->default_win, 1);
 
+#define BOOT_FB_WINDOW 0
 	if(pdata->default_win != BOOT_FB_WINDOW) {
 		dev_warn(fbdev->dev, "closing bootloader FIMD window 0 \n",BOOT_FB_WINDOW);
 		s3cfb_set_window(fbdev,BOOT_FB_WINDOW, 0);
