@@ -10,7 +10,7 @@ setup ()
 
     KERNEL_DIR="$(dirname "$(readlink -f "$0")")"
     BUILD_DIR="$KERNEL_DIR/build"
-    MODULES=("fs/cifs/cifs.ko" "fs/fuse/fuse.ko" "fs/nls/nls_utf8.ko")
+    #MODULES=("fs/cifs/cifs.ko" "fs/fuse/fuse.ko" "fs/nls/nls_utf8.ko")
 
     if [ x = "x$NO_CCACHE" ] && ccache -V &>/dev/null ; then
         CCACHE=ccache
@@ -28,30 +28,39 @@ setup ()
 build ()
 {
     local target=$1
+    echo "Building for $target"
+    local target_dir="$BUILD_DIR/$target"
     local module
-    THREADS=`cat /proc/cpuinfo | grep processor | wc -l`
-    make -j${THREADS} ARCH=arm ${target}_cm9_defconfig
-    make -j${THREADS}
-    cp "$KERNEL_DIR"/arch/arm/boot/zImage $ANDROID_BUILD_TOP/device/samsung/galaxytab/kernel
-    for module in "${MODULES[@]}" ; do
-        cp "$target_dir/$module" $ANDROID_BUILD_TOP/device/samsung/galaxytab/modules
-    done
+    rm -fr "$target_dir"
+    mkdir -p "$target_dir/usr"
+    cp "$KERNEL_DIR/usr/"*.list "$target_dir/usr"
+    sed "s|usr/|$KERNEL_DIR/usr/|g" -i "$target_dir/usr/"*.list
+    mka -C "$KERNEL_DIR" O="$target_dir" ${target}\_cm9_defconfig HOSTCC="$CCACHE gcc"
+    mka -C "$KERNEL_DIR" O="$target_dir" HOSTCC="$CCACHE gcc" CROSS_COMPILE="$CCACHE $CROSS_PREFIX" zImage modules
+    if [ "$target_dir" == p1 ]; then
+    cp "$target_dir"/arch/arm/boot/zImage $ANDROID_BUILD_TOP/device/samsung/galaxytab/kernel
+    else
+    cp "$target_dir"/arch/arm/boot/zImage $ANDROID_BUILD_TOP/device/samsung/galaxytab/kernel-$target
+    fi
 }
-    
+
 setup
 
 if [ "$1" = clean ] ; then
-    make clean
+    rm -fr "$BUILD_DIR"/*
     exit 0
 fi
 
-target=$1
+targets=("$@")
+if [ 0 = "${#targets[@]}" ] ; then
+    targets=(p1 p1c p1l p1n)
+fi
 
 START=$(date +%s)
-THREADS=`cat /proc/cpuinfo | grep processor | wc -l`
-make -j${THREADS} ARCH=arm $target_cm9_defconfig
-make -j${THREADS}
-cp arch/arm/boot/zImage $ANDROID_BUILD_TOP/device/samsung/galaxytab/kernel
+
+for target in "${targets[@]}" ; do 
+    build $target
+done
 
 END=$(date +%s)
 ELAPSED=$((END - START))
