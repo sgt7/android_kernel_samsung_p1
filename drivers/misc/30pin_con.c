@@ -52,7 +52,7 @@ int CONNECTED_ACC=0;
 int CONNECTED_DOCK=0;
 
 // chul2.park
-#ifdef CONFIG_USB_S3C_OTG_HOST
+#if defined CONFIG_USB_S3C_OTG_HOST || defined CONFIG_USB_DWC_OTG
 // workaround for wrong interrupt at boot time :(
 //static unsigned int intr_count = 0;
 
@@ -152,7 +152,7 @@ static ssize_t MHD_check_write(struct device *dev, struct device_attribute *attr
 static DEVICE_ATTR(MHD_file, S_IRUGO | S_IWUSR | S_IWGRP, MHD_check_read, MHD_check_write);
 
 
-#ifdef CONFIG_USB_S3C_OTG_HOST
+#if defined CONFIG_USB_S3C_OTG_HOST || defined CONFIG_USB_DWC_OTG
 /// 'a' for auto, 't' to force target mode, 'h' to force host mode
 static char usbmodeChar = 'a';
 
@@ -513,7 +513,7 @@ void acc_ID_intr_handle(struct work_struct *_work)
 			ACC_STATE = acc_ID_val;
 			acc_notified(false);
 			set_irq_type(IRQ_DOCK_INT, IRQ_TYPE_EDGE_FALLING);
-#ifdef CONFIG_USB_S3C_OTG_HOST
+#if defined CONFIG_USB_S3C_OTG_HOST || defined CONFIG_USB_DWC_OTG
 
 // sztupy:
 // this function (set_otghost_mode) will determine what to do with the new information according to the current mode of operation
@@ -533,7 +533,7 @@ void acc_ID_intr_handle(struct work_struct *_work)
 			adc_val = connector_detect_change();
 			acc_notified(adc_val);
 			set_irq_type(IRQ_DOCK_INT, IRQ_TYPE_EDGE_RISING);
-#ifdef CONFIG_USB_S3C_OTG_HOST
+#if defined CONFIG_USB_S3C_OTG_HOST || defined CONFIG_USB_DWC_OTG
 		// check USB OTG Host ADC range...
 		//if(adc_val > 2700 && adc_val < 2799) {
 			if(usbmodeChar == 'a') {
@@ -688,7 +688,7 @@ static int acc_con_probe(struct platform_device *pdev)
         enable_irq_wake(IRQ_ACCESSORY_INT);
         enable_irq_wake(IRQ_DOCK_INT);
 
-#ifdef CONFIG_USB_S3C_OTG_HOST
+#if defined CONFIG_USB_S3C_OTG_HOST || defined CONFIG_USB_DWC_OTG
 	if (device_create_file(acc_dev, &dev_attr_usbmode) < 0)
 		printk("Failed to create device file(%s)!\n", dev_attr_usbmode.attr.name);
 #endif
