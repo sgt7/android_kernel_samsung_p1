@@ -25,6 +25,8 @@ static bool bln_blink_enabled = false;  // indicates blink is set
 static bool p1_touchkey_suspended = false;
 #endif
 
+static bool buttons_enabled = true;
+
 #define _SUPPORT_TOUCH_AMPLITUDE_
 
 /******************************************************************************
@@ -265,15 +267,15 @@ static ssize_t backlightnotification_status_write(struct device *dev,
     pr_devel("%s: %u \n", __FUNCTION__, data);
     if(data == 0 || data == 1) {
       if(data == 1) {
-	pr_info("%s: backlightnotification function enabled\n", __FUNCTION__);
-	bln_enabled = true;
+        pr_info("%s: backlightnotification function enabled\n", __FUNCTION__);
+        bln_enabled = true;
       }
 
       if(data == 0) {
-	pr_info("%s: backlightnotification function disabled\n", __FUNCTION__);
-	bln_enabled = false;
-	if (BacklightNotification_ongoing)
-	  disable_led_notification();
+        pr_info("%s: backlightnotification function disabled\n", __FUNCTION__);
+        bln_enabled = false;
+        if (BacklightNotification_ongoing)
+          disable_led_notification();
       }
     } else {
       pr_info("%s: invalid input range %u\n", __FUNCTION__, data);
@@ -585,7 +587,7 @@ static void release_all_keys(struct input_dev *input_dev)
 {
 	int i;
 
-	for(i = 0; i <NUMOFKEYS; i++ )
+	for(i = 0; i < NUMOFKEYS; i++ )
 	{
 		if(tsp_keystatus[i])
 		{
@@ -1337,6 +1339,39 @@ static void check_chip_calibration(struct qt602240_data *data)
     }
 }
 
+static ssize_t buttons_enabled_status_write(struct device *dev,
+      struct device_attribute *attr, const char *buf, size_t size)
+{
+  unsigned int data;
+  if(sscanf(buf, "%u\n", &data) == 1) {
+    pr_devel("%s: %u \n", __FUNCTION__, data);
+    if(data == 0 || data == 1) {
+      if(data == 1) {
+        pr_info("%s: key function enabled\n", __FUNCTION__);
+        buttons_enabled = true;
+        touch_led_on(255);
+      }
+
+      if(data == 0) {
+        pr_info("%s: key function disabled\n", __FUNCTION__);
+        buttons_enabled = false;
+        touch_led_on(false);
+      }
+    } else {
+      pr_info("%s: invalid input range %u\n", __FUNCTION__, data);
+    }
+  } else {
+    pr_info("%s: invalid input\n", __FUNCTION__);
+  }
+
+  return size;
+}
+
+static ssize_t buttons_enabled_status_read(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+  return sprintf(buf, "%u\n", (buttons_enabled ? 1 : 0));
+}
 
 static void qt602240_input_read(struct qt602240_data *data)
 {
@@ -1447,7 +1482,7 @@ static void qt602240_input_read(struct qt602240_data *data)
 			goto soft_reset;
 		}
 
-		for (i = 0; i <NUMOFKEYS; i++ ) {
+		for (i = 0; i <(buttons_enabled ? NUMOFKEYS : 0); i++ ) {
 			if (tsp_keystatus[i]) {
 				input_report_key(input_dev, tsp_keycodes[i], 0);
 				input_sync(input_dev);
@@ -2084,6 +2119,7 @@ void qt602240_inform_first_brightness(void)
 }
 EXPORT_SYMBOL(qt602240_inform_first_brightness);
 
+static DEVICE_ATTR(buttons_enabled, S_IRUGO | S_IWUGO , buttons_enabled_status_read, buttons_enabled_status_write);
 static DEVICE_ATTR(info, 0444, qt602240_info_show, NULL);
 static DEVICE_ATTR(object_table, 0444, qt602240_object_table_show, NULL);
 static DEVICE_ATTR(object, 0664, qt602240_object_show, qt602240_object_store);
@@ -2091,6 +2127,7 @@ static DEVICE_ATTR(update_fw, 0664, NULL, qt602240_update_fw_store);
 static DEVICE_ATTR(update_status, 0664, qt602240_update_status_show, NULL);
 
 static struct attribute *qt602240_attrs[] = {
+	&dev_attr_buttons_enabled.attr,
 	&dev_attr_info.attr,
 	&dev_attr_object_table.attr,
 	&dev_attr_object.attr,
@@ -2568,7 +2605,7 @@ static int __devinit qt602240_probe(struct i2c_client *client,
     init_led();
 
 #if defined(KEY_LED_SELF)
-    touch_led_on(255);
+    if (buttons_enabled) touch_led_on(255);
 #endif
 #if defined(LED_SWITCH)
     led_sw= 1;
@@ -2717,7 +2754,7 @@ static int qt602240_resume(struct i2c_client *client)
 		init_led();
 		p1_touchkey_suspended = false;
 #if defined(KEY_LED_SELF)
-		touch_led_on(255);
+		if (buttons_enabled) touch_led_on(255);
 #endif
 #endif      //KEY_LED_CONTROL
 #if defined (LED_SWITCH)
