@@ -127,7 +127,7 @@ static void touch_led_on(int val)
     if(val < 42)
         set = 1;
 
-    if(val > 0)
+    if(val > 0 && buttons_enabled)
     {
         if(set !=preset)
         {
@@ -2605,7 +2605,7 @@ static int __devinit qt602240_probe(struct i2c_client *client,
     init_led();
 
 #if defined(KEY_LED_SELF)
-    if (buttons_enabled) touch_led_on(255);
+    touch_led_on(255);
 #endif
 #if defined(LED_SWITCH)
     led_sw= 1;
@@ -2754,7 +2754,7 @@ static int qt602240_resume(struct i2c_client *client)
 		init_led();
 		p1_touchkey_suspended = false;
 #if defined(KEY_LED_SELF)
-		if (buttons_enabled) touch_led_on(255);
+		touch_led_on(255);
 #endif
 #endif      //KEY_LED_CONTROL
 #if defined (LED_SWITCH)
