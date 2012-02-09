@@ -1475,6 +1475,7 @@ CONFIG_BATTERY_P1=y
 CONFIG_HWMON=y
 # CONFIG_HWMON_VID is not set
 # CONFIG_HWMON_DEBUG_CHIP is not set
+CONFIG_BLX=y
 
 #
 # Native drivers
