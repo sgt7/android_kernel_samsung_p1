@@ -67,6 +67,7 @@ enum {
 	BATT_BOOTING,
 	BATT_FG_SOC,
 	BATT_RESET_SOC,
+	DISABLE_CHARGER,
 };
 
 #define TOTAL_CHARGING_TIME	(6*60*60)	/* 6 hours */

@@ -417,7 +417,8 @@ static int mfc_ioctl(struct inode *inode, struct file *file, unsigned int cmd, u
 
        case IOCTL_MFC_BUF_CACHE:
 		mutex_lock(&mfc_mutex);
-		
+
+		in_param.ret_code = MFCINST_RET_OK;
 		mfc_ctx->buf_type = in_param.args.buf_type;
 
 		mutex_unlock(&mfc_mutex);

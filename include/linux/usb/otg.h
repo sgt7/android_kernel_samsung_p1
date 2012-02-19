@@ -173,6 +173,7 @@ otg_shutdown(struct otg_transceiver *otg)
 /* for usb host and peripheral controller drivers */
 extern struct otg_transceiver *otg_get_transceiver(void);
 extern void otg_put_transceiver(struct otg_transceiver *);
+const char *otg_state_string(enum usb_otg_state state);
 
 /* Context: can sleep */
 static inline int

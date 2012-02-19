@@ -1663,6 +1663,12 @@ static int autosuspend_check(struct usb_device *udev)
 	struct usb_interface	*intf;
 	unsigned long		suspend_time, j;
 
+#if defined CONFIG_USB_S3C_OTG_HOST || defined CONFIG_USB_DWC_OTG
+        /* temporarily disabled autosuspend for otg host */
+        if (udev->bus->busnum == 2)
+                return -EOPNOTSUPP;
+#endif
+
 	/* Fail if autosuspend is disabled, or any interfaces are in use, or
 	 * any interface drivers require remote wakeup but it isn't available.
 	 */
