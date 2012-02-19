@@ -984,6 +984,7 @@ int fimc_s_fmt_vid_capture(struct file *file, void *fh, struct v4l2_format *f)
 	 * released at the file close.
 	 * Anyone has better idea to do this?
 	*/
+	struct v4l2_mbus_framefmt mbus_fmt;
 	mutex_lock(&ctrl->v4l2_lock);
 
 		if (!ctrl->cap) {
