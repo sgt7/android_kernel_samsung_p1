@@ -1591,13 +1591,15 @@ static struct attribute_group voodoo_sound_control_group = {
 
 static struct miscdevice voodoo_sound_device = {
 	.minor = MISC_DYNAMIC_MINOR,
-	.name = "voodoo_sound",
+	//.name = "voodoo_sound",
+	.name = "wm8994_sound",
 };
 
 #ifndef MODULE
 static struct miscdevice voodoo_sound_control_device = {
 	.minor = MISC_DYNAMIC_MINOR,
-	.name = "voodoo_sound_control",
+	//.name = "voodoo_sound_control",
+	.name = "wm8994_sound_control",
 };
 #endif
 
