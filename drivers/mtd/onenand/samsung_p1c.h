@@ -1,6 +1,6 @@
 /* linux/drivers/mtd/onenand/samsung_p1c.h
  *
- * Partition Layout for Samsung Galaxy Tab CDMA Models
+ * Partition Layout for Samsung Galaxy Tab (CDMA variants)
  *
  */
 

@@ -48,11 +48,7 @@ enum soc_type {
 */
 
 #if defined(CONFIG_MACH_P1_LTN)
-	#if defined(CONFIG_VIDEO_TSI)
-		#include "samsung_p1l.h"
-	#else
-		#include "samsung_p1n.h"
-	#endif
+#include "samsung_p1.h"
 #elif defined(CONFIG_MACH_P1_CDMA)
 #include "samsung_p1c.h"
 #elif defined(CONFIG_MACH_P1_GSM)
