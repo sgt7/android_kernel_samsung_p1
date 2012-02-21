@@ -42,7 +42,10 @@ enum soc_type {
 };
 
 
-/* START OF DEVICE SPECIFIC PARTITION LAYOUT */
+/* START OF DEVICE SPECIFIC PARTITION LAYOUT 
+* Using the same layouts but different files for each variant
+* to allow customization later
+*/
 
 #if defined(CONFIG_MACH_P1_LTN)
 	#if defined(CONFIG_VIDEO_TSI)
