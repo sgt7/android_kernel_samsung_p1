@@ -1306,7 +1306,7 @@ static int s5k6aafx_set_white_balance(struct v4l2_subdev *sd, struct v4l2_contro
 				sizeof(s5k6aafx_wb_daylight) / sizeof(s5k6aafx_wb_daylight[0]));
 			break;
 
-		case WHITE_BALANCE_CLOUDY_DAYLIGHT:
+		case WHITE_BALANCE_CLOUDY:
 			err = s5k6aafx_write_regs(sd, s5k6aafx_wb_cloudy, \
 				sizeof(s5k6aafx_wb_cloudy) / sizeof(s5k6aafx_wb_cloudy[0]));
 			break;

@@ -2345,14 +2345,7 @@ static int isx005_set_white_balance(struct v4l2_subdev *sd, struct v4l2_control 
 			break;
 
 		case WHITE_BALANCE_SUNNY:
-		case WHITE_BALANCE_DAYLIGHT:
-			err = isx005_i2c_write(sd, \
-				isx005_WB_Sunny, \
-				sizeof(isx005_WB_Sunny) / sizeof(isx005_WB_Sunny[0]), \
-				"isx005_WB_Sunny");
-			break;
-
-		case WHITE_BALANCE_CLOUDY_DAYLIGHT:
+		case WHITE_BALANCE_CLOUDY:
 			err = isx005_i2c_write(sd, \
 				isx005_WB_Cloudy, \
 				sizeof(isx005_WB_Cloudy) / sizeof(isx005_WB_Cloudy[0]), \
@@ -2360,7 +2353,6 @@ static int isx005_set_white_balance(struct v4l2_subdev *sd, struct v4l2_control 
 			break;
 
 		case WHITE_BALANCE_TUNGSTEN:
-		case WHITE_BALANCE_INCANDESCENT:
 			err = isx005_i2c_write(sd, \
 				isx005_WB_Tungsten, \
 				sizeof(isx005_WB_Tungsten) / sizeof(isx005_WB_Tungsten[0]), \
