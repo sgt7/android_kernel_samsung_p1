@@ -1601,16 +1601,11 @@ static int s5k5ccgx_set_white_balance(struct v4l2_subdev *sd, struct v4l2_contro
 			break;
 
 		case WHITE_BALANCE_SUNNY:
-		case WHITE_BALANCE_DAYLIGHT:
-			err = s5k5ccgx_i2c_write_block(sd,S5K5CCGX_WB_DAYLIGHT,S5K5CCGX_WB_DAYLIGHT_INDEX,"S5K5CCGX_WB_DAYLIGHT");
-			break;
-
-		case WHITE_BALANCE_CLOUDY_DAYLIGHT:
+		case WHITE_BALANCE_CLOUDY:
 			err = s5k5ccgx_i2c_write_block(sd,S5K5CCGX_WB_CLOUDY,S5K5CCGX_WB_CLOUDY_INDEX,"S5K5CCGX_WB_CLOUDY");
 			break;
 
 		case WHITE_BALANCE_TUNGSTEN:
-		case WHITE_BALANCE_INCANDESCENT:
 			err = s5k5ccgx_i2c_write_block(sd,S5K5CCGX_WB_INCANDESCENT,S5K5CCGX_WB_INCANDESCENT_INDEX,"S5K5CCGX_WB_INCANDESCENT");
 			break;
 

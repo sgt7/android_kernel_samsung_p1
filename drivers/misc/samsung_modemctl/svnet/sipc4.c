@@ -232,10 +232,10 @@ static ssize_t store_suspend(struct device *d,
 static ssize_t store_resume(struct device *d,
 		struct device_attribute *attr, const char *buf, size_t count);
 
-static DEVICE_ATTR(activate, S_IRUGO | S_IWUSR | S_IWGRP, show_act, store_act);
-static DEVICE_ATTR(deactivate, S_IRUGO | S_IWUSR | S_IWGRP, show_deact, store_deact);
-static DEVICE_ATTR(suspend, S_IRUGO | S_IWUSR | S_IWGRP, show_suspend, store_suspend);
-static DEVICE_ATTR(resume, S_IRUGO | S_IWUSR | S_IWGRP, NULL, store_resume);
+static DEVICE_ATTR(activate, 0664, show_act, store_act);
+static DEVICE_ATTR(deactivate, 0664, show_deact, store_deact);
+static DEVICE_ATTR(suspend, 0664, show_suspend, store_suspend);
+static DEVICE_ATTR(resume, 0664, NULL, store_resume);
 
 static struct attribute *pdp_attributes[] = {
 	&dev_attr_activate.attr,

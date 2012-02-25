@@ -1,4 +1,4 @@
-/* linux/drivers/mtd/onenand/samsung_galaxys.h
+/* linux/drivers/mtd/onenand/samsung_p1.h
  *
  * Partition Layout for Samsung Galaxy Tab (GSM variants)
  *
