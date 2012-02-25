@@ -174,7 +174,7 @@ MODULE_PARM_DESC(bootloaderfb, "Address of booting logo image in Bootloader");
 #define LOGO_MEM_SIZE       		1024*600*4
 #define LOGO_MEM_BASE		        0x4EC00000 
 
-#define BOOT_FB_WINDOW	0
+//#define BOOT_FB_WINDOW	0
 
 static int s3cfb_draw_logo(struct fb_info *fb)
 {
@@ -1336,11 +1336,11 @@ static int __devinit s3cfb_probe(struct platform_device *pdev)
 #endif 
 	s3cfb_set_window(fbdev, pdata->default_win, 1);
 
-#define BOOT_FB_WINDOW 0
-	if(pdata->default_win != BOOT_FB_WINDOW) {
-		dev_warn(fbdev->dev, "closing bootloader FIMD window 0 \n",BOOT_FB_WINDOW);
-		s3cfb_set_window(fbdev,BOOT_FB_WINDOW, 0);
-	}
+//#define BOOT_FB_WINDOW 0
+//	if(pdata->default_win != BOOT_FB_WINDOW) {
+//		dev_warn(fbdev->dev, "closing bootloader FIMD window 0 \n",BOOT_FB_WINDOW);
+//		s3cfb_set_window(fbdev,BOOT_FB_WINDOW, 0);
+//	}
 
 
 #if defined(CONFIG_MACH_S5PC110_P1) && defined(CONFIG_FB_S3C_MDNIE) && defined(__NO_BOOT_INIT_MDNIE__)
