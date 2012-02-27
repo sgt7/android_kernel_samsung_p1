@@ -140,7 +140,7 @@ typedef enum
 }Lcd_CMC623_UI_mode;
 
 extern int tune_cmc623_suspend(void);
-extern int tune_cmc623_pre_resume(void);
+extern int tune_cmc623_pre_resume();
 extern int tune_cmc623_resume(void);
 extern void tune_cmc623_set_lcddata(const struct s3cfb_lcd *);
 extern void tune_cmc623_set_lcd_pclk(int pclk);
