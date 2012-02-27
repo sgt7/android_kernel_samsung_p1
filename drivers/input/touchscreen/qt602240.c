@@ -1447,25 +1447,22 @@ static void qt602240_input_read(struct qt602240_data *data)
 			for (i= 0; i<MAX_USING_FINGER_NUM; ++i ) {
 				if (fingerInfo[i].pressure == -1 )
 					continue;
+                if (fingerInfo[i].pressure > 0) {
 #ifdef CONFIG_TOUCHSCREEN_QT602240_ROT90
-				input_report_abs(input_dev, ABS_MT_POSITION_X, fingerInfo[i].y);
-				input_report_abs(input_dev, ABS_MT_POSITION_Y, QT602240_MAX_XC - 1 - fingerInfo[i].x);
+                    input_report_abs(input_dev, ABS_MT_POSITION_X, fingerInfo[i].y);
+                    input_report_abs(input_dev, ABS_MT_POSITION_Y, QT602240_MAX_XC - 1 - fingerInfo[i].x);
 #else
-				input_report_abs(input_dev, ABS_MT_POSITION_X, fingerInfo[i].x);
-				input_report_abs(input_dev, ABS_MT_POSITION_Y, fingerInfo[i].y);
+                    input_report_abs(input_dev, ABS_MT_POSITION_X, fingerInfo[i].x);
+                    input_report_abs(input_dev, ABS_MT_POSITION_Y, fingerInfo[i].y);
 #endif
-				input_report_abs(input_dev, ABS_MT_TOUCH_MAJOR, fingerInfo[i].pressure);
-				input_report_abs(input_dev, ABS_MT_WIDTH_MAJOR, fingerInfo[i].size);
-				input_report_abs(input_dev, ABS_MT_TRACKING_ID, fingerInfo[i].id);
-				input_report_abs(input_dev, ABS_MT_TOUCH_MAJOR, fingerInfo[i].pressure);
-
-				if (fingerInfo[i].pressure == 0 ) {
-					input_report_key(input_dev, BTN_TOUCH, 0);
-					fingerInfo[i].pressure= -1;
-				}
-				else
-					input_report_key(input_dev, BTN_TOUCH, 1);
-
+                    input_report_abs(input_dev, ABS_MT_TOUCH_MAJOR, fingerInfo[i].pressure);
+                    input_report_abs(input_dev, ABS_MT_WIDTH_MAJOR, fingerInfo[i].size);
+                    input_report_abs(input_dev, ABS_MT_TRACKING_ID, fingerInfo[i].id);
+                    input_report_abs(input_dev, ABS_MT_TOUCH_MAJOR, fingerInfo[i].pressure);
+                    input_report_key(input_dev, BTN_TOUCH, 1);
+                } else if (fingerInfo[i].pressure == 0) {
+                    fingerInfo[i].pressure= -1;
+                }
 				input_mt_sync(input_dev);
 			}
 			input_sync(input_dev);
