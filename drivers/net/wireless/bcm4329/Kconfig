@@ -15,13 +15,13 @@ config BCM4329
 config BCM4329_FW_PATH
 	depends on BCM4329
 	string "Firmware path"
-	default "/system/etc/wifi/bcm4329_sta.bin"
+	default "/system/etc/firmware/fw_bcm4329.bin"
 	---help---
 	  Path to the firmware file.
 
 config BCM4329_NVRAM_PATH
 	depends on BCM4329
 	string "NVRAM path"
-	default "/system/etc/wifi/nvram_net.txt"
+	default "/proc/calibration"
 	---help---
 	  Path to the calibration file.
