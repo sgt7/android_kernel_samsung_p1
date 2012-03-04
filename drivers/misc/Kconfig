@@ -429,15 +429,6 @@ config APANIC_PLABEL
 	 If your platform uses a different flash partition label for storing
  	 crashdumps, enter it here.
 
-config SAMSUNG_JACK
-	bool "3.5MM ear jack driver for Samsung devices"
-	depends on INPUT
-	default n
-	---help---
-	 This is 3.5MM ear jack driver for Samsung devices.
-
-	 If unsure, say N.
-
 config USB_SWITCH_FSA9480
 	tristate "FSA9480 USB Switch"
 	depends on I2C
@@ -477,17 +468,11 @@ config SVNET_WHITELIST
 	  send white port list
 	  Say N, in doubt
 
-config PN544
-	bool "NXP PN544 NFC Controller Driver"
-	default n
-	help
-	  NXP PN544 Near Field Communication controller support.
-
 config BLX
-       bool "Support for Battery Life eXtender"
-       default y
-       help
-         Say Y here to enable Battery Life eXtender
+	bool "Support for Battery Life eXtender"
+	default y
+	help
+	  Say Y here to enable Battery Life eXtender
 
 config VIBTONZ
 	tristate "Vibetonz"
