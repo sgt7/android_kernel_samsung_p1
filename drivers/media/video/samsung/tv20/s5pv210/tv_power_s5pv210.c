@@ -3,7 +3,7 @@
  * power raw ftn  file for Samsung TVOut driver
  *
  * Copyright (c) 2010 Samsung Electronics
- * http://www.samsungsemi.com/
+ * 	http://www.samsungsemi.com/
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -12,15 +12,15 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>
+#include <linux/platform_device.h>
 #include <linux/uaccess.h>
 #include <linux/io.h>
-#include <linux/regulator/consumer.h>
 
 #include <mach/map.h>
 #include <mach/regs-clock.h>
 
-#include "../s5p_tv.h"
 
+#include "tv_out_s5pv210.h"
 
 #if defined USE_POWERCON_FUNCTION
 #undef USE_POWERCON_FUNCTION
@@ -49,7 +49,7 @@
 #define TVPWR_TV_BLOCK_STATUS(a)    ((0x1<<4)&a)
 
 static unsigned short g_dacPwrOn;
-extern struct s5p_tv_status s5ptv_status;
+
 
 void __s5p_tv_power_init_mtc_stable_counter(unsigned int value)
 {
@@ -62,7 +62,7 @@ void __s5p_tv_power_init_mtc_stable_counter(unsigned int value)
 	TVPMPRINTK("(0x%08x)\n\r", readl(S5P_MTC_STABLE));
 }
 
-void __s5p_tv_powerinitialize_dac_onoff(bool on)
+void __s5p_tv_powerinitialize_dac_onoff(unsigned short on)
 {
 	TVPMPRINTK("(%d)\n\r", on);
 
@@ -71,23 +71,20 @@ void __s5p_tv_powerinitialize_dac_onoff(bool on)
 	TVPMPRINTK("(0x%08x)\n\r", g_dacPwrOn);
 }
 
-void __s5p_tv_powerset_dac_onoff(bool on)
+void __s5p_tv_powerset_dac_onoff(unsigned short on)
 {
 	TVPMPRINTK("(%d)\n\r", on);
 
-	if (on) {
-		regulator_enable(s5ptv_status.tv_tvout);
+	if (on)
 		writel(S5P_DAC_ENABLE, S5P_DAC_CONTROL);
-	} else {
+	else
 		writel(S5P_DAC_DISABLE, S5P_DAC_CONTROL);
-		regulator_disable(s5ptv_status.tv_tvout);
-	}
 
 	TVPMPRINTK("(0x%08x)\n\r", readl(S5P_DAC_CONTROL));
 }
 
 
-bool __s5p_tv_power_get_power_status(void)
+unsigned short __s5p_tv_power_get_power_status(void)
 {
 	TVPMPRINTK("(0x%08x)\n\r", readl(S5P_BLK_PWR_STAT));
 
@@ -95,7 +92,7 @@ bool __s5p_tv_power_get_power_status(void)
 	return TVPWR_TV_BLOCK_STATUS(readl(S5P_BLK_PWR_STAT)) ? 1 : 0;
 }
 
-bool __s5p_tv_power_get_dac_power_status(void)
+unsigned short __s5p_tv_power_get_dac_power_status(void)
 {
 	TVPMPRINTK("()\n\r");
 
@@ -111,8 +108,11 @@ void __s5p_tv_poweron(void)
 
 	writel(readl(S3C_VA_SYS + 0xE804) | 0x1, S3C_VA_SYS + 0xE804);
 
-	if (regulator_enable(s5ptv_status.tv_regulator))
-		pr_err("%s : failed to turn tv-power-domain on\n", __func__);
+	writel(readl(S5P_NORMAL_CFG) | TVPWR_SUBSYSTEM_ACTIVE, S5P_NORMAL_CFG);
+
+	while (!TVPWR_TV_BLOCK_STATUS(readl(S5P_BLK_PWR_STAT)))
+		msleep(1);
+
 
 	TVPMPRINTK("0x%08x, 0x%08x)\n\r", readl(S5P_NORMAL_CFG),
 		readl(S5P_BLK_PWR_STAT));
@@ -125,8 +125,11 @@ void __s5p_tv_poweroff(void)
 
 	__s5p_tv_powerset_dac_onoff(0);
 
-	if (regulator_disable(s5ptv_status.tv_regulator))
-		pr_err("%s : failed to turn tv-power-domain off\n", __func__);
+	writel(readl(S5P_NORMAL_CFG) & ~TVPWR_SUBSYSTEM_ACTIVE, S5P_NORMAL_CFG);
+
+	while (TVPWR_TV_BLOCK_STATUS(readl(S5P_BLK_PWR_STAT)))
+		msleep(1);
+
 
 	TVPMPRINTK("0x%08x, 0x%08x)\n\r", readl(S5P_NORMAL_CFG),
 		readl(S5P_BLK_PWR_STAT));

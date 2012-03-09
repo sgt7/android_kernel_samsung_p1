@@ -1032,6 +1032,24 @@ config USB_S2255
 
 endif # V4L_USB_DRIVERS
 
+config VIDEO_ISX005
+        tristate "ISX005 supporting camera driver"
+        depends on I2C && VIDEO_V4L2
+        ---help---
+          This driver supports ISX005 SoC camera module
+
+config VIDEO_S5K6AAFX
+        tristate "S5K6AAFX Camera Sensor"
+        depends on I2C && VIDEO_V4L2
+        ---help---
+          This driver supports S5K6AAFX SoC camera module
+
+config VIDEO_S5K5CCGX
+        tristate "S5K5CCGX Camera Sensor"
+        depends on I2C && VIDEO_V4L2
+        ---help---
+          This driver supports S5K5CCGX SoC camera module
+
 config VIDEO_CE147
         tristate "CE147 Camera Sensor"
         depends on I2C && VIDEO_V4L2

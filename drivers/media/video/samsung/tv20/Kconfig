@@ -1,5 +1,5 @@
 #
-# Configuration for TV-OUT/HDMI
+# Configuration for Post Porcessor
 #
 
 config VIDEO_TV20
@@ -12,7 +12,7 @@ config VIDEO_TV20
 config HDMI_CEC
 	bool "HDMI CEC driver support."
 	depends on VIDEO_TV20 && CPU_S5PV210
-	default n
+	default y
 	---help---
 	  This is a HDMI CEC driver for Samsung SMDK_S5PV210
 	  Check dev node (major 10, minor 242)
@@ -20,7 +20,7 @@ config HDMI_CEC
 config HDMI_HPD
 	bool "HDMI HPD driver support."
 	depends on VIDEO_TV20 && CPU_S5PV210
-	default n
+	default y
 	---help---
 	  This is a HDMI HPD driver for Samsung SMDK_S5PV210
 	  Check dev node (major 10, minor 243)
@@ -38,7 +38,7 @@ config TV_FB
 config USER_ALLOC_TVOUT
 	bool "Support pre allocated frame buffer memory."
 	depends on VIDEO_TV20 && TV_FB
-	default n
+	default y
 	---help---
 	  TV Driver doesn't allocate memory for frame buffer.
 	  So, before enabling TV out, the frame buffer should be allocated.

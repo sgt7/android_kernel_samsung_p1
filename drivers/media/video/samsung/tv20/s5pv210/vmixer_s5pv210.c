@@ -3,7 +3,7 @@
  * Mixer raw ftn  file for Samsung TVOut driver
  *
  * Copyright (c) 2010 Samsung Electronics
- * http://www.samsungsemi.com/
+ * 	http://www.samsungsemi.com/
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -886,7 +886,7 @@ enum s5p_tv_vmx_err __s5p_vm_init_csc_coef(enum s5p_yuv_fmt_component component,
 	switch (component) {
 
 	case TVOUT_YUV_Y:
-		mxr_cm = (mode == VMIXER_COEF_Y_WIDE) ?
+		mxr_cm 	= (mode == VMIXER_COEF_Y_WIDE) ?
 			     S5P_MXR_BG_COLOR_WIDE : S5P_MXR_BG_COLOR_NARROW;
 		mxr_cm |= S5P_MXR_BG_COEFF_0(coeff0) |
 			     S5P_MXR_BG_COEFF_1(coeff1) |
@@ -897,7 +897,7 @@ enum s5p_tv_vmx_err __s5p_vm_init_csc_coef(enum s5p_yuv_fmt_component component,
 		break;
 
 	case TVOUT_YUV_CB:
-		mxr_cm	= S5P_MXR_BG_COEFF_0(coeff0) |
+		mxr_cm 	= S5P_MXR_BG_COEFF_0(coeff0) |
 			     S5P_MXR_BG_COEFF_1(coeff1) |
 			     S5P_MXR_BG_COEFF_2(coeff2);
 		writel(mxr_cm, mixer_base + S5P_MXR_CM_COEFF_CB);
@@ -906,7 +906,7 @@ enum s5p_tv_vmx_err __s5p_vm_init_csc_coef(enum s5p_yuv_fmt_component component,
 		break;
 
 	case TVOUT_YUV_CR:
-		mxr_cm = S5P_MXR_BG_COEFF_0(coeff0) |
+		mxr_cm 	= S5P_MXR_BG_COEFF_0(coeff0) |
 			     S5P_MXR_BG_COEFF_1(coeff1) |
 			     S5P_MXR_BG_COEFF_2(coeff2);
 		writel(mxr_cm, S5P_MXR_CM_COEFF_CR);

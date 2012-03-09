@@ -106,6 +106,11 @@
 #define S5PV210_SZ_LCD		SZ_1M
 #define S5P_SZ_LCD		S5PV210_SZ_LCD
 
+#define S5PV210_PA_CSIS		(0xFA600000)
+#define S5P_PA_CSIS		S5PV210_PA_CSIS
+#define S5PV210_SZ_CSIS		SZ_1M
+#define S5P_SZ_CSIS		S5PV210_SZ_CSIS
+
 #define S5PV210_PA_JPEG		(0xFB600000)
 #define S5PV210_SZ_JPEG		SZ_1M
 
@@ -208,6 +213,13 @@
 #define S5PV210_PA_CEC		(0xE1B00000)
 #define S5P_PA_CEC		S5PV210_PA_CEC
 #define S5P_SZ_CEC		SZ_4K
+
+#if defined(CONFIG_VIDEO_TSI)
+/* s3c-tsi */
+#define S5PV210_PA_TSI		(0xEB400000)            
+#define S5P_PA_TSI			S5PV210_PA_TSI
+#define S5P_SZ_TSI			SZ_256     
+#endif
 
 /* TVOUT */
 #define S5PV210_PA_TVENC	(0xF9000000)

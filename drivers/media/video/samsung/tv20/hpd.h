@@ -3,7 +3,7 @@
  * hpd interface header file for Samsung TVOut driver
  *
  * Copyright (c) 2010 Samsung Electronics
- * http://www.samsungsemi.com/
+ * 	http://www.samsungsemi.com/
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -16,8 +16,8 @@
 #define HPD_LO          0
 #define HPD_HI          1
 
-#define HDMI_ON		1
-#define HDMI_OFF	0
+#define HDMI_ON 	1
+#define HDMI_OFF 	0
 
 struct hpd_struct {
 	spinlock_t lock;

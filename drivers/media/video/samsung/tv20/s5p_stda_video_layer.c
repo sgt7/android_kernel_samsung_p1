@@ -3,7 +3,7 @@
  * Video Layer ftn. file for Samsung TVOut driver
  *
  * Copyright (c) 2010 Samsung Electronics
- * http://www.samsungsemi.com/
+ * 	http://www.samsungsemi.com/
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -32,7 +32,7 @@
 #define VLAYERPRINTK(fmt, args...)
 #endif
 
-#define INTERLACED	0
+#define INTERLACED 	0
 #define PROGRESSIVE 	1
 
 u8 check_input_mode(enum s5p_vp_src_color color)
@@ -133,14 +133,16 @@ static void _s5p_vlayer_calc_inner_values(void)
 	st->vl_dest_width = d_w;
 	st->vl_dest_height = d_h;
 
-
 	if (o_mode == INTERLACED) {
-		st->vl_src_height	= s_h / 2;
-		st->vl_src_offset_y	= s_oy / 2;
+		if (st->vl_op_mode.line_skip) { 
+			st->vl_src_height	= s_h / 2;
+			st->vl_src_offset_y	= s_oy / 2;
+		}
+
 		st->vl_dest_height	= d_h / 2;
-		st->vl_dest_offset_y	= d_oy / 2;
+		st->vl_dest_offset_y = d_oy / 2;
 	} else {
-		if (i_mode == INTERLACED) {
+		if (i_mode == INTERLACED) { 
 			st->vl_src_height	= s_h / 2;
 			st->vl_src_offset_y	= s_oy / 2;
 		}
@@ -705,9 +707,9 @@ bool _s5p_vlayer_set_brightness_contrast_control(unsigned long buf_in)
 	memcpy((void *)&(s5ptv_status.vl_bc_control[ctrl->eq_num]),
 		(const void *)ctrl, sizeof(struct s5p_vl_csc_ctrl));
 
-	eq_num	= s5ptv_status.vl_bc_control[ctrl->eq_num].eq_num;
-	intc	= s5ptv_status.vl_bc_control[ctrl->eq_num].intc;
-	slope	= s5ptv_status.vl_bc_control[ctrl->eq_num].slope;
+	eq_num 	= s5ptv_status.vl_bc_control[ctrl->eq_num].eq_num;
+	intc 	= s5ptv_status.vl_bc_control[ctrl->eq_num].intc;
+	slope 	= s5ptv_status.vl_bc_control[ctrl->eq_num].slope;
 
 	if (_s5p_vlayer_wait_previous_update())
 		return false;
@@ -799,8 +801,12 @@ bool _s5p_vlayer_set_csc_coef(unsigned long buf_in)
 bool _s5p_vlayer_init_param(unsigned long buf_in)
 {
 	struct s5p_tv_status *st = &s5ptv_status;
+	struct s5p_vl_param *video = &(s5ptv_status.vl_basic_param);
 
 	bool i_mode, o_mode; /* 0 for interlaced, 1 for progressive */
+
+	u32 s_h = video->src_height;
+	u32 d_h = video->dest_height;
 
 	switch (st->tvout_param.disp_mode) {
 
@@ -855,24 +861,27 @@ bool _s5p_vlayer_init_param(unsigned long buf_in)
 		/* i to i : line skip 1, ipc 0, auto toggle 0 */
 		if (o_mode == INTERLACED) {
 			st->vl_op_mode.line_skip = true;
-			st->vl2d_ipc		= false;
+			st->vl2d_ipc 		 = false;
 			st->vl_op_mode.toggle_id = false;
 		} else {
 		/* i to p : line skip 1, ipc 1, auto toggle 0 */
 			st->vl_op_mode.line_skip = true;
-			st->vl2d_ipc		= true;
+			st->vl2d_ipc 		 = true;
 			st->vl_op_mode.toggle_id = false;
 		}
 	} else {
 		/* p to i : line skip 1, ipc 0, auto toggle 0 */
 		if (o_mode == INTERLACED) {
-			st->vl_op_mode.line_skip = true;
-			st->vl2d_ipc		 = false;
+			if (d_h > s_h && ((d_h<<16)/s_h < 0x100000))
+				st->vl_op_mode.line_skip = false;
+			else
+				st->vl_op_mode.line_skip = true;
+			st->vl2d_ipc 		 = false;
 			st->vl_op_mode.toggle_id = false;
 		} else {
 		/* p to p : line skip 0, ipc 0, auto toggle 0 */
 			st->vl_op_mode.line_skip = false;
-			st->vl2d_ipc		= false;
+			st->vl2d_ipc 		 = false;
 			st->vl_op_mode.toggle_id = false;
 		}
 	}

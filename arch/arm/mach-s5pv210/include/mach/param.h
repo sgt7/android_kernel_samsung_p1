@@ -29,7 +29,11 @@
 #define LANGUAGE_SEL		0
 #define SET_DEFAULT_PARAM	0		/* Set Param to Default */
 #define VERSION_LINE		"I8315XXIE00"	/* Set Image Info */
+#ifdef CONFIG_FIQ
+#define COMMAND_LINE		"console=ttyFIQ0,115200"
+#else
 #define COMMAND_LINE		"console=ttySAC2,115200"
+#endif
 #define	BOOT_VERSION		" version=Sbl(1.0.0) "
 
 typedef enum {

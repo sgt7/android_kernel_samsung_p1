@@ -3,7 +3,7 @@
  * cec interface file for Samsung TVOut driver (only s5pv210)
  *
  * Copyright (c) 2010 Samsung Electronics
- * http://www.samsungsemi.com/
+ * 	http://www.samsungsemi.com/
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -396,7 +396,10 @@ static char banner[] __initdata =
 int __init s5p_cec_init(void)
 {
 	int ret;
-
+#if defined (CONFIG_TARGET_LOCALE_EUR) || defined (CONFIG_TARGET_LOCALE_HKTW) || defined (CONFIG_TARGET_LOCALE_HKTW_FET) || defined (CONFIG_TARGET_LOCALE_VZW) || defined (CONFIG_TARGET_LOCALE_USAGSM)
+	if(HWREV < 0x8)
+		return -1;
+#endif			
 	printk(banner);
 
 	ret = platform_driver_register(&s5p_cec_driver);

@@ -3,7 +3,7 @@
  * Video4Linux API ftn. file for Samsung TVOut driver
  *
  * Copyright (c) 2010 Samsung Electronics
- * http://www.samsungsemi.com/
+ * 	http://www.samsungsemi.com/
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -131,39 +131,39 @@ static struct v4l2_output s5p_tv_outputs[] = {
 
 const struct v4l2_fmtdesc s5p_tv_o_fmt_desc[] = {
 	{
-		.index		= 0,
-		.type		= V4L2_BUF_TYPE_VIDEO_OUTPUT,
-		.description	= "YUV420, NV12 (Video Processor)",
-		.pixelformat	= V4L2_PIX_FMT_NV12,
-		.flags		= FORMAT_FLAGS_CrCb,
+		.index    	= 0,
+		.type     	= V4L2_BUF_TYPE_VIDEO_OUTPUT,
+		.description 	= "YUV420, NV12 (Video Processor)",
+		.pixelformat   	= V4L2_PIX_FMT_NV12,
+		.flags    	= FORMAT_FLAGS_CrCb,
 	}
 };
 
 const struct v4l2_fmtdesc s5p_tv_o_overlay_fmt_desc[] = {
 	{
-		.index		= 0,
-		.type		= V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY,
-		.description	= "16bpp RGB, le - RGB[565]",
-		.pixelformat	= V4L2_PIX_FMT_RGB565,
-		.flags		= FORMAT_FLAGS_PACKED,
+		.index    	= 0,
+		.type     	= V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY,
+		.description 	= "16bpp RGB, le - RGB[565]",
+		.pixelformat   	= V4L2_PIX_FMT_RGB565,
+		.flags    	= FORMAT_FLAGS_PACKED,
 	}, {
-		.index		= 1,
-		.type		= V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY,
-		.description	= "16bpp RGB, le - ARGB[1555]",
-		.pixelformat	= V4L2_PIX_FMT_RGB555,
-		.flags		= FORMAT_FLAGS_PACKED,
+		.index    	= 1,
+		.type     	= V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY,
+		.description 	= "16bpp RGB, le - ARGB[1555]",
+		.pixelformat   	= V4L2_PIX_FMT_RGB555,
+		.flags    	= FORMAT_FLAGS_PACKED,
 	}, {
-		.index		= 2,
-		.type		= V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY,
-		.description	= "16bpp RGB, le - ARGB[4444]",
-		.pixelformat	= V4L2_PIX_FMT_RGB444,
-		.flags		= FORMAT_FLAGS_PACKED,
+		.index    	= 2,
+		.type     	= V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY,
+		.description 	= "16bpp RGB, le - ARGB[4444]",
+		.pixelformat   	= V4L2_PIX_FMT_RGB444,
+		.flags    	= FORMAT_FLAGS_PACKED,
 	}, {
-		.index		= 3,
-		.type		= V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY,
-		.description	= "32bpp RGB, le - ARGB[8888]",
-		.pixelformat	= V4L2_PIX_FMT_RGB32,
-		.flags		= FORMAT_FLAGS_PACKED,
+		.index    	= 3,
+		.type     	= V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY,
+		.description 	= "32bpp RGB, le - ARGB[8888]",
+		.pixelformat   	= V4L2_PIX_FMT_RGB32,
+		.flags    	= FORMAT_FLAGS_PACKED,
 	}
 };
 
@@ -180,85 +180,85 @@ const struct v4l2_standard s5p_tv_standards[] = {
 	}, {
 		.index  = 2,
 		.id     = V4L2_STD_PAL_M,
-		.name	= "PAL_M",
+		.name 	= "PAL_M",
 	}, {
 		.index  = 3,
 		.id     = V4L2_STD_PAL_N,
-		.name	= "PAL_N",
+		.name 	= "PAL_N",
 	}, {
 		.index  = 4,
 		.id     = V4L2_STD_PAL_Nc,
-		.name	= "PAL_Nc",
+		.name 	= "PAL_Nc",
 	}, {
 		.index  = 5,
 		.id     = V4L2_STD_PAL_60,
-		.name	= "PAL_60",
+		.name 	= "PAL_60",
 	}, {
 		.index  = 6,
 		.id     = V4L2_STD_NTSC_443,
-		.name	= "NTSC_443",
+		.name 	= "NTSC_443",
 	}, {
 		.index  = 7,
 		.id     = V4L2_STD_480P_60_16_9,
-		.name	= "480P_60_16_9",
+		.name 	= "480P_60_16_9",
 	}, {
 		.index  = 8,
 		.id     = V4L2_STD_480P_60_4_3,
-		.name	= "480P_60_4_3",
+		.name 	= "480P_60_4_3",
 	}, {
 		.index  = 9,
 		.id     = V4L2_STD_576P_50_16_9,
-		.name	= "576P_50_16_9",
+		.name 	= "576P_50_16_9",
 	}, {
 		.index  = 10,
 		.id     = V4L2_STD_576P_50_4_3,
-		.name	= "576P_50_4_3",
+		.name 	= "576P_50_4_3",
 	}, {
 		.index  = 11,
 		.id     = V4L2_STD_720P_60,
-		.name	= "720P_60",
+		.name 	= "720P_60",
 	}, {
 		.index  = 12,
 		.id     = V4L2_STD_720P_50,
-		.name	= "720P_50",
+		.name 	= "720P_50",
 	},
 #ifdef CONFIG_CPU_S5PV210
 	{
 		.index  = 13,
 		.id     = V4L2_STD_1080P_60,
-		.name	= "1080P_60",
+		.name 	= "1080P_60",
 	}, {
 		.index  = 14,
 		.id     = V4L2_STD_1080P_50,
-		.name	= "1080P_50",
+		.name 	= "1080P_50",
 	}, {
 		.index  = 15,
 		.id     = V4L2_STD_1080I_60,
-		.name	= "1080I_60",
+		.name 	= "1080I_60",
 	}, {
 		.index  = 16,
 		.id     = V4L2_STD_1080I_50,
-		.name	= "1080I_50",
+		.name 	= "1080I_50",
 	}, {
 		.index  = 17,
 		.id     = V4L2_STD_480P_59,
-		.name	= "480P_59",
+		.name 	= "480P_59",
 	}, {
 		.index  = 18,
 		.id     = V4L2_STD_720P_59,
-		.name	= "720P_59",
+		.name 	= "720P_59",
 	}, {
 		.index  = 19,
 		.id     = V4L2_STD_1080I_59,
-		.name	= "1080I_59",
+		.name 	= "1080I_59",
 	}, {
 		.index  = 20,
 		.id     = V4L2_STD_1080P_59,
-		.name	= "1080I_50",
+		.name 	= "1080I_50",
 	}, {
 		.index  = 21,
 		.id     = V4L2_STD_1080P_30,
-		.name	= "1080I_30",
+		.name 	= "1080I_30",
 	}
 #endif
 };
@@ -426,8 +426,8 @@ static int s5p_tv_v4l2_g_fmt_vid_out_overlay(struct file *file,
 		memset(&vparam, 0, sizeof(struct v4l2_window_s5p_tvout));
 
 		if (s5ptv_status.vl_basic_param.win_blending) {
-			vparam.flags		= V4L2_FBUF_FLAG_CHROMAKEY;
-			vparam.capability	= V4L2_FBUF_CAP_CHROMAKEY;
+			vparam.flags 		= V4L2_FBUF_FLAG_CHROMAKEY;
+			vparam.capability 	= V4L2_FBUF_CAP_CHROMAKEY;
 		}
 
 		if (s5ptv_status.vl_basic_param.alpha) {
@@ -590,7 +590,7 @@ static int s5p_tv_v4l2_s_fmt_vid_out(struct file *file, void *fh,
 					&temp_addr);
 				_s5p_vlayer_set_img_size((unsigned long)
 					&img_size);
-
+					
 			}
 
 		} else {
@@ -697,19 +697,19 @@ static int s5p_tv_v4l2_overlay(struct file *file, void *fh, unsigned int i)
 	   overlay will be enabled or disabled on resume or
 	   handle_cable function according to this status variable*/
 	if (s5ptv_status.suspend_status == true || !(s5ptv_status.hpd_status)) {
-		if (start)
-			s5ptv_status.grp_layer_enable[layer->index] = true;
-		else
-			s5ptv_status.grp_layer_enable[layer->index] = false;
+        if(start)
+            s5ptv_status.grp_layer_enable[layer->index] = true;
+        else
+            s5ptv_status.grp_layer_enable[layer->index] = false;
 
 		V4L2PRINTK("suspend mode/hdmi cable is not inserted\n");
-		return 0;
+        return 0;
 	} else {
-		if (start)
-			_s5p_grp_start(layer->index);
-		else
-			_s5p_grp_stop(layer->index);
-	}
+	if (start)
+		_s5p_grp_start(layer->index);
+	else
+		_s5p_grp_stop(layer->index);
+    }
 	V4L2PRINTK("()--\n");
 	return 0;
 }
@@ -778,37 +778,37 @@ static int s5p_tv_v4l2_streamon(struct file *file, void *fh,
 	   overlay will be enabled or disabled on resume or handle_cable
 	   function according to this status variable*/
 	if (s5ptv_status.suspend_status == true || !(s5ptv_status.hpd_status)) {
-		switch (i) {
-			/* Vlayer */
-		case V4L2_BUF_TYPE_VIDEO_OUTPUT:
-			_s5p_vlayer_init_param(0);
-			s5ptv_status.vp_layer_enable = true;
-			break;
-			/* GRP0/1*/
-		case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
-			s5ptv_status.grp_layer_enable[layer->index] = true;
-			break;
+	switch (i) {
+		/* Vlayer */
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		_s5p_vlayer_init_param(0);
+                s5ptv_status.vp_layer_enable = true;
+                break;
+		/* GRP0/1*/
+            case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY :
+                s5ptv_status.grp_layer_enable[layer->index] = true;
+                break;
 
-		default:
-			break;
-		}
+            default :
+                break;
+        }
 		V4L2PRINTK("suspend mode/hdmi cable is not inserted\n");
-		return 0;
-	}
+        return 0;
+    }
 
 	switch (i) {
 		/* Vlayer*/
-	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+        case V4L2_BUF_TYPE_VIDEO_OUTPUT :
 		if (!(s5ptv_status.vp_layer_enable)) {
-			_s5p_vlayer_init_param(0);
-			_s5p_vlayer_start();
-			s5ptv_status.vp_layer_enable = true;
+                _s5p_vlayer_init_param(0);
+		_s5p_vlayer_start();
+		s5ptv_status.vp_layer_enable = true;
 
-			mdelay(50);
+		mdelay(50);
 		} else
-			return -EBUSY;
+                return -EBUSY;
 
-		break;
+	    break;
 		/* GRP0/1 */
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
 		_s5p_grp_start(layer->index);
@@ -836,22 +836,22 @@ static int s5p_tv_v4l2_streamoff(struct file *file, void *fh,
 	   Each layer will be enabled or disabled on resume or
 	   handle_cable function according to this status variable*/
 	if (s5ptv_status.suspend_status == true || !(s5ptv_status.hpd_status)) {
-		switch (i) {
-			/* Vlayer*/
-		case V4L2_BUF_TYPE_VIDEO_OUTPUT:
-			s5ptv_status.vp_layer_enable = false;
-			break;
-			/* GRP0/1*/
-		case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
-			s5ptv_status.grp_layer_enable[layer->index] = false;
-			break;
+        switch (i) {
+		/* Vlayer*/
+            case V4L2_BUF_TYPE_VIDEO_OUTPUT :
+                s5ptv_status.vp_layer_enable = false;
+                break;
+		/* GRP0/1*/
+            case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY :
+                s5ptv_status.grp_layer_enable[layer->index] = false;
+                break;
 
-		default:
-			break;
-		}
+            default :
+                break;
+        }
 		V4L2PRINTK("suspend mode\hdmi cable is not inserted\n");
-		return 0;
-	}
+        return 0;
+    }
 
 	switch (i) {
 		/* Vlayer */
@@ -1103,11 +1103,11 @@ static int s5p_tv_v4l2_s_output(struct file *file, void *fh, unsigned int i)
 	if ((s5ptv_status.tvout_param.out_mode != TVOUT_OUTPUT_HDMI) && \
 		(s5ptv_status.tvout_param.out_mode != TVOUT_OUTPUT_HDMI_RGB) &&
 		(s5ptv_status.tvout_param.out_mode != TVOUT_OUTPUT_DVI)) {
-		if (!(s5ptv_status.hpd_status))
-			s5p_tv_clk_gate(true);
+        if(!(s5ptv_status.hpd_status))
+            s5p_tv_clk_gate(true);
 
-		s5ptv_status.hpd_status = 1;
-	}
+        s5ptv_status.hpd_status = 1;
+    }
 
 	_s5p_tv_if_set_disp();
 
@@ -1119,14 +1119,14 @@ static int s5p_tv_v4l2_s_output(struct file *file, void *fh, unsigned int i)
 /* Crop ioctls */
 
 /*
- * Video Format Name	Pixel aspect ratio		Description
- * 			STD(4:3)	Anamorphic(16:9)
- * 640x480      	4:3	  			Used on YouTube
- * 720x576  	576i	5:4 		64:45 		Used on D1/DV PAL
- * 704x576  	576p	12:11 		16:11 		Used on EDTV PAL
- * 720x480  	480i	8:9 		32:27 		Used on DV NTSC
- * 720x486  	480i	8:9 		32:27 		Used on D1 NTSC
- * 704x480  	480p	10:11 		40:33 		Used on EDTV NTSC
+ * Video Format Name 	Pixel aspect ratio		Description
+ * 			STD(4:3) 	Anamorphic(16:9)
+ * 640x480       	4:3	  			Used on YouTube
+ * 720x576  	576i 	5:4 		64:45 		Used on D1/DV PAL
+ * 704x576  	576p 	12:11 		16:11 		Used on EDTV PAL
+ * 720x480  	480i 	8:9 		32:27 		Used on DV NTSC
+ * 720x486  	480i 	8:9 		32:27 		Used on D1 NTSC
+ * 704x480  	480p 	10:11 		40:33 		Used on EDTV NTSC
  */
 
 static int s5p_tv_v4l2_cropcap(struct file *file, void *fh,
@@ -1271,7 +1271,7 @@ static int s5p_tv_v4l2_g_crop(struct file *file, void *fh, struct v4l2_crop *a)
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
 		crop->c.left	= s5ptv_status.vl_basic_param.dest_offset_x;
 		crop->c.top	= s5ptv_status.vl_basic_param.dest_offset_y;
-		crop->c.width	= s5ptv_status.vl_basic_param.dest_width;
+		crop->c.width 	= s5ptv_status.vl_basic_param.dest_width;
 		crop->c.height	= s5ptv_status.vl_basic_param.dest_height;
 		break;
 		/* GRP0/1 */
@@ -1279,7 +1279,7 @@ static int s5p_tv_v4l2_g_crop(struct file *file, void *fh, struct v4l2_crop *a)
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
 		crop->c.left	= s5ptv_overlay[layer->index].dst_rect.left;
 		crop->c.top	= s5ptv_overlay[layer->index].dst_rect.top;
-		crop->c.width	= s5ptv_overlay[layer->index].dst_rect.width;
+		crop->c.width 	= s5ptv_overlay[layer->index].dst_rect.width;
 		crop->c.height	= s5ptv_overlay[layer->index].dst_rect.height;
 
 		break;
@@ -1350,7 +1350,7 @@ static int s5p_tv_v4l2_g_parm_v(struct file *file, void *fh,
 	struct v4l2_window_s5p_tvout vparam;
 
 	if (s5ptv_status.vl_basic_param.win_blending) {
-		vparam.flags		= V4L2_FBUF_FLAG_GLOBAL_ALPHA;
+		vparam.flags 		= V4L2_FBUF_FLAG_GLOBAL_ALPHA;
 		vparam.capability	= V4L2_FBUF_FLAG_GLOBAL_ALPHA;
 	}
 
@@ -1429,23 +1429,23 @@ static int s5p_tv_v4l2_g_parm_vo(struct file *file, void *fh,
 	V4L2PRINTK("entered\n");
 
 	if (s5ptv_overlay[layer->index].win_blending) {
-		vparam.flags		= V4L2_FBUF_FLAG_GLOBAL_ALPHA;
-		vparam.capability	= V4L2_FBUF_CAP_GLOBAL_ALPHA;
+		vparam.flags 		= V4L2_FBUF_FLAG_GLOBAL_ALPHA;
+		vparam.capability 	= V4L2_FBUF_CAP_GLOBAL_ALPHA;
 	}
 
 	if (s5ptv_overlay[layer->index].blank_change) {
-		vparam.flags		|= V4L2_FBUF_FLAG_CHROMAKEY;
-		vparam.capability	|= V4L2_FBUF_CAP_CHROMAKEY;
+		vparam.flags 		|= V4L2_FBUF_FLAG_CHROMAKEY;
+		vparam.capability 	|= V4L2_FBUF_CAP_CHROMAKEY;
 	}
 
 	if (s5ptv_overlay[layer->index].pixel_blending) {
-		vparam.flags		|= V4L2_FBUF_FLAG_LOCAL_ALPHA;
-		vparam.capability	|= V4L2_FBUF_CAP_LOCAL_ALPHA;
+		vparam.flags 		|= V4L2_FBUF_FLAG_LOCAL_ALPHA;
+		vparam.capability 	|= V4L2_FBUF_CAP_LOCAL_ALPHA;
 	}
 
 	if (s5ptv_overlay[layer->index].pre_mul) {
-		vparam.flags		|= V4L2_FBUF_FLAG_PRE_MULTIPLY;
-		vparam.capability	|= V4L2_FBUF_CAP_PRE_MULTIPLY;
+		vparam.flags 		|= V4L2_FBUF_FLAG_PRE_MULTIPLY;
+		vparam.capability 	|= V4L2_FBUF_CAP_PRE_MULTIPLY;
 	}
 
 	vparam.priority		= s5ptv_overlay[layer->index].priority;

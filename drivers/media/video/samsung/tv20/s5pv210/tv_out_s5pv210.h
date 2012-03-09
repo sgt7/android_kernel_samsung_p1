@@ -3,7 +3,7 @@
  * tv out header file for Samsung TVOut driver
  *
  * Copyright (c) 2010 Samsung Electronics
- * http://www.samsungsemi.com/
+ * 	http://www.samsungsemi.com/
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -194,10 +194,10 @@ enum s5p_tv_clk_vmiexr_srcclk {
 };
 
 enum s5p_vp_src_color {
-	VPROC_SRC_COLOR_NV12	= 0,
+	VPROC_SRC_COLOR_NV12  	= 0,
 	VPROC_SRC_COLOR_NV12IW  = 1,
-	VPROC_SRC_COLOR_TILE_NV12	= 2,
-	VPROC_SRC_COLOR_TILE_NV12IW	= 3
+	VPROC_SRC_COLOR_TILE_NV12  	= 2,
+	VPROC_SRC_COLOR_TILE_NV12IW  	= 3
 };
 
 enum s5p_vp_pxl_rate {

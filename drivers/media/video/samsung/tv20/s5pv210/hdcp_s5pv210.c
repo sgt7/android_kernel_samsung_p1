@@ -3,7 +3,7 @@
  * hdcp raw ftn  file for Samsung TVOut driver
  *
  * Copyright (c) 2010 Samsung Electronics
- * http://www.samsungsemi.com/
+ * 	http://www.samsungsemi.com/
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -125,24 +125,24 @@ struct s5p_hdcp_info {
 	u32	time_out;
 	u32	hdcp_enable;
 
-	spinlock_t	lock;
-	spinlock_t	reset_lock;
+	spinlock_t 	lock;
+	spinlock_t 	reset_lock;
 
-	struct i2c_client	*client;
+	struct i2c_client 	*client;
 
-	wait_queue_head_t	waitq;
-	enum hdcp_event		event;
-	enum hdcp_state		auth_status;
+	wait_queue_head_t 	waitq;
+	enum hdcp_event 	event;
+	enum hdcp_state 	auth_status;
 
-	struct work_struct	work;
+	struct work_struct  	work;
 };
 
 static struct s5p_hdcp_info hdcp_info = {
-	.is_repeater	= false,
+	.is_repeater 	= false,
 	.time_out	= 0,
 	.hdcp_enable	= false,
 	.client		= NULL,
-	.event		= HDCP_EVENT_STOP,
+	.event 		= HDCP_EVENT_STOP,
 	.auth_status	= NOT_AUTHENTICATED,
 
 };
@@ -157,8 +157,8 @@ static struct s5p_hdcp_info hdcp_info = {
 #define MAX_DEVS_EXCEEDED          (0x1 << 7)
 #define MAX_CASCADE_EXCEEDED       (0x1 << 3)
 
-#define MAX_CASCADE_EXCEEDED_ERROR	(-1)
-#define MAX_DEVS_EXCEEDED_ERROR		(-2)
+#define MAX_CASCADE_EXCEEDED_ERROR 	(-1)
+#define MAX_DEVS_EXCEEDED_ERROR    	(-2)
 #define REPEATER_ILLEGAL_DEVICE_ERROR	(-3)
 #define REPEATER_TIMEOUT_ERROR		(-4)
 
@@ -173,7 +173,7 @@ static struct s5p_hdcp_info hdcp_info = {
 #define SET_HDCP_KSV_WRITE_DONE		(0x1 << 3)
 #define CLEAR_HDCP_KSV_WRITE_DONE	(~SET_HDCP_KSV_WRITE_DONE)
 
-#define SET_HDCP_KSV_LIST_EMPTY		(0x1 << 2)
+#define SET_HDCP_KSV_LIST_EMPTY 	(0x1 << 2)
 #define CLEAR_HDCP_KSV_LIST_EMPTY	(~SET_HDCP_KSV_LIST_EMPTY)
 #define SET_HDCP_KSV_END		(0x1 << 1)
 #define CLEAR_HDCP_KSV_END		(~SET_HDCP_KSV_END)
@@ -583,8 +583,8 @@ static bool compare_r_val(void)
 	}
 
 	if (!ret) {
-		hdcp_info.event		= HDCP_EVENT_STOP;
-		hdcp_info.auth_status	= NOT_AUTHENTICATED;
+		hdcp_info.event 	= HDCP_EVENT_STOP;
+		hdcp_info.auth_status 	= NOT_AUTHENTICATED;
 	}
 
 	return ret ? true : false;
@@ -1101,10 +1101,10 @@ bool __s5p_stop_hdcp(void)
 
 	hdcp_protocol_status = 0;
 
-	hdcp_info.time_out	= INFINITE;
-	hdcp_info.event		= HDCP_EVENT_STOP;
-	hdcp_info.auth_status	= NOT_AUTHENTICATED;
-	hdcp_info.hdcp_enable	= false;
+	hdcp_info.time_out 	= INFINITE;
+	hdcp_info.event 	= HDCP_EVENT_STOP;
+	hdcp_info.auth_status 	= NOT_AUTHENTICATED;
+	hdcp_info.hdcp_enable 	= false;
 
 	/*
 	hdcp_info.client	= NULL;
@@ -1182,9 +1182,9 @@ bool __s5p_start_hdcp(void)
 	u8 reg;
 	u32  sfr_val;
 
-	hdcp_info.event		= HDCP_EVENT_STOP;
-	hdcp_info.time_out	= INFINITE;
-	hdcp_info.auth_status	= NOT_AUTHENTICATED;
+	hdcp_info.event 	= HDCP_EVENT_STOP;
+	hdcp_info.time_out 	= INFINITE;
+	hdcp_info.auth_status 	= NOT_AUTHENTICATED;
 
 	HDCPPRINTK("HDCP ftn. Start!!\n");
 

@@ -119,6 +119,8 @@ obj-$(CONFIG_VLYNQ)		+= vlynq/
 obj-$(CONFIG_STAGING)		+= staging/
 obj-y				+= platform/
 obj-y				+= ieee802154/
+obj-$(CONFIG_SENSOR)		+= sensor/
+
 #common clk code
 obj-y				+= clk/
 

@@ -1,0 +1,65 @@
+#!/stage1/busybox sh
+export _PATH="$PATH"
+export PATH=/stage1
+
+busybox cd /
+busybox date >>boot.txt
+exec >>boot.txt 2>&1
+busybox rm init
+busybox mount -t proc proc /proc
+busybox mount -t sysfs sysfs /sys
+
+bml_over_mtd dump boot 72 reservoir 2004 /stage1/boot.bin
+
+load_image=/stage1/boot.cpio
+
+busybox mount -t yaffs2 /dev/block/mtdblock2 /system
+busybox mount -t yaffs2 /dev/block/mtdblock3 /cache
+
+if busybox test -e /cache/.startrecovery || [ `busybox cat /proc/cmdline | busybox grep bootmode | busybox awk '{print $2}'` == bootmode=2 ] ; then
+	# recovery boot
+	busybox rm -fr /cache/.startrecovery
+	load_image=/stage1/recovery.cpio
+
+	# disable lpm
+	busybox echo 0 > /sys/class/power_supply/battery/charging_mode_booting
+elif ! busybox test -e /system/build.prop ; then
+	# emergency boot
+	busybox umount /cache
+	erase_image cache
+	busybox mount -t yaffs2 /dev/block/mtdblock3 /cache
+	busybox mkdir /cache/recovery
+
+	busybox mount -t vfat /dev/block/mmcblk0p1 /sdcard	
+
+	UPDATE=$(busybox cat /sdcard/cyanogenmod.cfg)
+
+	if busybox test -e $UPDATE ; then
+		busybox echo "install_zip(\"`echo $UPDATE`\");" > /cache/recovery/extendedcommand
+	fi
+
+	load_image=/stage1/recovery.cpio
+
+	# disable lpm
+	busybox echo 0 > /sys/class/power_supply/battery/charging_mode_booting
+fi
+
+busybox umount /cache
+busybox umount /system
+busybox umount /sdcard
+busybox rmdir /sdcard
+
+cpio -i < ${load_image}
+
+if busybox grep -q 1 /sys/class/power_supply/battery/charging_mode_booting ; then
+	# low power mode
+	busybox cp lpm.rc init.rc
+	busybox rm init.p1.rc
+fi
+
+busybox umount /sys
+busybox umount /proc
+busybox date >>boot.txt
+busybox rm -fr /stage1 /dev/*
+export PATH="${_PATH}"
+exec /init

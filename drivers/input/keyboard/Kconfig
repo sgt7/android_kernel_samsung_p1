@@ -578,4 +578,14 @@ config KEYPAD_CYPRESS_TOUCH_HAS_LEGACY_KEYCODE
 	default n
 	help
 	 Say Y here if your device uses legacy keycodes.
+
+config KEYBOARD_P1
+	tristate "P1 dock keyboard support"
+	default n
+	help
+	  Say Y here if you want to use the P1 dock keyboard.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called p1_keyboard.
+
 endif

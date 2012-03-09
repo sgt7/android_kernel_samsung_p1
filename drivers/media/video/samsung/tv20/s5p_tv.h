@@ -72,8 +72,8 @@
 #define AVI_VIC_34			(34<<0)
 
 
-#define VP_UPDATE_RETRY_MAXIMUM		30
-#define VP_WAIT_UPDATE_SLEEP		3
+#define VP_UPDATE_RETRY_MAXIMUM 	30
+#define VP_WAIT_UPDATE_SLEEP 		3
 
 struct tvout_output_if {
 	enum s5p_tv_disp_mode	disp_mode;
@@ -369,18 +369,18 @@ enum s5ptvfb_chroma_dir_t {
 };
 
 struct s5ptvfb_alpha {
-	enum		s5ptvfb_alpha_t mode;
+	enum 		s5ptvfb_alpha_t mode;
 	int		channel;
 	unsigned int	value;
 };
 
 struct s5ptvfb_chroma {
-	int		enabled;
-	int		blended;
+	int 		enabled;
+	int 		blended;
 	unsigned int	key;
 	unsigned int	comp_key;
 	unsigned int	alpha;
-	enum		s5ptvfb_chroma_dir_t dir;
+	enum 		s5ptvfb_chroma_dir_t dir;
 };
 
 struct s5ptvfb_user_window {
@@ -389,14 +389,14 @@ struct s5ptvfb_user_window {
 };
 
 struct s5ptvfb_user_plane_alpha {
-	int		channel;
+	int 		channel;
 	unsigned char	red;
 	unsigned char	green;
 	unsigned char	blue;
 };
 
 struct s5ptvfb_user_chroma {
-	int		enabled;
+	int 		enabled;
 	unsigned char	red;
 	unsigned char	green;
 	unsigned char	blue;
@@ -409,7 +409,7 @@ struct s5ptvfb_window {
 	atomic_t	in_use;
 	int		x;
 	int		y;
-	enum		s5ptvfb_data_path_t path;
+	enum 		s5ptvfb_data_path_t path;
 	int		local_channel;
 	int		dma_burst;
 	unsigned int	pseudo_pal[16];
@@ -442,10 +442,10 @@ struct s5ptvfb_lcd {
 	int	height;
 	int	bpp;
 	int	freq;
-	struct	s5ptvfb_lcd_timing timing;
-	struct	s5ptvfb_lcd_polarity polarity;
+	struct 	s5ptvfb_lcd_timing timing;
+	struct 	s5ptvfb_lcd_polarity polarity;
 
-	void	(*init_ldi)(void);
+	void 	(*init_ldi)(void);
 };
 
 struct s5p_tv_status {
@@ -554,14 +554,14 @@ struct s5p_tv_status {
 	bool grp_layer_enable[2];
 
 	/* i2c for hdcp port */
-	struct i2c_client	*hdcp_i2c_client;
+	struct i2c_client 	*hdcp_i2c_client;
 
 	struct s5p_tv_vo	overlay[2];
 
 	struct video_device      *video_dev[3];
 
-	struct regulator	*tv_tv;
-	struct regulator	*tv_tvout;
+	struct regulator	*tv_pll;
+	struct regulator	*tv_osc;
 	struct regulator	*tv_regulator;
 
 	struct clk *tvenc_clk;
@@ -575,7 +575,7 @@ struct s5p_tv_status {
 	struct clk *sclk_hdmi;
 	struct clk *sclk_mixer;
 
-	struct s5p_tv_v4l2	v4l2;
+	struct s5p_tv_v4l2 	v4l2;
 
 	struct s5ptvfb_window win;
 	struct fb_info	*fb;
@@ -606,7 +606,7 @@ struct s5p_tv_status {
 #define V4L2_OUTPUT_TYPE_HDMI_RGB		11
 #define V4L2_OUTPUT_TYPE_DVI			12
 
-#define V4L2_STD_PAL_BDGHI	(V4L2_STD_PAL_B| \
+#define V4L2_STD_PAL_BDGHI 	(V4L2_STD_PAL_B|\
 				V4L2_STD_PAL_D|	\
 				V4L2_STD_PAL_G|	\
 				V4L2_STD_PAL_H|	\
@@ -628,11 +628,11 @@ struct s5p_tv_status {
 #define V4L2_STD_1080P_59	((v4l2_std_id)0x11000000)
 #define V4L2_STD_1080P_30	((v4l2_std_id)0x12000000)
 
-#define FORMAT_FLAGS_DITHER		0x01
-#define FORMAT_FLAGS_PACKED		0x02
-#define FORMAT_FLAGS_PLANAR		0x04
-#define FORMAT_FLAGS_RAW		0x08
-#define FORMAT_FLAGS_CrCb		0x10
+#define FORMAT_FLAGS_DITHER       	0x01
+#define FORMAT_FLAGS_PACKED       	0x02
+#define FORMAT_FLAGS_PLANAR       	0x04
+#define FORMAT_FLAGS_RAW         	0x08
+#define FORMAT_FLAGS_CrCb         	0x10
 
 #define V4L2_FBUF_FLAG_PRE_MULTIPLY	0x0040
 #define V4L2_FBUF_CAP_PRE_MULTIPLY	0x0080
@@ -693,7 +693,7 @@ extern	bool _s5p_hdmi_api_proc(unsigned long arg, u32 cmd);
 extern	bool _s5p_hdmi_video_api_proc(unsigned long arg, u32 cmd);
 
 extern	bool _s5p_grp_api_proc(unsigned long arg, u32 cmd);
-extern	bool _s5p_grp_init_param(enum s5p_tv_vmx_layer vm_layer,
+extern 	bool _s5p_grp_init_param(enum s5p_tv_vmx_layer vm_layer,
 		unsigned long p_buf_in);
 extern	bool _s5p_grp_start(enum s5p_tv_vmx_layer vmLayer);
 extern	bool _s5p_grp_stop(enum s5p_tv_vmx_layer vmLayer);
@@ -1089,11 +1089,6 @@ extern void s5p_hdmi_set_audio(bool en);
 extern void s5p_hdmi_mute_en(bool en);
 extern bool __s5p_start_hdcp(void);
 extern bool __s5p_stop_hdcp(void);
-
-#if defined(CONFIG_MACH_P1)
-extern struct i2c_driver SII9234_i2c_driver;
-extern struct i2c_driver SII9234A_i2c_driver;
-extern struct i2c_driver SII9234B_i2c_driver;
-extern struct i2c_driver SII9234C_i2c_driver;
-#endif
+extern unsigned int HWREV;
+void TVout_LDO_ctrl(int enable);
 

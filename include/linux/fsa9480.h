@@ -36,8 +36,18 @@ struct fsa9480_platform_data {
 	void (*deskdock_cb) (bool attached);
 	void (*cardock_cb) (bool attached);
 	void (*reset_cb) (void);
+	void (*set_init_flag) (void);
+	void (*set_usb_switch) (void);
 };
 
-extern int fsa9480_get_dock_status(void);
+enum {
+	AUTO_SWITCH = 0,
+	SWITCH_USB_Port,
+	SWITCH_Audio_Port,
+	SWITCH_UART_Port,
+	SWITCH_V_Audio_Port
+};
+
+void fsa9480_manual_switching(int path);
 
 #endif /* _FSA9480_H_ */

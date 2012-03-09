@@ -249,6 +249,26 @@ config MACH_ARIES
 	help
 	  Machine support for Aries
 
+config MACH_P1
+	bool "Samsung Galaxy TAB 7"
+	select CPU_S5PV210
+	select ARCH_DISCONTIGMEM_ENABLE
+	select S3C_DEV_WDT
+	select S3C_DEV_I2C1
+	select S3C_DEV_I2C2
+	select S5P_DEV_ONENAND
+	select HAVE_PWM
+	select SAMSUNG_DEV_PWM
+	select ARCH_HAS_CPUFREQ
+	select S3C_DEV_HSMMC
+	select S3C_DEV_HSMMC1 if !S5PV210_SD_CH0_8BIT
+	select S3C_DEV_HSMMC2
+	select S3C_DEV_HSMMC3 if !S5PV210_SD_CH2_8BIT
+	select S5PV210_SETUP_SDHCI
+	select S5PV210_POWER_DOMAIN
+	help
+	  Machine support for P1
+
 if MACH_ARIES
 choice
 	prompt "Select phone Type"
@@ -314,6 +334,59 @@ config SAMSUNG_EPIC
 endchoice
 endif
 
+if MACH_P1
+choice
+prompt "Select device type"
+config MACH_P1_GSM
+	bool "GSM"
+	depends on MACH_P1
+	help
+		"Galaxy Tab GSM"
+
+config MACH_P1_CDMA
+	bool "CDMA"
+	depends on MACH_P1
+	help
+		"Galaxy Tab CDMA"
+
+endchoice
+endif
+
+if MACH_P1_CDMA
+choice
+prompt "Select device model"
+config SAMSUNG_P1C
+	bool "P1C"
+	depends on MACH_P1_CDMA
+	help
+		"CDMA Device Model"
+
+endchoice
+endif
+
+if MACH_P1_GSM
+choice
+prompt "Select device model"
+config SAMSUNG_P1
+	bool "P1"
+	depends on MACH_P1_GSM
+	help
+		"P1000 Device Model"
+
+config SAMSUNG_P1L
+	bool "P1L"
+	depends on MACH_P1_GSM
+	help
+		"P1000L Device Model"
+
+config SAMSUNG_P1N
+	bool "P1N"
+	depends on MACH_P1_GSM
+	help
+		"P1000N Device Model"
+endchoice
+endif
+
 config S5PV210_SETUP_FB
 	bool
 	depends on FB_S3C
@@ -327,6 +400,13 @@ config S5P_ADC
 	default y
 	help
 	  ADC ( A/D Conversion ) driver for Samsung S5PXXXX
+
+config S5PV210_SETUP_CSIS
+	bool
+	depends on VIDEO_FIMC
+	default y
+	help
+	  Common setup code for MIPI-CSIS
 
 config S5PV210_SETUP_FIMC0
 	bool
@@ -363,4 +443,11 @@ config WIFI_CONTROL_FUNC
        bool "Enable WiFi control function abstraction"
        help
          Enables Power/Reset/Carddetect function abstraction
+
+config SEC_HEADSET
+        tristate "SEC 2 Wire detection driver"
+        help
+         Provides support for detecting SEC 2 wire devices, such as wired
+         headset.
+
 endif

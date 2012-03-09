@@ -63,6 +63,7 @@ extern struct platform_device s3c_device_fb;
 extern struct platform_device s3c_device_fimc0;
 extern struct platform_device s3c_device_fimc1;
 extern struct platform_device s3c_device_fimc2;
+extern struct platform_device s3c_device_csis;
 extern struct platform_device s3c_device_ipc;
 extern struct platform_device s3c_device_mfc;
 extern struct platform_device s3c_device_jpeg;
@@ -197,5 +198,13 @@ extern struct platform_device s3c_device_ac97;
  */
 extern void *s3c_set_platdata(void *pd, size_t pdsize,
 			      struct platform_device *pdev);
+
+extern struct platform_device s5p_device_tvout;
+extern struct platform_device s5p_device_cec;
+extern struct platform_device s5p_device_hpd;
+
+#if defined(CONFIG_VIDEO_TSI)
+extern struct platform_device s3c_device_tsi;
+#endif
 
 #endif /* __PLAT_DEVS_H */

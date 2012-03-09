@@ -3,7 +3,7 @@
  * Clock Other header file for Samsung TVOut driver
  *
  * Copyright (c) 2010 Samsung Electronics
- * http://www.samsung.com/
+ * 	http://www.samsung.com/
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -68,8 +68,8 @@
 /* CLK_SRC2 */
 #define VMIXER_SEL_MOUT_VPLL    (1<<4)
 #define VMIXER_SEL_MASK         (~(1<<4))
-#define HDMI_SEL_HDMIPHY	(1<<0)
-#define HDMI_SEL_MASK		(~(1<<0))
+#define HDMI_SEL_HDMIPHY    	(1<<0)
+#define HDMI_SEL_MASK         	(~(1<<0))
 
 /* CLK_DIV3 */
 #define HDMI_DIV_RATIO(a)   (0xf&(a))

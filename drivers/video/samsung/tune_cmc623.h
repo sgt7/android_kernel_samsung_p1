@@ -126,10 +126,26 @@ static Cmc623RegisterSet Cmc623_InitSeq[] =
     {CMC623_REG_RGBIFEN, 0x0001},  // enable RGB IF
 };
 
-static int cmc623_attach_adapter(struct i2c_adapter *adap); 
+typedef enum
+{
+	CMC623_UI_MODE,
+	CMC623_VIDEO_MODE,
+	CMC623_VIDEO_WARM_MODE,
+	CMC623_VIDEO_COLD_MODE,
+	CMC623_CAMERA_MODE,
+	CMC623_NAVI,
+	CMC623_DMB_MODE,
+	CMC623_VT_MODE,
+	CMC623_GALLERY_MODE,
+}Lcd_CMC623_UI_mode;
 
-extern int tune_cmc623_suspend();
-extern int tune_cmc623_resume();
+extern int tune_cmc623_suspend(void);
+extern int tune_cmc623_pre_resume();
+extern int tune_cmc623_resume(void);
+extern void tune_cmc623_set_lcddata(const struct s3cfb_lcd *);
+extern void tune_cmc623_set_lcd_pclk(int pclk);
+extern void cmc623_Set_Mode_Ext(Lcd_CMC623_UI_mode mode, u8 mDNIe_Outdoor_OnOff);
+extern void cmc623_Set_Region(int enable, int hStart, int hEnd, int vStart, int vEnd);
 
 #if defined(__cplusplus)
 }

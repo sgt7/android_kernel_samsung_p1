@@ -3,7 +3,7 @@
  * cec ftn file for Samsung TVOut driver
  *
  * Copyright (c) 2010 Samsung Electronics
- * http://www.samsungsemi.com/
+ * 	http://www.samsungsemi.com/
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -240,7 +240,7 @@ void __init __s5p_cec_probe(struct platform_device *pdev)
 {
 	struct resource *res;
 	size_t	size;
-	int	ret;
+	int 	ret;
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 

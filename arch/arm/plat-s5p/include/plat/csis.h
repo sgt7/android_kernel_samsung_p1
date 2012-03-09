@@ -25,5 +25,7 @@ struct s3c_platform_csis {
 };
 
 extern void s3c_csis_set_platdata(struct s3c_platform_csis *csis);
+extern void s3c_csis_cfg_gpio(void);
+extern void s3c_csis_cfg_phy_global(int on);
 
 #endif /* __ASM_PLAT_CSIS_H */

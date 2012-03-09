@@ -139,6 +139,8 @@ int regulator_disable(struct regulator *regulator);
 int regulator_force_disable(struct regulator *regulator);
 int regulator_is_enabled(struct regulator *regulator);
 
+void regulator_set_use_count(struct regulator *regulator, int cnt);
+
 int regulator_bulk_get(struct device *dev, int num_consumers,
 		       struct regulator_bulk_data *consumers);
 int regulator_bulk_enable(int num_consumers,

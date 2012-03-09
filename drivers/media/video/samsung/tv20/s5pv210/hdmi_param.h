@@ -3,15 +3,15 @@
  * hdmi parameter header file for Samsung TVOut driver
  *
  * Copyright (c) 2010 Samsung Electronics
- * http://www.samsungsemi.com/
+ * 	http://www.samsungsemi.com/
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
 */
 
-#define PHY_I2C_ADDRESS		0x70
-#define PHY_REG_MODE_SET_DONE	0x1F
+#define PHY_I2C_ADDRESS       	0x70
+#define PHY_REG_MODE_SET_DONE 	0x1F
 
 struct hdmi_v_params {
 	u16 h_blank;
@@ -51,7 +51,7 @@ struct _hdmi_tg_param {
 
 static const struct hdmi_v_params video_params[] = {
 	{ 0xA0 , 0x16A0D, 0x32020D, 0x11B80E, 0xA00C , 1 , 1 , 0, 0, 1,
-	  0,		0,		0,		ePHY_FREQ_25_200,},
+	  0, 		0, 		0, 		ePHY_FREQ_25_200,},
 	{ 0x8A , 0x16A0D, 0x35A20D, 0x11300E, 0x900F , 2 , 3 , 0, 0, 1,
 	  0, 		0, 		0, 		ePHY_FREQ_27_027,},
 	{ 0x172, 0xF2EE , 0x6722EE, 0x2506C , 0x500A , 4 , 4 , 0, 0, 0,

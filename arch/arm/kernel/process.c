@@ -45,7 +45,7 @@ unsigned long __stack_chk_guard __read_mostly;
 EXPORT_SYMBOL(__stack_chk_guard);
 #endif
 
-#ifdef CONFIG_MACH_ARIES
+#ifdef CONFIG_MACH_ARIES || CONFIG_MACH_P1
 #include <mach/regs-clock.h>
 #endif
 
@@ -149,7 +149,7 @@ void arm_machine_restart(char mode, const char *cmd)
 	 */
 	setup_mm_for_reboot(mode);
 
-#ifdef CONFIG_MACH_ARIES
+#ifdef CONFIG_MACH_ARIES || CONFIG_MACH_P1
 	writel(0x12345678, S5P_INFORM5);  /* Turn off low power mode */
 #endif
 

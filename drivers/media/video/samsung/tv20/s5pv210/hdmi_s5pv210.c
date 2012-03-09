@@ -3,7 +3,7 @@
  * hdmi raw ftn  file for Samsung TVOut driver
  *
  * Copyright (c) 2010 Samsung Electronics
- * http://www.samsungsemi.com/
+ * 	http://www.samsungsemi.com/
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -45,40 +45,39 @@ void __iomem		*hdmi_base;
 static struct resource	*i2c_hdmi_phy_mem;
 void __iomem		*i2c_hdmi_phy_base;
 
-spinlock_t	lock_hdmi;
+spinlock_t 	lock_hdmi;
 
 /*
  * i2c_hdmi_phy related
  */
 
-#define PHY_I2C_ADDRESS		0x70
+#define PHY_I2C_ADDRESS       		0x70
 
-#define I2C_ACK			(1<<7)
-#define I2C_INT			(1<<5)
-#define I2C_PEND		(1<<4)
+#define I2C_ACK				(1<<7)
+#define I2C_INT				(1<<5)
+#define I2C_PEND			(1<<4)
 
-#define I2C_INT_CLEAR		(0<<4)
+#define I2C_INT_CLEAR			(0<<4)
 
-#define I2C_CLK			(0<<6)
-#define I2C_CLK_PEND_INT	(I2C_CLK|I2C_INT_CLEAR|I2C_INT)
+#define I2C_CLK				(0x41)
+#define I2C_CLK_PEND_INT		(I2C_CLK|I2C_INT_CLEAR|I2C_INT)
 
-#define I2C_ENABLE		(1<<4)
-#define I2C_START		(1<<5)
+#define I2C_ENABLE			(1<<4)
+#define I2C_START			(1<<5)
 
-#define I2C_MODE_MTX		(0x3<<6)
-#define I2C_MODE_MRX		(0x2<<6)
-#define I2C_MODE_SRX		(0x0<<6)
+#define I2C_MODE_MTX			0xC0
+#define I2C_MODE_MRX			0x80
 
-#define I2C_IDLE		0
+#define I2C_IDLE			0
 
 static struct {
 	s32    state;
-	u8	*buffer;
+	u8 	*buffer;
 	s32    bytes;
 } i2c_hdmi_phy_context;
 
 
-#define STATE_IDLE		0
+#define STATE_IDLE 		0
 #define STATE_TX_EDDC_SEGADDR	1
 #define STATE_TX_EDDC_SEGNUM	2
 #define STATE_TX_DDC_ADDR	3
@@ -324,13 +323,6 @@ int hdmi_phy_down(bool on, u8 addr, u8 offset, u8 *read_buffer)
 
 int __s5p_hdmi_phy_power(bool on)
 {
-#if !defined(CONFIG_MACH_P1)
-    /* for the case that
-      - only analog tv is supported
-      - and the power for the hdmi phy is not supported*/
-     return 0;
-#endif
-
 	u32 size;
 	u8 *buffer;
 	u8 read_buffer[0x40] = {0, };
@@ -446,7 +438,7 @@ s32 hdmi_phy_config(enum phy_freq freq, enum s5p_hdmi_color_depth cd)
 	}
 
 #ifdef S5P_HDMI_DEBUG
-	{
+{
 	int i = 0;
 	u8 read_buffer[0x40] = {0, };
 
@@ -898,9 +890,9 @@ void __s5p_hdmi_audio_set_aui(enum s5p_tv_audio_codec_type audio_codec,
 	u8 sum_of_bits, bytes1, bytes2, bytes3, check_sum;
 #if 1
 	/* Fix TestID 7-31 Audio InfoFrame issue*/
-	u32	bit_rate;
+	u32 bit_rate;
 	u32	type = 0;
-	u32	ch = (audio_codec == PCM) ? 1 : 0;
+	u32	ch = (audio_codec == PCM)?1:0;
 	u32	sample = 0;
 	u32	bpsType = 0;
 #else
@@ -1127,69 +1119,69 @@ enum s5p_tv_hdmi_err __s5p_hdmi_init_spd_infoframe(
 	}
 
 	HDMIPRINTK("SPD_CON = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_CON));
+		readl(hdmi_base + S5P_SPD_CON));
 	HDMIPRINTK("SPD_HEADER0 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_HEADER0));
+		readl(hdmi_base + S5P_SPD_HEADER0));
 	HDMIPRINTK("SPD_HEADER1 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_HEADER1));
+		readl(hdmi_base + S5P_SPD_HEADER1));
 	HDMIPRINTK("SPD_HEADER2 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_HEADER2));
+		readl(hdmi_base + S5P_SPD_HEADER2));
 	HDMIPRINTK("SPD_DATA0  = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA0));
+		readl(hdmi_base + S5P_SPD_DATA0));
 	HDMIPRINTK("SPD_DATA1  = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA1));
+		readl(hdmi_base + S5P_SPD_DATA1));
 	HDMIPRINTK("SPD_DATA2  = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA2));
+		readl(hdmi_base + S5P_SPD_DATA2));
 	HDMIPRINTK("SPD_DATA3  = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA3));
+		readl(hdmi_base + S5P_SPD_DATA3));
 	HDMIPRINTK("SPD_DATA4  = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA4));
+		readl(hdmi_base + S5P_SPD_DATA4));
 	HDMIPRINTK("SPD_DATA5  = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA5));
+		readl(hdmi_base + S5P_SPD_DATA5));
 	HDMIPRINTK("SPD_DATA6  = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA6));
+		readl(hdmi_base + S5P_SPD_DATA6));
 	HDMIPRINTK("SPD_DATA7  = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA7));
+		readl(hdmi_base + S5P_SPD_DATA7));
 	HDMIPRINTK("SPD_DATA8  = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA8));
+		readl(hdmi_base + S5P_SPD_DATA8));
 	HDMIPRINTK("SPD_DATA9  = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA9));
+		readl(hdmi_base + S5P_SPD_DATA9));
 	HDMIPRINTK("SPD_DATA10 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA10));
+		readl(hdmi_base + S5P_SPD_DATA10));
 	HDMIPRINTK("SPD_DATA11 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA11));
+		readl(hdmi_base + S5P_SPD_DATA11));
 	HDMIPRINTK("SPD_DATA12 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA12));
+		readl(hdmi_base + S5P_SPD_DATA12));
 	HDMIPRINTK("SPD_DATA13 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA13));
+		readl(hdmi_base + S5P_SPD_DATA13));
 	HDMIPRINTK("SPD_DATA14 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA14));
+		readl(hdmi_base + S5P_SPD_DATA14));
 	HDMIPRINTK("SPD_DATA15 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA15));
+		readl(hdmi_base + S5P_SPD_DATA15));
 	HDMIPRINTK("SPD_DATA16 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA16));
+		readl(hdmi_base + S5P_SPD_DATA16));
 	HDMIPRINTK("SPD_DATA17 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA17));
+		readl(hdmi_base + S5P_SPD_DATA17));
 	HDMIPRINTK("SPD_DATA18 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA18));
+		readl(hdmi_base + S5P_SPD_DATA18));
 	HDMIPRINTK("SPD_DATA19 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA19));
+		readl(hdmi_base + S5P_SPD_DATA19));
 	HDMIPRINTK("SPD_DATA20 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA20));
+		readl(hdmi_base + S5P_SPD_DATA20));
 	HDMIPRINTK("SPD_DATA21 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA21));
+		readl(hdmi_base + S5P_SPD_DATA21));
 	HDMIPRINTK("SPD_DATA22 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA22));
+		readl(hdmi_base + S5P_SPD_DATA22));
 	HDMIPRINTK("SPD_DATA23 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA23));
+		readl(hdmi_base + S5P_SPD_DATA23));
 	HDMIPRINTK("SPD_DATA24 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA24));
+		readl(hdmi_base + S5P_SPD_DATA24));
 	HDMIPRINTK("SPD_DATA25 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA25));
+		readl(hdmi_base + S5P_SPD_DATA25));
 	HDMIPRINTK("SPD_DATA26 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA26));
+		readl(hdmi_base + S5P_SPD_DATA26));
 	HDMIPRINTK("SPD_DATA27 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_SPD_DATA27));
+		readl(hdmi_base + S5P_SPD_DATA27));
 
 	return HDMI_NO_ERROR;
 }
@@ -1258,7 +1250,7 @@ static void __s5p_hdmi_audio_i2s_config(
 	/* Configure register related to CUV information */
 	writel((readl(hdmi_base + S5P_HDMI_I2S_CH_ST_0) &
 		~(3<<6 | 7<<3 | 1<<2 | 1<<1 | 1<<0))
-		| (0<<6 | 0<<3 | 0<<2 | 0<<1 | 1<<0),
+		| (0<<6 | 0<<3 | 0<<2 | 0<<1 | 0<<0),
 		hdmi_base + S5P_HDMI_I2S_CH_ST_0);
 	writel((readl(hdmi_base + S5P_HDMI_I2S_CH_ST_1) &
 		~(0xff<<0)) | (0<<0),
@@ -1487,13 +1479,13 @@ void __s5p_hdmi_video_init_color_range(u8 y_min,
 	writel(c_min, hdmi_base + S5P_HDMI_CMIN);
 
 	HDMIPRINTK("HDMI_YMAX = 0x%08x \n\r",
-			readl(hdmi_base + S5P_HDMI_YMAX));
+		readl(hdmi_base + S5P_HDMI_YMAX));
 	HDMIPRINTK("HDMI_YMIN = 0x%08x \n\r",
-			readl(hdmi_base + S5P_HDMI_YMIN));
+		readl(hdmi_base + S5P_HDMI_YMIN));
 	HDMIPRINTK("HDMI_CMAX = 0x%08x \n\r",
-			readl(hdmi_base + S5P_HDMI_CMAX));
+		readl(hdmi_base + S5P_HDMI_CMAX));
 	HDMIPRINTK("HDMI_CMIN = 0x%08x \n\r",
-			readl(hdmi_base + S5P_HDMI_CMIN));
+		readl(hdmi_base + S5P_HDMI_CMIN));
 }
 
 enum s5p_tv_hdmi_err __s5p_hdmi_video_init_csc(
@@ -1674,33 +1666,33 @@ enum s5p_tv_hdmi_err __s5p_hdmi_video_init_avi_infoframe(
 
 	HDMIPRINTK("AVI_CON = 0x%08x \n\r", readl(hdmi_base + S5P_AVI_CON));
 	HDMIPRINTK("AVI_CHECK_SUM = 0x%08x \n\r",
-			readl(hdmi_base + S5P_AVI_CHECK_SUM));
+		readl(hdmi_base + S5P_AVI_CHECK_SUM));
 	HDMIPRINTK("AVI_BYTE1  = 0x%08x \n\r",
-			readl(hdmi_base + S5P_AVI_BYTE1));
+		readl(hdmi_base + S5P_AVI_BYTE1));
 	HDMIPRINTK("AVI_BYTE2  = 0x%08x \n\r",
-			readl(hdmi_base + S5P_AVI_BYTE2));
+		readl(hdmi_base + S5P_AVI_BYTE2));
 	HDMIPRINTK("AVI_BYTE3  = 0x%08x \n\r",
-			readl(hdmi_base + S5P_AVI_BYTE3));
+		readl(hdmi_base + S5P_AVI_BYTE3));
 	HDMIPRINTK("AVI_BYTE4  = 0x%08x \n\r",
-			readl(hdmi_base + S5P_AVI_BYTE4));
+		readl(hdmi_base + S5P_AVI_BYTE4));
 	HDMIPRINTK("AVI_BYTE5  = 0x%08x \n\r",
-			readl(hdmi_base + S5P_AVI_BYTE5));
+		readl(hdmi_base + S5P_AVI_BYTE5));
 	HDMIPRINTK("AVI_BYTE6  = 0x%08x \n\r",
-			readl(hdmi_base + S5P_AVI_BYTE6));
+		readl(hdmi_base + S5P_AVI_BYTE6));
 	HDMIPRINTK("AVI_BYTE7  = 0x%08x \n\r",
-			readl(hdmi_base + S5P_AVI_BYTE7));
+		readl(hdmi_base + S5P_AVI_BYTE7));
 	HDMIPRINTK("AVI_BYTE8  = 0x%08x \n\r",
-			readl(hdmi_base + S5P_AVI_BYTE8));
+		readl(hdmi_base + S5P_AVI_BYTE8));
 	HDMIPRINTK("AVI_BYTE9  = 0x%08x \n\r",
-			readl(hdmi_base + S5P_AVI_BYTE9));
+		readl(hdmi_base + S5P_AVI_BYTE9));
 	HDMIPRINTK("AVI_BYTE10 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_AVI_BYTE10));
+		readl(hdmi_base + S5P_AVI_BYTE10));
 	HDMIPRINTK("AVI_BYTE11 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_AVI_BYTE11));
+		readl(hdmi_base + S5P_AVI_BYTE11));
 	HDMIPRINTK("AVI_BYTE12 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_AVI_BYTE12));
+		readl(hdmi_base + S5P_AVI_BYTE12));
 	HDMIPRINTK("AVI_BYTE13 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_AVI_BYTE13));
+		readl(hdmi_base + S5P_AVI_BYTE13));
 
 	return HDMI_NO_ERROR;
 }
@@ -1751,19 +1743,19 @@ enum s5p_tv_hdmi_err __s5p_hdmi_video_init_mpg_infoframe(
 	       hdmi_base + S5P_MPEG_BYTE5);
 
 	HDMIPRINTK("MPG_CON = 0x%08x \n\r",
-			readl(hdmi_base + S5P_MPG_CON));
+		   readl(hdmi_base + S5P_MPG_CON));
 	HDMIPRINTK("MPG_CHECK_SUM = 0x%08x \n\r",
-			readl(hdmi_base + S5P_MPG_CHECK_SUM));
+		   readl(hdmi_base + S5P_MPG_CHECK_SUM));
 	HDMIPRINTK("MPEG_BYTE1 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_MPEG_BYTE1));
+		   readl(hdmi_base + S5P_MPEG_BYTE1));
 	HDMIPRINTK("MPEG_BYTE2 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_MPEG_BYTE2));
+		   readl(hdmi_base + S5P_MPEG_BYTE2));
 	HDMIPRINTK("MPEG_BYTE3 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_MPEG_BYTE3));
+		   readl(hdmi_base + S5P_MPEG_BYTE3));
 	HDMIPRINTK("MPEG_BYTE4 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_MPEG_BYTE4));
+		   readl(hdmi_base + S5P_MPEG_BYTE4));
 	HDMIPRINTK("MPEG_BYTE5 = 0x%08x \n\r",
-			readl(hdmi_base + S5P_MPEG_BYTE5));
+		   readl(hdmi_base + S5P_MPEG_BYTE5));
 
 	return HDMI_NO_ERROR;
 }

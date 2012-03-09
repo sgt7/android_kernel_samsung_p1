@@ -53,3 +53,4 @@ obj-$(CONFIG_KEYBOARD_XTKBD)		+= xtkbd.o
 obj-$(CONFIG_KEYBOARD_W90P910)		+= w90p910_keypad.o
 obj-$(CONFIG_KEYPAD_CYPRESS_TOUCH)	+= cypress-touchkey.o
 obj-$(CONFIG_KEYPAD_CYPRESS_TOUCH)	+= cypress-touchkey-firmware.o
+obj-$(CONFIG_KEYBOARD_P1)   += p1_keyboard.o

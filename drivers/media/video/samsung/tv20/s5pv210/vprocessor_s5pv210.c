@@ -3,7 +3,7 @@
  * Video Processor raw ftn  file for Samsung TVOut driver
  *
  * Copyright (c) 2010 Samsung Electronics
- * http://www.samsungsemi.com/
+ * 	http://www.samsungsemi.com/
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -259,7 +259,7 @@ void __s5p_vp_set_poly_filter_coef_default(u32 h_ratio, u32 v_ratio)
 
 	/* Vertical Y 4tap */
 
-	if (v_ratio <= (0x1 << 16))		/* 720->720 or zoom in*/
+	if (v_ratio <= (0x1 << 16))          	/* 720->720 or zoom in*/
 		e_v_filter = VPROC_PP_V_NORMAL;
 	else if (v_ratio <= (0x5 << 14))	/* 4->3*/
 		e_v_filter = VPROC_PP_V_3_4;

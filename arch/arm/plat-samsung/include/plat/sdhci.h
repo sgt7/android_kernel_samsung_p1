@@ -88,6 +88,14 @@ struct s3c_sdhci_platdata {
 	int		rx_cfg;
 	int		tx_cfg;
 
+	/* add to deal with EXT_IRQ as a card detect pin */
+	void            (*cfg_ext_cd) (void);
+	unsigned int    (*detect_ext_cd) (void);
+#ifdef CONFIG_MACH_P1
+	void            (*translate_vdd)(struct platform_device *pdev, unsigned int vdd);
+#endif
+	unsigned int    ext_cd;
+
         /* add to deal with non-removable device */
         int     built_in;
 

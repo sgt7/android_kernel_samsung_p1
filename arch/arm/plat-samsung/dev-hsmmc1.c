@@ -82,4 +82,6 @@ void s3c_sdhci1_set_platdata(struct s3c_sdhci_platdata *pd)
 		set->must_maintain_clock = pd->must_maintain_clock;
 	if (pd->enable_intr_on_resume)
 		set->enable_intr_on_resume = pd->enable_intr_on_resume;
+	if (pd->translate_vdd)
+		set->translate_vdd = pd->translate_vdd;
 }

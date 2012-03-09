@@ -144,7 +144,7 @@ struct clk_should_be_running s5pv210_pd_cam_clk[] = {
 		.dev		= &s3c_device_fimc2.dev,
 	}, {
 		.clk_name	= "sclk_csis",
-		.dev		= &s5p_device_mipi_csis0.dev,
+		.dev		= &s3c_device_csis.dev,
 	}, {
 		.clk_name	= "jpeg",
 		.dev		= &s3c_device_jpeg.dev,

@@ -20,14 +20,18 @@ struct sec_switch_platform_data {
 	void (*set_usb_gadget_vbus) (bool en);
 	int (*get_cable_status) (void);
 	int (*get_phy_init_status) (void);
+	int (*get_regulator) (void);
+	void (*set_regulator) (int mode);
+	void (*set_switch_status) (int val);
 };
 
 #define SWITCH_MODEM	0
 #define SWITCH_PDA	1
 
-#define USB_VBUS_ALL_OFF 0
-#define USB_VBUS_CP_ON	 1
-#define USB_VBUS_AP_ON	 2
-#define USB_VBUS_ALL_ON	 3
+enum {
+	AP_VBUS_ON = 0,
+	CP_VBUS_ON,
+	AP_VBUS_OFF,
+};
 
 #endif
