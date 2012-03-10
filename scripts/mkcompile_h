@@ -64,7 +64,7 @@ UTS_TRUNCATE="cut -b -$UTS_LEN"
   echo \#define UTS_VERSION \"`echo $UTS_VERSION | $UTS_TRUNCATE`\"
 
   echo \#define LINUX_COMPILE_TIME \"`date +%T`\"
-  echo \#define LINUX_COMPILE_BY \"`echo SGT7-ICS-Te4m`\"
+  echo \#define LINUX_COMPILE_BY \"`echo SGT7-ICS-TE4M`\"
   echo \#define LINUX_COMPILE_HOST \"``\"
 
   domain=`dnsdomainname 2> /dev/null`
