@@ -1,4 +1,4 @@
-..#
+#
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.35.7
 # Mon Jun 20 04:43:41 2011
@@ -158,6 +158,7 @@ CONFIG_MODULE_UNLOAD=y
 CONFIG_MODULE_FORCE_UNLOAD=y
 # CONFIG_MODVERSIONS is not set
 # CONFIG_MODULE_SRCVERSION_ALL is not set
+CONFIG_MODULE_LOOSE_VERMAGIC=y
 CONFIG_BLOCK=y
 CONFIG_LBDAF=y
 # CONFIG_BLK_DEV_BSG is not set
