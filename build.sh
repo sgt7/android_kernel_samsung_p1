@@ -8,7 +8,20 @@ setup ()
     fi
     . "$ANDROID_BUILD_TOP"/build/envsetup.sh
 
-    KERNEL_DIR="$(dirname "$(readlink -f "$0")")"
+#   Arch-dependent definitions
+    case `uname -s` in
+        Darwin)
+            KERNEL_DIR="$(dirname "$(greadlink -f "$0")")"
+            CROSS_PREFIX="$ANDROID_BUILD_TOP/prebuilt/darwin-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi-"
+            ;;
+        *)
+            KERNEL_DIR="$(dirname "$(readlink -f "$0")")"
+            CROSS_PREFIX="$ANDROID_BUILD_TOP/prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi-"
+            ;;
+    esac
+
+#   Moved to Arch-dependent section above
+#   KERNEL_DIR="$(dirname "$(readlink -f "$0")")"
     BUILD_DIR="$KERNEL_DIR/build"
     MODULES=("fs/cifs/cifs.ko" "fs/fuse/fuse.ko" "fs/nls/nls_utf8.ko")
 
@@ -22,7 +35,8 @@ setup ()
         CCACHE=""
     fi
 
-    CROSS_PREFIX="$ANDROID_BUILD_TOP/prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi-"
+#   Moved to Arch-dependent section above
+#   CROSS_PREFIX="$ANDROID_BUILD_TOP/prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi-"
 }
 
 build ()
