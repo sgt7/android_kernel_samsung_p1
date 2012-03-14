@@ -121,9 +121,6 @@ source "sound/oss/Kconfig"
 
 endif # SOUND_PRIME
 
-# S5PC110 SRP Driver
-source "sound/s5p-rp/Kconfig"
-
 endif # !M68K
 
 endif # SOUND
