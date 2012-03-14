@@ -258,7 +258,6 @@ extern void osl_dma_unmap(osl_t *osh, uint pa, uint size, int direction);
 #define PKTLIST_DUMP(osh, buf)
 
 extern void *osl_pktget(osl_t *osh, uint len);
-extern void *osl_pktget_kernel(osl_t *osh, uint len);
 extern void osl_pktfree(osl_t *osh, void *skb, bool send);
 extern void *osl_pktget_static(osl_t *osh, uint len);
 extern void osl_pktfree_static(osl_t *osh, void *skb, bool send);

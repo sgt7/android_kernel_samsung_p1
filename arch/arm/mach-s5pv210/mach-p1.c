@@ -1571,7 +1571,6 @@ static struct platform_device s3c_device_i2c13 = {
 	.dev.platform_data	= &i2c13_platdata,
 };
 
-#endif
 
 #if defined(CONFIG_MACH_P1_LTN) && defined(CONFIG_VIDEO_NM6XX)
 static	struct	i2c_gpio_platform_data	i2c15_platdata = {
