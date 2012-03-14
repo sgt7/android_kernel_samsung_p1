@@ -4601,6 +4601,12 @@ void s3c_config_sleep_gpio_table(int array_size, unsigned int (*gpio_table)[3])
 
 void s3c_config_sleep_gpio(void)
 {
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+	// Reported to cause battery drain and other things on captivate, so we'll
+	// disable this for now.
+	return;
+#endif
+
 	/* setting the alive mode registers */
 #if defined(CONFIG_SAMSUNG_FASCINATE) || defined(CONFIG_SAMSUNG_CAPTIVATE)
 	s3c_gpio_cfgpin(S5PV210_GPH0(0), S3C_GPIO_INPUT);
