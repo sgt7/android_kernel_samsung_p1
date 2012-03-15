@@ -38,9 +38,9 @@ build ()
     mka -C "$KERNEL_DIR" O="$target_dir" ${target}\_cm9_defconfig HOSTCC="$CCACHE gcc"
     mka -C "$KERNEL_DIR" O="$target_dir" HOSTCC="$CCACHE gcc" CROSS_COMPILE="$CCACHE $CROSS_PREFIX" zImage modules
     if [ "$target_dir" == p1 ]; then
-    cp "$target_dir"/arch/arm/boot/zImage $ANDROID_BUILD_TOP/device/samsung/galaxytab/kernel
+    cp "$target_dir"/arch/arm/boot/zImage $ANDROID_BUILD_TOP/device/samsung/p1/kernel
     else
-    cp "$target_dir"/arch/arm/boot/zImage $ANDROID_BUILD_TOP/device/samsung/galaxytab/kernel-$target
+    cp "$target_dir"/arch/arm/boot/zImage $ANDROID_BUILD_TOP/device/samsung/p1/kernel-$target
     fi
 }
 
@@ -53,7 +53,7 @@ fi
 
 targets=("$@")
 if [ 0 = "${#targets[@]}" ] ; then
-    targets=(p1 p1c p1l p1n)
+    targets=(p1 p1l p1n)
 fi
 
 START=$(date +%s)
