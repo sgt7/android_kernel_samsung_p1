@@ -4,9 +4,7 @@ export PATH=/stage1
 
 busybox cd /
 busybox date >>boot.txt
-busybox mount -t vfat /dev/block/mmcblk0p1 /sdcard
-busybox mv /sdcard/boot.txt /sdcard/boot-old.txt
-exec >> /sdcard/boot.txt 2>&1
+exec >>boot.txt 2>&1
 busybox rm init
 busybox mount -t proc proc /proc
 busybox mount -t sysfs sysfs /sys
@@ -31,10 +29,10 @@ if busybox test -e /cache/.startrecovery || [ `busybox cat /proc/cmdline | busyb
 	busybox echo 0 > /sys/class/power_supply/battery/charging_mode_booting
 elif ! busybox test -e /system/build.prop ; then
 	# emergency boot
-        busybox umount /cache
-        erase_image cache
-        busybox mount -t yaffs2 /dev/block/mtdblock3 /cache
-        busybox mkdir /cache/recovery
+	busybox umount /cache
+	erase_image cache
+	busybox mount -t yaffs2 /dev/block/mtdblock3 /cache
+	busybox mkdir /cache/recovery
 
 	busybox mount -t vfat /dev/block/mmcblk0p1 /sdcard	
 
@@ -42,7 +40,7 @@ elif ! busybox test -e /system/build.prop ; then
 
 	if busybox test -e $UPDATE ; then
 		busybox echo "install_zip(\"`echo $UPDATE`\");" > /cache/recovery/extendedcommand
-  	fi
+	fi
 
 	load_offset=$recovery_offset
 	load_len=$recovery_len
