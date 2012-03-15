@@ -492,11 +492,11 @@ config STORAGE_DGS
 	help
 	  Say Y to readable dgs I/F support.
 
-config GENERIC_BLN
-       bool "Generic BLN support for backlight notification"
-       default y
-       help
-         Say Y here to enable the backlight notification
-         for android led-notification (modified liblight needed)
+config SAMSUNG_PARAM
+	bool "Samsung Param Driver"
+	depends on MACH_P1
+	default n
+	help
+	  Driver for communication with Samsung's secondary bootloader
 
 endif # MISC_DEVICES

@@ -167,11 +167,11 @@ static ssize_t show_sim(struct device *d,
 static ssize_t show_phoneactive(struct device *d,
 		struct device_attribute *attr, char *buf);
 
-static DEVICE_ATTR(control, S_IRUSR | S_IRGRP | S_IWUSR | S_IWGRP, show_control, store_control);
-static DEVICE_ATTR(status, S_IRUGO, show_status, NULL);
-static DEVICE_ATTR(debug, S_IRUGO, show_debug, NULL);
-static DEVICE_ATTR(sim, S_IRUGO, show_sim, NULL);
-static DEVICE_ATTR(phoneactive, S_IRUGO, show_phoneactive, NULL);
+static DEVICE_ATTR(control, 0664, show_control, store_control);
+static DEVICE_ATTR(status, 0664, show_status, NULL);
+static DEVICE_ATTR(debug, 0664, show_debug, NULL);
+static DEVICE_ATTR(sim, 0664, show_sim, NULL);
+static DEVICE_ATTR(phoneactive, 0664, show_phoneactive, NULL);
 
 static struct attribute *modemctl_attributes[] = {
 	&dev_attr_control.attr,
@@ -542,6 +542,7 @@ static ssize_t show_phoneactive(struct device *d,
 static ssize_t show_debug(struct device *d,
 		struct device_attribute *attr, char *buf)
 {
+	/*
 	char *p = buf;
 	int i;
 	struct modemctl *mc = dev_get_drvdata(d);
@@ -584,8 +585,8 @@ static ssize_t show_debug(struct device *d,
 		}
 		p += sprintf(p, "%s\n", mdmctl_info[i].name);
 	}
-
-	return p - buf;
+*/
+	return 0;
 }
 
 static void mc_work(struct work_struct *work)

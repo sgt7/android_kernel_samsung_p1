@@ -1430,14 +1430,7 @@ static int nm6xx_set_white_balance(struct v4l2_subdev *sd, struct v4l2_control *
 		break;
 
 		case WHITE_BALANCE_SUNNY:
-		case WHITE_BALANCE_DAYLIGHT:
-			err = nm6xx_write_regs(sd, \
-				nm6xx_WB_Sunny, \
-				sizeof(nm6xx_WB_Sunny) / sizeof(nm6xx_WB_Sunny[0]), \
-				"nm6xx_WB_Sunny");
-		break;
-
-		case WHITE_BALANCE_CLOUDY_DAYLIGHT:
+		case WHITE_BALANCE_CLOUDY:
 			err = nm6xx_write_regs(sd, \
 				nm6xx_WB_Cloudy, \
 				sizeof(nm6xx_WB_Cloudy) / sizeof(nm6xx_WB_Cloudy[0]), \
@@ -1445,7 +1438,6 @@ static int nm6xx_set_white_balance(struct v4l2_subdev *sd, struct v4l2_control *
 		break;
 
 		case WHITE_BALANCE_TUNGSTEN:
-		case WHITE_BALANCE_INCANDESCENT:
 			err = nm6xx_write_regs(sd, \
 				nm6xx_WB_Tungsten, \
 				sizeof(nm6xx_WB_Tungsten) / sizeof(nm6xx_WB_Tungsten[0]), \

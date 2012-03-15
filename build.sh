@@ -37,7 +37,11 @@ build ()
     sed "s|usr/|$KERNEL_DIR/usr/|g" -i "$target_dir/usr/"*.list
     mka -C "$KERNEL_DIR" O="$target_dir" ${target}\_cm9_defconfig HOSTCC="$CCACHE gcc"
     mka -C "$KERNEL_DIR" O="$target_dir" HOSTCC="$CCACHE gcc" CROSS_COMPILE="$CCACHE $CROSS_PREFIX" zImage modules
+    if [ "$target_dir" == p1 ]; then
+    cp "$target_dir"/arch/arm/boot/zImage $ANDROID_BUILD_TOP/device/samsung/galaxytab/kernel
+    else
     cp "$target_dir"/arch/arm/boot/zImage $ANDROID_BUILD_TOP/device/samsung/galaxytab/kernel-$target
+    fi
 }
 
 setup

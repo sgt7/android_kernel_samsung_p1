@@ -582,18 +582,17 @@ void __init s3cfb_set_platdata(struct s3c_platform_fb *pd)
 		for (i = 0; i < npd->nr_wins; i++)
 			npd->nr_buffers[i] = 1;
 
+		default_win = npd->default_win;
+		num_overlay_win = CONFIG_FB_S3C_NUM_OVLY_WIN;
 
-	default_win = npd->default_win;
-	num_overlay_win = CONFIG_FB_S3C_NUM_OVLY_WIN;
+		if (num_overlay_win >= default_win) {
+			printk(KERN_WARNING "%s: NUM_OVLY_WIN should be less than default \
+					window number. set to 0.\n", __func__);
+			num_overlay_win = 0;
+		}
 
-	if (num_overlay_win >= default_win) {
-		printk(KERN_WARNING "%s: NUM_OVLY_WIN should be less than default \
-			window number. set to 0.\n", __func__);
-	num_overlay_win = 0;
-	}
-
-	for (i = 0; i < num_overlay_win; i++)
-		npd->nr_buffers[i] = CONFIG_FB_S3C_NUM_BUF_OVLY_WIN;
+		for (i = 0; i < num_overlay_win; i++)
+			npd->nr_buffers[i] = CONFIG_FB_S3C_NUM_BUF_OVLY_WIN;
 		npd->nr_buffers[default_win] = CONFIG_FB_S3C_NR_BUFFERS;
 
 	lcd = (struct s3cfb_lcd *)npd->lcd;
