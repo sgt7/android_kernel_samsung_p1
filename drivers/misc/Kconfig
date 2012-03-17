@@ -477,12 +477,6 @@ config VIBTONZ
 	help
 	  Say Y to enable Vibetonz support.
 
-config LEVEL
-	tristate "level_debug"
-	default y
-	help
-	  Say Y to enable debug level I/F support.
-
 config STORAGE_DGS
 	tristate "readable dgs"
 	default m

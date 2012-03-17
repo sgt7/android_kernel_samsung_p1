@@ -23,9 +23,6 @@
 #include <linux/init.h>
 #include <linux/nmi.h>
 #include <linux/dmi.h>
-#ifdef CONFIG_KERNEL_DEBUG_SEC
-#include <linux/kernel_sec_common.h>
-#endif
 
 int panic_on_oops;
 static unsigned long tainted_mask;
@@ -130,17 +127,11 @@ NORET_TYPE void panic(const char * fmt, ...)
 		 */
 		printk(KERN_EMERG "Rebooting in %d seconds..", panic_timeout);
 
-#ifndef CONFIG_KERNEL_DEBUG_SEC
 		for (i = 0; i < panic_timeout; i++) {
 			touch_nmi_watchdog();
 			panic_blink_one_second();
 		}
-#else
-		kernel_sec_set_cp_upload(); 
-		kernel_sec_save_final_context();
-		kernel_sec_set_upload_cause(UPLOAD_CAUSE_KERNEL_PANIC);
-		kernel_sec_hw_reset(false);
-#endif
+
 		/*
 		 * This will not be a clean reboot, with everything
 		 * shutting down.  But if there is a chance of
@@ -164,18 +155,13 @@ NORET_TYPE void panic(const char * fmt, ...)
 		disabled_wait(caller);
 	}
 #endif
-#ifndef CONFIG_KERNEL_DEBUG_SEC	
+
 	local_irq_enable();
 	while (1) {
 		touch_softlockup_watchdog();
 		panic_blink_one_second();
 	}
-#else
-	kernel_sec_set_cp_upload(); 
-	kernel_sec_save_final_context();
-	kernel_sec_set_upload_cause(UPLOAD_CAUSE_KERNEL_PANIC);
-	kernel_sec_hw_reset(false);
-#endif		
+
 }
 
 EXPORT_SYMBOL(panic);

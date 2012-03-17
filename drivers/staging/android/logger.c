@@ -33,10 +33,6 @@
 static char klog_buf[256];
 //}} pass platform log to kernel - 1/3
 
-#ifdef CONFIG_KERNEL_DEBUG_SEC
-#include <linux/kernel_sec_common.h>
-#endif
-
 /*
  *  Mark for GetLog (tkhwang)
  */ 

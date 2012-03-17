@@ -1104,19 +1104,6 @@ source "drivers/pcmcia/Kconfig"
 
 endmenu
 
-menu "Samsung Kernel Debug Features"
-
-choice
-        prompt "Enable Samsung Kernel Debug Features"
-        default KERNEL_DEBUG_SEC
-
-config KERNEL_DEBUG_SEC
-        bool "KERNEL_DEBUG_SEC"
-
-endchoice
-
-endmenu
-
 menu "Kernel Features"
 
 source "kernel/time/Kconfig"

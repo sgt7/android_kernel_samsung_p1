@@ -40,7 +40,6 @@ obj-$(CONFIG_USB_SWITCH_FSA9480)	+= fsa9480.o
 obj-$(CONFIG_SAMSUNG_MODEMCTL) += samsung_modemctl/
 obj-$(CONFIG_SAMSUNG_DPRAM)	+= dpram/
 obj-$(CONFIG_VIBTONZ)		+= vibtonz/
-obj-$(CONFIG_LEVEL)			+= level/
 obj-$(CONFIG_30PIN_CONN)	+= 30pin_con.o
 obj-$(CONFIG_MHL_SII9234)	+= sii9234.o
 obj-$(CONFIG_SAMSUNG_PARAM)  += param/
