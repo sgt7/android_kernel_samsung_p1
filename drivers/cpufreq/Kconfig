@@ -284,6 +284,28 @@ config CPU_FREQ_GOV_ONDEMAND
 
 	  If in doubt, say N.
 
+config CPU_FREQ_GOV_ONDEMAND_FLEXRATE
+	bool "flexrate interface for 'ondemand' cpufreq policy governor"
+	depends on CPU_FREQ_GOV_ONDEMAND
+	help
+	  Flexrate for 'ondemand' governor provides an interface to request
+	  faster polling temporarily. This is to let it react quickly to
+	  load changes when there is high probablity of load increase
+	  in short time. For example, when a user event occurs, we have
+	  use this interface. It does not increase the frequency
+	  unconditionally; however, it allows ondemand to react fast
+	  by temporarily decreasing sampling rate. Flexrate provides both
+	  sysfs interface and in-kernel interface.
+
+config CPU_FREQ_GOV_ONDEMAND_FLEXRATE_MAX_DURATION
+	int "flexrate's maximum duration of sampling rate override"
+	range 5 500
+	depends on CPU_FREQ_GOV_ONDEMAND_FLEXRATE
+	default "100"
+	help
+	  The maximum number of ondemand sampling whose rate is
+	  overriden by Flexrate for ondemand.
+
 config CPU_FREQ_GOV_ONDEMANDX
   tristate "'ondemandx' cpufreq policy governor"
   select CPU_FREQ_TABLE
