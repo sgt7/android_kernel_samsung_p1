@@ -196,6 +196,11 @@ extern int __cpufreq_driver_getavg(struct cpufreq_policy *policy,
 int cpufreq_register_governor(struct cpufreq_governor *governor);
 void cpufreq_unregister_governor(struct cpufreq_governor *governor);
 
+int lock_policy_rwsem_read(int cpu);
+int lock_policy_rwsem_write(int cpu);
+void unlock_policy_rwsem_read(int cpu);
+void unlock_policy_rwsem_write(int cpu);
+
 
 /*********************************************************************
  *                      CPUFREQ DRIVER INTERFACE                     *
@@ -230,7 +235,7 @@ struct cpufreq_driver {
 	int	(*bios_limit)	(int cpu, unsigned int *limit);
 
 	int	(*exit)		(struct cpufreq_policy *policy);
-	int	(*suspend)	(struct cpufreq_policy *policy);
+	int	(*suspend)	(struct cpufreq_policy *policy, pm_message_t pmsg);
 	int	(*resume)	(struct cpufreq_policy *policy);
 	struct freq_attr	**attr;
 };
@@ -332,17 +337,6 @@ static inline unsigned int cpufreq_get(unsigned int cpu)
 unsigned int cpufreq_quick_get(unsigned int cpu);
 #else
 static inline unsigned int cpufreq_quick_get(unsigned int cpu)
-{
-	return 0;
-}
-#endif
-
-#ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_FLEXRATE
-extern int cpufreq_ondemand_flexrate_request(unsigned int rate_ms,
-					     unsigned int duration);
-#else
-static inline int cpufreq_ondemand_flexrate_request(unsigned int rate_ms,
-						    unsigned int duration)
 {
 	return 0;
 }
