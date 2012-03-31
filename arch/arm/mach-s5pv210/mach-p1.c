@@ -350,7 +350,7 @@ static struct s3cfb_lcd lvds = {
 		.p_width = 154,
 		.p_height = 90,
 		.bpp = 24,
-        .freq = 68,
+        .freq = 65,
 
         .timing = {
 #if defined(CONFIG_MACH_P1_GSM) || defined(CONFIG_MACH_P1_LTN)
@@ -380,8 +380,8 @@ static struct s3cfb_lcd lvds = {
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0 		(8192 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC1 		(9900 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC2 		(8192 * SZ_1K)
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0 		(32768 * SZ_1K)
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC1 		(32768 * SZ_1K)
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0 		(36864 * SZ_1K)
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC1 		(36864 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMD 		(1024 * 600 * 4 * \
 							(CONFIG_FB_S3C_NR_BUFFERS + \
 							(CONFIG_FB_S3C_NUM_OVLY_WIN * \
@@ -705,14 +705,14 @@ static struct regulator_init_data crespo_ldo15_data = {
 static struct regulator_init_data crespo_ldo16_data = {
 	.constraints	= {
 		.name		= "MOTOR_3.0V",
-		.min_uV		= 3500000,
-		.max_uV		= 3500000,
+		.min_uV		= 3000000,
+		.max_uV		= 3000000,
 		.apply_uV	= 1,
 		.boot_on	= 1,
 		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE |
 				  REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
-            .uV     = 3500000,
+            .uV     = 3000000,
             .mode   = REGULATOR_MODE_NORMAL,
 			.disabled = 1,
 		},
@@ -724,14 +724,14 @@ static struct regulator_init_data crespo_ldo16_data = {
 static struct regulator_init_data crespo_ldo17_data = {
 	.constraints	= {
 		.name		= "LVDS_VDD3.3V",
-		.min_uV		= 3000000,
-		.max_uV		= 3000000,
+		.min_uV		= 2400000,
+		.max_uV		= 2400000,
 		.apply_uV	= 1,
 		.boot_on	= 1,
 		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE |
 				  REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
-            .uV     = 3000000,
+            .uV     = 2400000,
             .mode   = REGULATOR_MODE_NORMAL,
             .disabled = 1,
 		},
@@ -780,15 +780,15 @@ static struct regulator_init_data crespo_buck2_data = {
 static struct regulator_init_data crespo_buck3_data = {
 	.constraints	= {
 		.name		= "VCC_1.8V",
-		.min_uV		= 1800000,
-		.max_uV		= 1800000,
+		.min_uV		= 1700000,
+		.max_uV		= 1700000,
 		.apply_uV	= 1,
 		.boot_on    = 1,
 		.always_on	= 1,
 		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE |
 		                  REGULATOR_CHANGE_STATUS,
 		.state_mem      = {
-            .uV     = 1800000,
+            .uV     = 1700000,
 			.mode   = REGULATOR_MODE_NORMAL,
 			.disabled = 1,
 		},
