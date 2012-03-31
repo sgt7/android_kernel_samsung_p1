@@ -22,6 +22,8 @@
 static struct s5p_media_device *media_devs;
 static int nr_media_devs;
 
+static dma_addr_t media_base[NR_BANKS];
+
 static struct s5p_media_device *s5p_get_media_device(int dev_id, int bank)
 {
 	struct s5p_media_device *mdev = NULL;
@@ -77,13 +79,27 @@ size_t s5p_get_media_memsize_bank(int dev_id, int bank)
 }
 EXPORT_SYMBOL(s5p_get_media_memsize_bank);
 
-void s5p_reserve_bootmem(struct s5p_media_device *mdevs, int nr_mdevs)
+dma_addr_t s5p_get_media_membase_bank(int bank)
+{
+	if (bank > meminfo.nr_banks) {
+		printk(KERN_ERR "invalid bank.\n");
+		return -EINVAL;
+	}
+
+	return media_base[bank];
+}
+EXPORT_SYMBOL(s5p_get_media_membase_bank);
+
+void s5p_reserve_bootmem(struct s5p_media_device *mdevs,int nr_mdevs)
 {
 	struct s5p_media_device *mdev;
 	int i;
 
 	media_devs = mdevs;
 	nr_media_devs = nr_mdevs;
+
+	for (i = 0; i < meminfo.nr_banks; i++)
+		media_base[i] = meminfo.bank[i].start + meminfo.bank[i].size;
 
 	for (i = 0; i < nr_media_devs; i++) {
 		mdev = &media_devs[i];
@@ -100,6 +116,9 @@ void s5p_reserve_bootmem(struct s5p_media_device *mdevs, int nr_mdevs)
 				mdev->memsize,
 				PAGE_SIZE,
 				meminfo.bank[mdev->bank].start));
+
+		if (media_base[mdev->bank] > mdev->paddr)
+			media_base[mdev->bank] = mdev->paddr;
 
 		printk(KERN_INFO "s5pv210: %lu bytes system memory reserved "
 			"for %s at 0x%08x\n", (unsigned long) mdev->memsize,

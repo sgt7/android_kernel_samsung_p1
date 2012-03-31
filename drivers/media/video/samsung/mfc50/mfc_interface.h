@@ -105,8 +105,7 @@ enum  ssbsip_mfc_enc_conf {
 	MFC_ENC_SETCONF_CHANGE_BIT_RATE,
 	MFC_ENC_SETCONF_FRAME_TAG,
 	MFC_ENC_SETCONF_ALLOW_FRAME_SKIP,
-	MFC_ENC_GETCONF_FRAME_TAG,
-	MFC_ENC_SETCONF_I_PERIOD
+	MFC_ENC_GETCONF_FRAME_TAG
 };
 
 struct mfc_strm_ref_buf_arg {
@@ -146,8 +145,8 @@ struct mfc_enc_init_mpeg4_arg {
 	int in_cb_pad_val;
 	int in_cr_pad_val;
 
-	int in_frame_map;				/* [IN] Encoding input NV12 type ( 0 : tiled , 1: linear)   */
-    
+	int in_frame_map;                    /* [IN] Encoding input NV12 type linear(0) TILE(1)   */
+
 	unsigned int in_mapped_addr;
 	struct mfc_strm_ref_buf_arg out_u_addr;
 	struct mfc_strm_ref_buf_arg out_p_addr;
@@ -159,6 +158,8 @@ struct mfc_enc_init_mpeg4_arg {
 	int in_time_increament_res;          /* [IN] time increment resolution                       */
 	int in_time_vop_time_increament;     /* [IN] time increment                                  */
 };
+
+//struct mfc_enc_init_mpeg4_arg mfc_enc_init_h263_arg;
 
 struct mfc_enc_init_h264_arg {
 	enum ssbsip_mfc_codec_type in_codec_type; /* [IN] codec type                                       */
@@ -187,8 +188,8 @@ struct mfc_enc_init_h264_arg {
 	int in_cb_pad_val;                   /* [IN] CB pel value used to fill padding area           */
 	int in_cr_pad_val;                   /* [IN] CR pel value used to fill padding area           */
 
-	int in_frame_map;				/* [IN] Encoding input NV12 type ( 0 : tiled , 1: linear)   */
-	
+	int in_frame_map;                    /* [IN] Encoding input NV12 type linear(0) TILE(1)       */
+
 	unsigned int in_mapped_addr;
 	struct mfc_strm_ref_buf_arg out_u_addr;
 	struct mfc_strm_ref_buf_arg out_p_addr;
@@ -307,10 +308,10 @@ struct mfc_mem_free_arg {
 	unsigned int u_addr;
 };
 
-typedef enum {
+enum mfc_buffer_type {
 	MFC_BUFFER_NO_CACHE = 0,
 	MFC_BUFFER_CACHE = 1
-} mfc_buffer_type;	
+};
 
 union mfc_args {
 	struct mfc_enc_init_mpeg4_arg enc_init_mpeg4;
@@ -328,7 +329,7 @@ union mfc_args {
 	struct mfc_mem_free_arg mem_free;
 	struct mfc_get_phys_addr_arg get_phys_addr;
 
-	mfc_buffer_type buf_type;
+	enum mfc_buffer_type buf_type;
 };
 
 struct mfc_common_args {

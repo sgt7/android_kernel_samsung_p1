@@ -25,8 +25,8 @@
 #define S5P_MDEV_PMEM_ADSP  8
 #define S5P_MDEV_TEXSTREAM  9
 #define S5P_MDEV_FIMD       10
-#define S3C_MDEV_WIFI       11
-#define S5P_MDEV_MAX        12
+#define S5P_MDEV_MAX        11
 
+#define S5P_RANGE_MFC	    SZ_256M
 #endif
 
