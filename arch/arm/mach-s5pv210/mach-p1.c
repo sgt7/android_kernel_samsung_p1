@@ -7474,6 +7474,9 @@ static struct platform_device *crespo_devices[] __initdata = {
 #ifdef CONFIG_S3C_DEV_HSMMC
 	&s3c_device_hsmmc0,
 #endif
+#ifdef CONFIG_S3C_DEV_HSMMC1
+	&s3c_device_hsmmc1,
+#endif
 #ifdef CONFIG_S3C_DEV_HSMMC2
 	&s3c_device_hsmmc2,
 #endif
@@ -7804,6 +7807,9 @@ static void __init p1_machine_init(void)
 
 #ifdef CONFIG_S3C_DEV_HSMMC
 	s5pv210_default_sdhci0();
+#endif
+#ifdef CONFIG_S3C_DEV_HSMMC1
+	s5pv210_default_sdhci1();
 #endif
 #ifdef CONFIG_S3C_DEV_HSMMC2
 	s5pv210_default_sdhci2();
