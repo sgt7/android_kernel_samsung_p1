@@ -66,7 +66,7 @@
 #define MFC_FW_BUF_SIZE       (512 * 1024)     /* 512KB : 512x1024 size per instance */
 
 #define RISC_BUF_SIZE         (0x80000)        /* 512KB : 512x1024 size per instance */
-#define CPB_BUF_SIZE          (0x300000)       /* 3MB   : 3x1024x1024 for decoder    */
+#define CPB_BUF_SIZE          (0x180000)       /* 1.5MB   : 1.5x1024x1024 for decoder    */
 #define DESC_BUF_SIZE         (0x20000)        /* 128KB : 128x1024                   */
 #define SHARED_BUF_SIZE       (0x10000)        /* 64KB  :  64x1024                   */
 #define PRED_BUF_SIZE         (0x10000)        /* 64KB  :  64x1024                   */
