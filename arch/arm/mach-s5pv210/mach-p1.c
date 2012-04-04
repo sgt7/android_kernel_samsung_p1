@@ -7987,7 +7987,7 @@ MACHINE_END
 
 #if defined(CONFIG_MACH_P1_GSM)
 MACHINE_START(P1, "GT-P1000")
-#elif defined(CONFIG_MACH_P1_CDMA)
+#else
 MACHINE_START(P1, "SPH-P100")
 #endif
 	.phys_io	= S3C_PA_UART & 0xfff00000,
