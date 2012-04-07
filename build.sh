@@ -14,11 +14,19 @@ done
 make -j8
 cp arch/arm/boot/zImage ../../../"$TREE"/kernel
 
-make clean mrproper
-for target in "p1c p1l p1n"
-  do
+build() {
+  local target=$1
+  make clean mrproper
   make ARCH=arm "$target"_cm9_defconfig
-  
   make -j8
   cp arch/arm/boot/zImage ../../../"$TREE"/kernel-$target
+}
+
+targets=("$@")
+if [ 0 = "${#targets[@]}" ] ; then
+    targets=(p1c p1l p1n)
+fi
+
+for target in "${targets[@]}" ; do
+  build $target
 done
