@@ -7573,7 +7573,8 @@ static void __init p1_fixup(struct machine_desc *desc,
 	ram_console_start = mi->bank[2].start + mi->bank[2].size;
 	ram_console_size = SZ_1M - SZ_4K;
 
-	pm_debug_scratchpad = ram_console_start + ram_console_size;
+	/* Leave 1K at 0x57fff000 for kexec hardboot page. */
+	pm_debug_scratchpad = ram_console_start + ram_console_size + SZ_1K;
 }
 
 /* this function are used to detect s5pc110 chip version temporally */
