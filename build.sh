@@ -23,7 +23,11 @@ setup ()
 #   Moved to Arch-dependent section above
 #   KERNEL_DIR="$(dirname "$(readlink -f "$0")")"
     BUILD_DIR="$KERNEL_DIR/build"
-    MODULES=("fs/cifs/cifs.ko" "fs/fuse/fuse.ko" "fs/nls/nls_utf8.ko")
+    if [ "$1" = vibrantmtd ] ; then
+        MODULES=("fs/cifs/cifs.ko" "fs/fuse/fuse.ko" "fs/nls/nls_utf8.ko" "drivers/net/kineto_gan.ko")
+    else
+        MODULES=("fs/cifs/cifs.ko" "fs/fuse/fuse.ko" "fs/nls/nls_utf8.ko")
+    fi
 
     if [ x = "x$NO_CCACHE" ] && ccache -V &>/dev/null ; then
         CCACHE=ccache
@@ -57,7 +61,7 @@ build ()
     done
 }
     
-setup
+setup $1
 
 if [ "$1" = clean ] ; then
     rm -fr "$BUILD_DIR"/*
