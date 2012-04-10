@@ -8,7 +8,7 @@ obj-$(CONFIG_INPUT)		+= input-core.o
 input-core-objs := input.o input-compat.o ff-core.o
 
 obj-$(CONFIG_INPUT_FF_MEMLESS)	+= ff-memless.o
-obj-$(CONFIG_INPUT_POLLDEV)	+= input-polldev.o
+obj-y				            += input-polldev.o
 obj-$(CONFIG_INPUT_SPARSEKMAP)	+= sparse-keymap.o
 
 obj-$(CONFIG_INPUT_MOUSEDEV)	+= mousedev.o
