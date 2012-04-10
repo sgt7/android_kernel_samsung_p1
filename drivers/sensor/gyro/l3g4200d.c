@@ -88,7 +88,7 @@
 #define	RESUME_ENTRIES		5
 
 
-#define DEBUG 1
+#define DEBUG 0
 
 /** Registers Contents */
 #define WHOAMI_L3G4200D		0x00D3	/* Expected content for WAI register*/
