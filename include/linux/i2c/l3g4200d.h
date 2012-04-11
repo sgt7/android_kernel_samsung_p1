@@ -1,12 +1,12 @@
 /******************** (C) COPYRIGHT 2010 STMicroelectronics ********************
 *
-* File Name		: l3g4200d.h
-* Authors		: MH - C&I BU - Application Team
-*			: Carmine Iascone (carmine.iascone@st.com)
-*			: Matteo Dameno (matteo.dameno@st.com)
-* Version		: V 1.1 sysfs
-* Date			: 2010/Aug/19
-* Description		: L3G4200D digital output gyroscope sensor API
+* File Name          : l3g4200d.c
+* Authors            : MH - C&I BU - Application Team
+*		     : Carmine Iascone (carmine.iascone@st.com)
+*		     : Matteo Dameno (matteo.dameno@st.com)
+* Version            : V 0.1
+* Date               : 29/01/2010
+* Description        : L3G4200D digital output gyroscope sensor API
 *
 ********************************************************************************
 *
@@ -22,35 +22,31 @@
 * CONTENT OF SUCH SOFTWARE AND/OR THE USE MADE BY CUSTOMERS OF THE CODING
 * INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
 *
-********************************************************************************
-* REVISON HISTORY
+* THIS SOFTWARE IS SPECIFICALLY DESIGNED FOR EXCLUSIVE USE WITH ST PARTS.
 *
-* VERSION	| DATE		| AUTHORS		| DESCRIPTION
-* 1.0		| 2010/Aug/19	| Carmine Iascone	| First Release
-* 1.1		| 2011/02/28	| Matteo Dameno		| Self Test Added
 *******************************************************************************/
 
 #ifndef __L3G4200D_H__
 #define __L3G4200D_H__
 
-#define L3G4200D_GYR_DEV_NAME	"l3g4200d_gyr"
+#include <linux/ioctl.h>  /* For IOCTL macros */
 
-#define L3G4200D_GYR_FS_250DPS	0x00
-#define L3G4200D_GYR_FS_500DPS	0x10
-#define L3G4200D_GYR_FS_2000DPS	0x30
+/** This define controls compilation of the master device interface */
+/*#define L3G4200D_MASTER_DEVICE*/
 
-#define L3G4200D_GYR_ENABLED	1
-#define L3G4200D_GYR_DISABLED	0
+#define L3G4200D_IOCTL_BASE 'g'
+/* The following define the IOCTL command values via the ioctl macros */
+#define L3G4200D_SET_RANGE		_IOW(L3G4200D_IOCTL_BASE, 1, int)
+#define L3G4200D_SET_MODE		_IOW(L3G4200D_IOCTL_BASE, 2, int)
+#define L3G4200D_SET_BANDWIDTH		_IOW(L3G4200D_IOCTL_BASE, 3, int)
+#define L3G4200D_READ_GYRO_VALUES	_IOW(L3G4200D_IOCTL_BASE, 4, int)
+
+#define L3G4200D_FS_250DPS	0x00
+#define L3G4200D_FS_500DPS	0x10
+#define L3G4200D_FS_2000DPS	0x30
 
 #ifdef __KERNEL__
 struct l3g4200d_platform_data {
-	int (*init)(void);
-	void (*exit)(void);
-	int (*power_on)(void);
-	int (*power_off)(void);
-	int poll_interval;
-	int min_interval;
-
 	u8 fs_range;
 
 	u8 axis_map_x;
@@ -60,7 +56,14 @@ struct l3g4200d_platform_data {
 	u8 negate_x;
 	u8 negate_y;
 	u8 negate_z;
+
+	int (*init)(void);
+	void (*exit)(void);
+	int (*power_on)(void);
+	int (*power_off)(void);
+
 };
+
 #endif /* __KERNEL__ */
 
 #endif  /* __L3G4200D_H__ */
