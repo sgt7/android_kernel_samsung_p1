@@ -31,8 +31,14 @@
 
 #define GPD0_TOUT_1		2 << 4
 
+#ifdef CONFIG_SAMSUNG_VIBRANT
+#define PWM_PERIOD      (87084 / 2)
+#define PWM_DUTY        (87000 / 2)
+#else
 #define PWM_PERIOD		(89284 / 2)
 #define PWM_DUTY		(87280 / 2)
+#endif
+
 #define MAX_TIMEOUT		10000 /* 10s */
 
 static struct vibrator {
