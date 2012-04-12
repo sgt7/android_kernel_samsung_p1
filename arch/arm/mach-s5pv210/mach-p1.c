@@ -7187,75 +7187,7 @@ extern bool keyboard_enable;
 	}
 #endif
 }
-
 EXPORT_SYMBOL(s3c_config_sleep_gpio);
-
-static struct resource wifi_resources[] = {
-	[0] = {
-		.name	= "bcm4329_wlan_irq",
-		.start	= IRQ_EINT(20),
-		.end	= IRQ_EINT(20),
-		.flags	= IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHLEVEL,
-	},
-};
-
-static struct wifi_mem_prealloc wifi_mem_array[PREALLOC_WLAN_SEC_NUM] = {
-	{NULL, (WLAN_SECTION_SIZE_0 + PREALLOC_WLAN_SECTION_HEADER)},
-	{NULL, (WLAN_SECTION_SIZE_1 + PREALLOC_WLAN_SECTION_HEADER)},
-	{NULL, (WLAN_SECTION_SIZE_2 + PREALLOC_WLAN_SECTION_HEADER)},
-	{NULL, (WLAN_SECTION_SIZE_3 + PREALLOC_WLAN_SECTION_HEADER)}
-};
-
-static void *crespo_mem_prealloc(int section, unsigned long size)
-{
-	if (section == PREALLOC_WLAN_SEC_NUM)
-		return wlan_static_skb;
-
-	if ((section < 0) || (section > PREALLOC_WLAN_SEC_NUM))
-		return NULL;
-
-	if (wifi_mem_array[section].size < size)
-		return NULL;
-
-	return wifi_mem_array[section].mem_ptr;
-}
-
-int __init crespo_init_wifi_mem(void)
-{
-	int i;
-	int j;
-
-	for (i = 0 ; i < WLAN_SKB_BUF_NUM ; i++) {
-		wlan_static_skb[i] = dev_alloc_skb(
-				((i < (WLAN_SKB_BUF_NUM / 2)) ? 4096 : 8192));
-
-		if (!wlan_static_skb[i])
-			goto err_skb_alloc;
-	}
-
-	for (i = 0 ; i < PREALLOC_WLAN_SEC_NUM ; i++) {
-		wifi_mem_array[i].mem_ptr =
-				kmalloc(wifi_mem_array[i].size, GFP_KERNEL);
-
-		if (!wifi_mem_array[i].mem_ptr)
-			goto err_mem_alloc;
-	}
-	return 0;
-
- err_mem_alloc:
-	pr_err("Failed to mem_alloc for WLAN\n");
-	for (j = 0 ; j < i ; j++)
-		kfree(wifi_mem_array[j].mem_ptr);
-
-	i = WLAN_SKB_BUF_NUM;
-
- err_skb_alloc:
-	pr_err("Failed to skb_alloc for WLAN\n");
-	for (j = 0 ; j < i ; j++)
-		dev_kfree_skb(wlan_static_skb[j]);
-
-	return -ENOMEM;
-}
 
 static unsigned int wlan_sdio_on_table[][4] = {
         {GPIO_WLAN_SDIO_CLK, GPIO_WLAN_SDIO_CLK_AF, GPIO_LEVEL_NONE, S3C_GPIO_PULL_NONE},
@@ -7355,6 +7287,72 @@ static int wlan_carddetect_en(int onoff)
 	return 0;
 }
 
+static struct resource wifi_resources[] = {
+	[0] = {
+		.name	= "bcm4329_wlan_irq",
+		.start	= IRQ_EINT(20),
+		.end	= IRQ_EINT(20),
+		.flags	= IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHLEVEL,
+	},
+};
+
+static struct wifi_mem_prealloc wifi_mem_array[PREALLOC_WLAN_SEC_NUM] = {
+	{NULL, (WLAN_SECTION_SIZE_0 + PREALLOC_WLAN_SECTION_HEADER)},
+	{NULL, (WLAN_SECTION_SIZE_1 + PREALLOC_WLAN_SECTION_HEADER)},
+	{NULL, (WLAN_SECTION_SIZE_2 + PREALLOC_WLAN_SECTION_HEADER)},
+	{NULL, (WLAN_SECTION_SIZE_3 + PREALLOC_WLAN_SECTION_HEADER)}
+};
+
+static void *crespo_mem_prealloc(int section, unsigned long size)
+{
+	if (section == PREALLOC_WLAN_SEC_NUM)
+		return wlan_static_skb;
+
+	if ((section < 0) || (section > PREALLOC_WLAN_SEC_NUM))
+		return NULL;
+
+	if (wifi_mem_array[section].size < size)
+		return NULL;
+
+	return wifi_mem_array[section].mem_ptr;
+}
+
+int __init crespo_init_wifi_mem(void)
+{
+	int i;
+	int j;
+
+	for (i = 0 ; i < WLAN_SKB_BUF_NUM ; i++) {
+		wlan_static_skb[i] = dev_alloc_skb(
+				((i < (WLAN_SKB_BUF_NUM / 2)) ? 4096 : 8192));
+
+		if (!wlan_static_skb[i])
+			goto err_skb_alloc;
+	}
+
+	for (i = 0 ; i < PREALLOC_WLAN_SEC_NUM ; i++) {
+		wifi_mem_array[i].mem_ptr =
+				kmalloc(wifi_mem_array[i].size, GFP_KERNEL);
+
+		if (!wifi_mem_array[i].mem_ptr)
+			goto err_mem_alloc;
+	}
+	return 0;
+
+ err_mem_alloc:
+	pr_err("Failed to mem_alloc for WLAN\n");
+	for (j = 0 ; j < i ; j++)
+		kfree(wifi_mem_array[j].mem_ptr);
+
+	i = WLAN_SKB_BUF_NUM;
+
+ err_skb_alloc:
+	pr_err("Failed to skb_alloc for WLAN\n");
+	for (j = 0 ; j < i ; j++)
+		dev_kfree_skb(wlan_static_skb[j]);
+
+	return -ENOMEM;
+}
 static struct wifi_platform_data wifi_pdata = {
 	.set_power		= wlan_power_en,
 	.set_reset		= wlan_reset_en,
@@ -8048,18 +8046,3 @@ void s3c_setup_uart_cfg_gpio(unsigned char port)
 	}
 }
 EXPORT_SYMBOL(s3c_setup_uart_cfg_gpio);
-
-#if 1
-void s3c_config_gpio_alive_table(int array_size, unsigned int (*gpio_table)[4])
-{
-	u32 i, gpio;
-
-	for (i = 0; i < array_size; i++) {
-		gpio = gpio_table[i][0];
-		s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(gpio_table[i][1]));
-		s3c_gpio_setpull(gpio, gpio_table[i][3]);
-		if (gpio_table[i][2] != GPIO_LEVEL_NONE)
-			gpio_set_value(gpio, gpio_table[i][2]);
-	}
-}
-#endif
