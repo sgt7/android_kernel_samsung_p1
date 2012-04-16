@@ -1,0 +1,27 @@
+BUILDING THE KERNEL
+
+  In CyanogenMod 9, kernel building is now integrated into the Android Build
+  System and building through the Android Build System is the only supported
+  method of building the kernel.
+
+  Run the following command in the root directory of your Android tree to
+  build the kernel. (Replacing galaxysmtd with your build target.)
+
+		make -j4 out/target/product/galaxysmtd/boot.img
+
+  The resulting boot.img will be stored at
+
+        out/target/product/galaxysmtd/boot.img
+
+  And the kernel modules will be stored at
+
+        out/target/product/galaxysmtd/system/lib/modules/
+
+  Note: If you are building the entire system image, there is no need to
+        manually build the kernel. Building the kernel is fully integrated
+        into the Android Build System. This instruction is provided in case
+        you need to build only the kernel.
+
+  For more info, please see
+
+        http://wiki.cyanogenmod.com/wiki/Integrated_kernel_building
