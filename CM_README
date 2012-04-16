@@ -7,7 +7,7 @@ BUILDING THE KERNEL
   Run the following command in the root directory of your Android tree to
   build the kernel. (Replacing galaxysmtd with your build target.)
 
-		make -j4 out/target/product/galaxysmtd/boot.img
+        make -j4 out/target/product/galaxysmtd/boot.img
 
   The resulting boot.img will be stored at
 
