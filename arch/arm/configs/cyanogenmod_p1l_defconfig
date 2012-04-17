@@ -1,3 +1,25 @@
+######################################################
+
+#ISDB-T
+CONFIG_ISDBT_NMI=y
+
+# For TSI
+CONFIG_VIDEO_TSI=y
+CONFIG_VIDEO_TSI_DEBUG=n
+CONFIG_TSI_LIST_DEBUG=n
+
+# latin_cam:kihyung.nam add for nmi625 sound [
+CONFIG_SND_S3C_I2S2=y
+CONFIG_SND_C110_IIS2=y
+CONFIG_SND_SOC_NMI625=y
+# latin_cam:kihyung.nam add for nmi625 sound ]
+
+# latin_atv [
+CONFIG_VIDEO_NM6XX=y
+# latin_atv ]
+
+######################################################
+
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.35.7
@@ -86,7 +108,7 @@ CONFIG_SCHED_AUTOGROUP=y
 # CONFIG_RELAY is not set
 # CONFIG_NAMESPACES is not set
 CONFIG_BLK_DEV_INITRD=y
-CONFIG_INITRAMFS_SOURCE="usr/p1_initramfs.list"
+CONFIG_INITRAMFS_SOURCE="source/usr/p1_initramfs.list"
 CONFIG_INITRAMFS_ROOT_UID=0
 CONFIG_INITRAMFS_ROOT_GID=0
 CONFIG_RD_GZIP=y
@@ -293,7 +315,7 @@ CONFIG_S3C_GPIO_SPACE=0
 CONFIG_S3C_GPIO_TRACK=y
 # CONFIG_S3C_ADC is not set
 CONFIG_S3C_DEV_HSMMC=y
-CONFIG_S3C_DEV_HSMMC2=y
+CONFIG_S3C_DEV_HSMMC1=y
 CONFIG_S3C_DEV_HSMMC3=y
 CONFIG_S3C_DEV_I2C1=y
 CONFIG_S3C_DEV_I2C2=y
@@ -338,9 +360,9 @@ CONFIG_S5PC110_DEV_ONENAND=y
 # CONFIG_MACH_HERRING is not set
 CONFIG_MACH_P1=y
 CONFIG_SAMSUNG_PARAM=y
-CONFIG_MACH_P1_GSM=y
+# CONFIG_MACH_P1_GSM is not set
+CONFIG_MACH_P1_LTN=y
 # CONFIG_MACH_P1_CDMA is not set
-# CONFIG_MACH_P1_LTN is not set
 CONFIG_S5PV210_SETUP_FB=y
 CONFIG_S5P_ADC=y
 CONFIG_S5PV210_SETUP_FIMC0=y
