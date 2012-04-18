@@ -58,6 +58,10 @@
 #include <dhdioctl.h>
 #include <sdiovar.h>
 
+#ifdef CONFIG_HAS_WAKELOCK
+#include <linux/wakelock.h>
+#endif
+
 #ifdef DHD_DEBUG
 #include <hndrte_cons.h>
 #endif /* DHD_DEBUG */
@@ -1281,8 +1285,7 @@ dhd_bus_txctl(struct dhd_bus *bus, uchar *msg, uint msglen)
 			DHD_INFO(("%s: ctrl_frame_stat == FALSE\n", __FUNCTION__));
 			ret = 0;
 		} else {
-			if (!bus->dhd->hang_was_sent)
-				DHD_ERROR(("%s: ctrl_frame_stat == TRUE\n", __FUNCTION__));
+			DHD_INFO(("%s: ctrl_frame_stat == TRUE\n", __FUNCTION__));
 			ret = -1;
 		}
 	}
@@ -4125,6 +4128,9 @@ dhdsdio_dpc(dhd_bus_t *bus)
 
 	/* Handle host mailbox indication */
 	if (intstatus & I_HMB_HOST_INT) {
+#ifdef CONFIG_HAS_WAKELOCK
+		wake_lock_timeout(&bus->dhd->wow_wakelock, 3*HZ);
+#endif
 		intstatus &= ~I_HMB_HOST_INT;
 		intstatus |= dhdsdio_hostmail(bus);
 	}
@@ -4157,6 +4163,9 @@ dhdsdio_dpc(dhd_bus_t *bus)
 
 	/* On frame indication, read available frames */
 	if (PKT_AVAILABLE()) {
+#ifdef CONFIG_HAS_WAKELOCK
+		wake_lock_timeout(&bus->dhd->wow_wakelock, 3*HZ);
+#endif
 		framecnt = dhdsdio_readframes(bus, rxlimit, &rxdone);
 		if (rxdone || bus->rxskip)
 			intstatus &= ~I_HMB_FRAME_IND;

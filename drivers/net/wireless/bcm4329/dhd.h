@@ -48,6 +48,10 @@
 #include <asm/uaccess.h>
 #include <asm/unaligned.h>
 
+#ifdef CONFIG_HAS_WAKELOCK
+#include <linux/wakelock.h>
+#endif
+
 /* The kernel threading is sdio-specific */
 #else /* LINUX */
 #define ENOMEM		1
@@ -156,7 +160,6 @@ typedef struct dhd_pub {
 	/* Suspend disable flag and "in suspend" flag */
 	int suspend_disable_flag; /* "1" to disable all extra powersaving during suspend */
 	int in_suspend;			/* flag set to 1 when early suspend called */
-	int hang_was_sent;	/* flag that message was send at least once */
 #ifdef PNO_SUPPORT
 	int pno_enable;                 /* pno status : "1" is pno enable */
 #endif /* PNO_SUPPORT */
@@ -169,6 +172,9 @@ typedef struct dhd_pub {
 	uint8 country_code[WLC_CNTRY_BUF_SZ];
 	char eventmask[WL_EVENTING_MASK_LEN];
 
+#ifdef CONFIG_HAS_WAKELOCK
+	struct wake_lock 	wow_wakelock;
+#endif
 } dhd_pub_t;
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27)) && defined(CONFIG_PM_SLEEP)
@@ -454,12 +460,5 @@ extern void dhd_wait_event_wakeup(dhd_pub_t*dhd);
 extern void dhd_arp_cleanup(dhd_pub_t *dhd);
 int dhd_arp_get_arp_hostip_table(dhd_pub_t *dhd, void *buf, int buflen);
 void dhd_arp_offload_add_ip(dhd_pub_t *dhd, u32 ipaddr);
-
-#define DHD_UNICAST_FILTER_NUM         0
-#define DHD_BROADCAST_FILTER_NUM       1
-#define DHD_MULTICAST4_FILTER_NUM      2
-#define DHD_MULTICAST6_FILTER_NUM      3
-extern int net_os_set_packet_filter(struct net_device *dev, int val);
-extern int net_os_rxfilter_add_remove(struct net_device *dev, int val, int num);
 
 #endif /* _dhd_h_ */

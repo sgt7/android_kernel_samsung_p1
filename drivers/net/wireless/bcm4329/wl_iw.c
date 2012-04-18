@@ -116,6 +116,10 @@ static int		g_onoff = G_WLAN_SET_ON;
 wl_iw_extra_params_t	g_wl_iw_params;
 static struct mutex	wl_cache_lock;
 
+#ifdef CONFIG_US_NON_DFS_CHANNELS_ONLY
+static bool use_non_dfs_channels = true;
+#endif
+
 extern bool wl_iw_conn_status_str(uint32 event_type, uint32 status,
 	uint32 reason, char* stringBuf, uint buflen);
 #include <bcmsdbus.h>
@@ -7269,18 +7273,6 @@ static int wl_iw_set_priv(
 #endif
 		else if (strnicmp(extra, "GETPOWER", strlen("GETPOWER")) == 0)
 			ret = wl_iw_get_power_mode(dev, info, (union iwreq_data *)dwrq, extra);
-		else if (strnicmp(extra, RXFILTER_START_CMD, strlen(RXFILTER_START_CMD)) == 0)
-			ret = net_os_set_packet_filter(dev, 1);
-		else if (strnicmp(extra, RXFILTER_STOP_CMD, strlen(RXFILTER_STOP_CMD)) == 0)
-			ret = net_os_set_packet_filter(dev, 0);
-		else if (strnicmp(extra, RXFILTER_ADD_CMD, strlen(RXFILTER_ADD_CMD)) == 0) {
-			int filter_num = *(extra + strlen(RXFILTER_ADD_CMD) + 1) - '0';
-			ret = net_os_rxfilter_add_remove(dev, TRUE, filter_num);
-		}
-		else if (strnicmp(extra, RXFILTER_REMOVE_CMD, strlen(RXFILTER_REMOVE_CMD)) == 0) {
-			int filter_num = *(extra + strlen(RXFILTER_REMOVE_CMD) + 1) - '0';
-			ret = net_os_rxfilter_add_remove(dev, FALSE, filter_num);
-		}
 #ifdef SOFTAP
 #ifdef SOFTAP_TLV_CFG
 		else if (strnicmp(extra, SOFTAP_SET_CMD, strlen(SOFTAP_SET_CMD)) == 0) {
