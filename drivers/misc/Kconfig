@@ -55,7 +55,7 @@ config AD525X_DPOT_SPI
 
 config ANDROID_PMEM
 	bool "Android pmem allocator"
-	default y
+	default n
 
 if  ANDROID_PMEM
    comment "Reserved memory configurations"
