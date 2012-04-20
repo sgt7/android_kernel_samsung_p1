@@ -329,11 +329,7 @@ static const char fsg_string_interface[] = "Mass Storage";
 
 #define DRIVER_NAME             "usb_mass_storage"
 
-#if defined(CONFIG_MACH_P1_GSM) || defined(CONFIG_MACH_P1_LTN)
 #define UMS_DISK_LUNS   2
-#elif defined(CONFIG_MACH_P1_CDMA)
-#define UMS_DISK_LUNS   1
-#endif
 
 #ifdef _ENABLE_CDFS_
 #define UMS_CDROM_LUNS  1
@@ -1244,27 +1240,15 @@ static int do_inquiry(struct fsg_common *common, struct fsg_buffhd *bh)
 
 #if (UMS_DISK_LUNS > 1) // 2 : internal & external SD
     case UMS_CDROM_LUNS:
-#if defined(CONFIG_MACH_P1_GSM)
         strlcpy(product_disk_id, "GT-P1000", 9);
-#elif defined(CONFIG_MACH_P1_CDMA)
-        strlcpy(product_disk_id, "SPH-P100", 9);
-#endif
         break;
 
     case (UMS_CDROM_LUNS + 1):
-#if defined(CONFIG_MACH_P1_GSM) || defined(CONFIG_MACH_P1_LTN)
         strlcpy(product_disk_id, "GT-P1000 Card", 14);
-#elif defined(CONFIG_MACH_P1_CDMA)
-        strlcpy(product_disk_id, "SPH-P100 Card", 14);
-#endif
         break;
 #else // 1 : external SD
     case UMS_CDROM_LUNS:
-#if defined(CONFIG_MACH_P1_GSM) || defined(CONFIG_MACH_P1_LTN)
         strlcpy(product_disk_id, "GT-P1000 Card", 14);
-#elif defined(CONFIG_MACH_P1_CDMA)
-        strlcpy(product_disk_id, "SPH-P100 Card", 14);
-#endif
         break;
 #endif	
     default:

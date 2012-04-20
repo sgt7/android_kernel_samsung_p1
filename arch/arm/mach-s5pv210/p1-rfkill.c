@@ -343,11 +343,7 @@ static int __init crespo_rfkill_probe(struct platform_device *pdev)
 	irq = IRQ_BT_HOST_WAKE;
 
 	ret = request_irq(irq, bt_host_wake_irq_handler,
-#if defined(CONFIG_MACH_P1_GSM) || defined(CONFIG_MACH_P1_LTN)
 			IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
-#elif defined(CONFIG_MACH_P1_CDMA)
-			IRQF_TRIGGER_RISING,
-#endif
 			"bt_host_wake_irq_handler", NULL);
 
 	if (ret < 0) {

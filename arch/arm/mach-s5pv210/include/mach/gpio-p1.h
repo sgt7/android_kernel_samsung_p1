@@ -518,10 +518,7 @@
 
 #define GPIO_HWREV_MODE5		S5PV210_GPJ0(7)
 
-#if defined(CONFIG_MACH_P1_CDMA)
-/* GPJ1 */ /* Below pin added for P1 VZW SCH-I800 */
-#define GPIO_PHONE_ON			S5PV210_GPJ1(0)
-#elif defined(CONFIG_MACH_P1_LTN)
+#if defined(CONFIG_MACH_P1_LTN)
 #define GPIO_WLAN_BT_EN			S5PV210_GPJ1(0)
 #elif defined(CONFIG_MACH_P1_GSM)
 /* On GSM */

@@ -64,21 +64,12 @@ static void modemctl_cfg_gpio(void);
 
 static struct modemctl_platform_data mdmctl_data = {
 	.name = "xmm",
-#if defined(CONFIG_MACH_P1_GSM) || defined(CONFIG_MACH_P1_LTN)
 	.gpio_phone_on = NULL,
-#elif defined(CONFIG_MACH_P1_CDMA)
-	.gpio_phone_on =  GPIO_PHONE_ON,
-#endif
 	.gpio_phone_active = GPIO_PHONE_ACTIVE,
 	.gpio_pda_active = GPIO_PDA_ACTIVE,
 	.gpio_cp_reset = GPIO_CP_RST,
-#if defined(CONFIG_MACH_P1_GSM) || defined(CONFIG_MACH_P1_LTN)
 	.gpio_reset_req_n = GPIO_RESET_REQ_N,
 	.gpio_sim_ndetect = GPIO_SIM_nDETECT,
-#elif defined(CONFIG_MACH_P1_CDMA)
-	.gpio_reset_req_n = NULL,
-	.gpio_sim_ndetect = NULL,
-#endif
 	.cfg_gpio = modemctl_cfg_gpio,
 	};
 
@@ -126,11 +117,7 @@ static void modemctl_cfg_gpio(void)
 	if (err) {
 		printk("fail to request gpio %s\n","PDA_ACTIVE");
 	} else {
-#if defined(CONFIG_MACH_P1_GSM) || defined(CONFIG_MACH_P1_LTN)
 		gpio_direction_output(gpio_pda_active, GPIO_LEVEL_LOW);
-#elif defined(CONFIG_MACH_P1_CDMA)
-		gpio_direction_output(gpio_pda_active, GPIO_LEVEL_HIGH);
-#endif
 		s3c_gpio_setpull(gpio_pda_active, S3C_GPIO_PULL_NONE);
 	}
 
