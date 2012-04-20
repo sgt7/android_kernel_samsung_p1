@@ -384,9 +384,8 @@ static struct s3cfb_lcd lvds = {
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_PMEM 		(8192 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_PMEM_GPU1 	(4200 * SZ_1K)
 #define  S5PV210_ANDROID_PMEM_MEMSIZE_PMEM_ADSP 	(1500 * SZ_1K)
-#endif
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_TEXSTREAM 	(4800 * SZ_1K)
-
+#endif
 static struct s5p_media_device crespo_media_devs[] = {
 	[0] = {
 		.id = S5P_MDEV_MFC,
@@ -461,7 +460,6 @@ static struct s5p_media_device crespo_media_devs[] = {
 		.memsize = S5PV210_ANDROID_PMEM_MEMSIZE_PMEM_ADSP,
 		.paddr = 0,
 	},
-#endif
 	[10] = {
 		.id = S5P_MDEV_TEXSTREAM,
 		.name = "texstream",
@@ -469,6 +467,7 @@ static struct s5p_media_device crespo_media_devs[] = {
 		.memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_TEXSTREAM,
 		.paddr = 0,
 	},
+#endif
 };
 
 /* MAX8998 LDO */
