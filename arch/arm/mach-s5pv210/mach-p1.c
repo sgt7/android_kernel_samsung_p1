@@ -348,7 +348,7 @@ static struct s3cfb_lcd lvds = {
 		.p_width = 154,
 		.p_height = 90,
 		.bpp = 24,
-        .freq = 65,
+        .freq = 60,
 
         .timing = {
                 .h_fp = 142,    //50,	//179,	//.h_fp = 79,
