@@ -60,8 +60,8 @@ struct mtd_partition s3c_partition_info[] = {
 	           this device hardcoded, but I placed it at the end of the NAND to be
 	           able to change the other partition layout without moving it */
 		.name		= "radio",
-		.offset		= (1905*SZ_256K),
-		.size		= (99*SZ_256K), //2003
+		.offset		= (1906*SZ_256K),
+		.size		= (98*SZ_256K), //2003
 	},
 	{       /* The reservoir area is used by Samsung's Block Management Layer (BML)
 	           to map good blocks from this reservoir to bad blocks in user
