@@ -1564,12 +1564,12 @@ static struct attribute_group wm8994_extensions_control_group = {
 
 static struct miscdevice wm8994_extensions_device = {
 	.minor = MISC_DYNAMIC_MINOR,
-	.name = "wm8994_sound",
+	.name = "voodoo_sound",
 };
 
 static struct miscdevice wm8994_extensions_control_device = {
 	.minor = MISC_DYNAMIC_MINOR,
-	.name = "wm8994_sound_control",
+	.name = "voodoo_sound_control",
 };
 
 void wm8994_extensions_pcm_remove()
