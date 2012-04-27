@@ -445,7 +445,7 @@ config SND_WM8994_EXTENSIONS_MODULE
 config SND_WM8994_EXTENSIONS_DEVELOPMENT
 	bool "Codec development tools (unsafe)"
 	depends on SND_WM8994_EXTENSIONS
-	default y
+	default n
 	help
 	  Allow to codec dump registers and load register-address/value batches
 	  Powerful but also dangerous tool
