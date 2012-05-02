@@ -1,5 +1,4 @@
 config WIRELESS_EXT
-	def_bool y
 	bool
 
 config WEXT_CORE
@@ -15,7 +14,6 @@ config WEXT_SPY
 	bool
 
 config WEXT_PRIV
-	def_bool y
 	bool
 
 config CFG80211
