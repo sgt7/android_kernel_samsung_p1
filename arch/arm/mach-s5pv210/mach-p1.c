@@ -7595,7 +7595,7 @@ static unsigned int p1_get_hwrev(void)
 			sprintf(model_str, "P2");
 			break;
 		case 2:
-			sprintf(model_str, "GT-P1000");
+			sprintf(model_str, "P1");
 			break;
 		case 3:
 			sprintf(model_str, "P1");
@@ -7904,7 +7904,7 @@ MACHINE_START(SMDKC110, "SMDKC110")
 #endif
 MACHINE_END
 
-MACHINE_START(P1, "GT-P1000")
+MACHINE_START(P1, "P1")
 
 	.phys_io	= S3C_PA_UART & 0xfff00000,
 	.io_pg_offst	= (((u32)S3C_VA_UART) >> 18) & 0xfffc,
