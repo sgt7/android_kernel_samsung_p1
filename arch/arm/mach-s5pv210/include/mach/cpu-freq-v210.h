@@ -57,6 +57,7 @@ enum {
 	DVFS_LOCK_TOKEN_7,	// for the touch event
 	DVFS_LOCK_TOKEN_8,	// USB
 	DVFS_LOCK_TOKEN_9,	// BT
+	DVFS_LOCK_TOKEN_PVR,
 	DVFS_LOCK_TOKEN_NUM
 };
 
