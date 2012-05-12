@@ -39,4 +39,23 @@ file /stage1/busybox source/usr/p1_initramfs_files/busybox 755 0 0
 file /stage1/init source/usr/p1_initramfs_files/init 755 0 0
 file /stage1/bml_over_mtd source/usr/p1_initramfs_files/bml_over_mtd 755 0 0
 file /stage1/erase_image source/usr/p1_initramfs_files/erase_image 755 0 0
+file /stage1/boot.cpio ../../ramdisk.cpio 644 0 0
+file /stage1/recovery.cpio ../../ramdisk-recovery.cpio 644 0 0
+slink /stage1/cat busybox 755 0 0
+slink /stage1/cp busybox 755 0 0
+slink /stage1/cpio busybox 755 0 0
+slink /stage1/date busybox 755 0 0
+slink /stage1/dd busybox 755 0 0
+slink /stage1/echo busybox 755 0 0
+slink /stage1/grep busybox 755 0 0
+slink /stage1/insmod busybox 755 0 0
+slink /stage1/mkdir busybox 755 0 0
+slink /stage1/mount busybox 755 0 0
+slink /stage1/rm busybox 755 0 0
+slink /stage1/sh busybox 755 0 0
+slink /stage1/tail busybox 755 0 0
+slink /stage1/test busybox 755 0 0
+slink /stage1/touch busybox 755 0 0
+slink /stage1/umount busybox 755 0 0
+slink /stage1/zcat busybox 755 0 0
 dir /sys 755 0 0
