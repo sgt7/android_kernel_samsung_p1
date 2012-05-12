@@ -358,9 +358,12 @@ static void s5pv210_cpufreq_clksrcs_APLL2MPLL(unsigned int index,
 #ifdef CONFIG_DVFS_LIMIT
 int s5pv210_lock_dvfs_high_level(uint nToken, uint perf_level)
 {
+
+#if 0
 	if (g_dvfs_printk_mask & (1 << nToken))
 		printk(KERN_DEBUG "%s : lock with token(%d) level(%d) current(%X)\n",
 		       __func__, nToken, perf_level, g_dvfs_high_lock_token);
+#endif
 
 	if (g_dvfs_high_lock_token & (1 << nToken))
 		return 0;
@@ -408,9 +411,11 @@ int s5pv210_unlock_dvfs_high_level(unsigned int nToken)
 
 	//mutex_unlock(&dvfs_high_lock);
 
+#if 0
 	if (g_dvfs_printk_mask & (1 << nToken))
 		printk(KERN_DEBUG "%s : unlock with token(%d) current(%X) level(%d)\n",
 		       __func__, nToken, g_dvfs_high_lock_token, g_dvfs_high_lock_limit);
+#endif
 
 	/* Reevaluate cpufreq policy with the effect of calling the governor with a
 	 * CPUFREQ_GOV_LIMITS event, so that the governor sets its preferred
