@@ -207,8 +207,19 @@ static struct usb_cdc_union_desc rndis_union_desc = {
 	.bLength =		sizeof(rndis_union_desc),
 	.bDescriptorType =	USB_DT_CS_INTERFACE,
 	.bDescriptorSubType =	USB_CDC_UNION_TYPE,
-	/* .bMasterInterface0 =	DYNAMIC */
-	/* .bSlaveInterface0 =	DYNAMIC */
+	/* Hack: Since these values were previously set once during rndis_bind,
+	 * they weren't (and aren't) updated on subsequent USB configurations to
+	 * match their actual interface numbers, which presents an unfortunate
+	 * compatibility problem.  Windows requires the CDC RNDIS interfaces to be
+	 * present on descriptors 0 & 1, but doesn't pay attention to the master &
+	 * slave values.  In contrast, Linux allows CDC RNDIS to present on any
+	 * interfaces, but performs strict checking of the CDC interface
+	 * descriptors and gets unhappy when these values don't match their actual
+	 * configuration.  Since the CDC ACM function has the same problem, only
+	 * one can be configured for the 0 & 1 interface slots at bind time, and
+	 * the other has to have their master & slave values hardcoded. */
+	.bMasterInterface0 =  0,
+	.bSlaveInterface0 =  1,
 };
 
 /* the data interface has two bulk endpoints */
@@ -719,7 +730,6 @@ rndis_bind(struct usb_configuration *c, struct usb_function *f)
 #endif
 
 	rndis_control_intf.bInterfaceNumber = status;
-	rndis_union_desc.bMasterInterface0 = status;
 
 	status = usb_interface_id(c, f);
 	if (status < 0)
@@ -727,7 +737,6 @@ rndis_bind(struct usb_configuration *c, struct usb_function *f)
 	rndis->data_id = status;
 
 	rndis_data_intf.bInterfaceNumber = status;
-	rndis_union_desc.bSlaveInterface0 = status;
 
 	status = -ENODEV;
 

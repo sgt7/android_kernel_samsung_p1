@@ -29,6 +29,7 @@
 #include <linux/kernel.h>
 #include <linux/utsname.h>
 #include <linux/platform_device.h>
+#include <linux/mutex.h>
 
 #include <linux/usb/android_composite.h>
 #include <linux/usb/ch9.h>
@@ -101,6 +102,8 @@ struct android_dev {
 	int current_usb_mode;   /* soonyong.cho : save usb mode except tethering and askon mode. */
 	int requested_usb_mode; /*                requested usb mode from app included tethering and askon */
 	int debugging_usb_mode; /*		  debugging usb mode */
+	int rndis_usb_mode;
+	struct mutex enable_mutex;
 #endif
 };
 
@@ -499,6 +502,14 @@ void android_enable_function(struct usb_function *f, int enable)
 	struct android_dev *dev = _android_dev;
 	int product_id = 0;
 	int ret = -1;
+
+	/* This function may be called from multiple threads simultaneously, e.g.,
+	 * from open/release on /dev/android_adb_enable (adbd), and from setting
+	 * 0/1 on /sys/devices/virtual/usb_composite/rndis/enable.  Since we cannot
+	 * synchronize these from init, we can only allow one thread in this
+	 * function at a time. */
+	mutex_lock(&dev->enable_mutex);
+
 	askon_status = 0;
 
 	if(enable) {
@@ -509,10 +520,11 @@ void android_enable_function(struct usb_function *f, int enable)
 				currentusbstatus =  dev->current_usb_mode;
 		}
 		if (!strcmp(f->name, "adb")) {
-			ret = set_product(dev, USBSTATUS_ADB);
+			int mode = dev->rndis_usb_mode ? USBSTATUS_ADB_RNDIS : USBSTATUS_ADB;
+			ret = set_product(dev, mode);
 			if (ret != -1)
 				dev->debugging_usb_mode = 1; /* save debugging status */
-				currentusbstatus =  USBSTATUS_ADB ;
+				currentusbstatus =  mode ;
 		}
 		if (!strcmp(f->name, "mtp")) {
 			ret = set_product(dev, USBSTATUS_MTPONLY);
@@ -522,7 +534,11 @@ void android_enable_function(struct usb_function *f, int enable)
 		}
 #if !defined(CONFIG_ARIES_NTT) // disable tethering
 		if (!strcmp(f->name, "rndis")) {
-			ret = set_product(dev, USBSTATUS_VTP);
+			int mode = dev->debugging_usb_mode ? USBSTATUS_ADB_RNDIS : USBSTATUS_VTP;
+			ret = set_product(dev, mode);
+			if (ret != -1)
+				dev->rndis_usb_mode = 1;
+			currentusbstatus =  mode;
 		}
 #endif
 		if (!strcmp(f->name, "usb_mass_storage")) {
@@ -534,18 +550,26 @@ void android_enable_function(struct usb_function *f, int enable)
 
 	}
 	else { /* for disable : Return old mode. If Non-GED model changes policy, below code has to be modified. */
-		if (!strcmp(f->name, "rndis") && dev->debugging_usb_mode)
-			ret = set_product(dev, USBSTATUS_ADB);
-		else
-		ret = set_product(dev, dev->current_usb_mode);
-
-		if(!strcmp(f->name, "adb")) {
-			dev->debugging_usb_mode = 0;
-			currentusbstatus = 0;
+		if (!strcmp(f->name, "adb")) {
+			int mode = dev->rndis_usb_mode ? USBSTATUS_VTP : dev->current_usb_mode;
+			ret = set_product(dev, mode);
+			if (ret != -1)
+				dev->debugging_usb_mode = 0;
+			currentusbstatus =  mode;
+		} else if (!strcmp(f->name, "rndis")) {
+			int mode = dev->debugging_usb_mode ? USBSTATUS_ADB : dev->current_usb_mode;
+			ret = set_product(dev, mode);
+			if (ret != -1)
+				dev->rndis_usb_mode = 0;
+			currentusbstatus =  mode;
+		} else {
+			ret = set_product(dev, dev->current_usb_mode);
+			currentusbstatus = dev->current_usb_mode;
 		}
 	} /* if(enable) */
 
 	if(ret == -1) {
+		mutex_unlock(&dev->enable_mutex);
 		return ;
 	}
 
@@ -561,6 +585,7 @@ void android_enable_function(struct usb_function *f, int enable)
 		dev->cdev->gadget->speed, dev->current_usb_mode, dev->debugging_usb_mode);
 	usb_composite_force_reset(dev->cdev);
 
+	mutex_unlock(&dev->enable_mutex);
 }
 
 #else /* original code */
@@ -652,6 +677,9 @@ void samsung_enable_function(int mode)
 #endif
 		case USBSTATUS_ASKON: /* do not save usb mode */
 			return;
+		case USBSTATUS_ADB_RNDIS:
+			ret = set_product(dev, USBSTATUS_ADB_RNDIS);
+			break;
 	}
 
 	if(ret == -1) {
@@ -832,7 +860,7 @@ static ssize_t UmsStatus_show(struct device *dev, struct device_attribute *attr,
      if(currentusbstatus == USBSTATUS_VTP)
         return sprintf(buf, "%s\n", "RemoveOffline");
     else
-        if((currentusbstatus== USBSTATUS_UMS) || (currentusbstatus== USBSTATUS_ADB) )
+        if((currentusbstatus== USBSTATUS_UMS) || (currentusbstatus== USBSTATUS_ADB) || (currentusbstatus== USBSTATUS_ADB_RNDIS) )
             return sprintf(buf, "%s\n", "ums online");
         else
             return sprintf(buf, "%s\n", "InsertOffline");
@@ -931,6 +959,7 @@ static int __init init(void)
 
 	/* set default values, which should be overridden by platform data */
 	dev->product_id = PRODUCT_ID;
+	mutex_init(&dev->enable_mutex);
 	_android_dev = dev;
 
 	return platform_driver_register(&android_platform_driver);
@@ -941,6 +970,7 @@ static void __exit cleanup(void)
 {
 	usb_composite_unregister(&android_usb_driver);
 	platform_driver_unregister(&android_platform_driver);
+	mutex_destroy(&_android_dev->enable_mutex);
 	kfree(_android_dev);
 	_android_dev = NULL;
 }

@@ -95,6 +95,12 @@ static char *usb_functions_mtp[] = {
 };
 #endif
 
+static char *usb_functions_rndis_ums_adb[] = {
+	"rndis",
+	"usb_mass_storage",
+	"adb",
+};
+
 static char *usb_functions_all[] = {
 #ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
 /* soonyong.cho : Every function driver for samsung composite.
@@ -244,6 +250,16 @@ static struct android_usb_product usb_products[] = {
 		.bDeviceProtocol= 0x01,
 		.s		= ANDROID_MTP_CONFIG_STRING,
 		.mode		= USBSTATUS_MTPONLY,
+	},
+	{
+		.product_id     = SAMSUNG_DEBUG_PRODUCT_ID,
+		.num_functions  = ARRAY_SIZE(usb_functions_rndis_ums_adb),
+		.functions      = usb_functions_rndis_ums_adb,
+		.bDeviceClass   = USB_CLASS_COMM,
+		.bDeviceSubClass= 0,
+		.bDeviceProtocol= 0,
+		.s              = ANDROID_DEBUG_CONFIG_STRING,
+		.mode           = USBSTATUS_ADB_RNDIS,
 	},
 #  endif
 #else /* original */
