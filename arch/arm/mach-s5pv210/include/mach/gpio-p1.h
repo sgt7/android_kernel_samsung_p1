@@ -650,11 +650,9 @@
 
 #define GPIO_GPS_CLK_EN         S5PV210_MP04(0)
 
-#elif defined(CONFIG_SAMSUNG_P1)
+#endif
 
 #define GPIO_USB_SEL            S5PV210_MP04(0)
-
-#endif
 
 #if defined(CONFIG_SAMSUNG_P1L) || defined(CONFIG_SAMSUNG_P1N)
 
