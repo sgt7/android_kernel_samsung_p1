@@ -498,8 +498,6 @@
 
 #endif
 
-#endif
-
 #define GPIO_HWREV_MODE5        S5PV210_GPJ0(7)
 
 //GPJ1**
