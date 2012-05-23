@@ -1,0 +1,19 @@
+#
+# GYRO Sensor Configuration
+#
+
+config GYRO
+	bool "GYRO Sensors"
+	default y
+	help
+	  This option enables sensors
+
+
+config GYRO_L3G4200D
+	depends on GYRO
+	tristate "L3G4200D driver for s5pc11x"
+	default y
+	help
+	  This option enables gyro sensors using L3G4200D driver
+	  It is optimized for s5pc11x
+	  
