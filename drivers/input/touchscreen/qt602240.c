@@ -13,6 +13,7 @@
  #include "qt602240.h"
  #include <linux/bln.h>
 
+#include <linux/timer.h>
 #include <linux/device.h>
 #define CONFIG_KEYPAD_CYPRESS_TOUCH_USE_BLN
 #ifdef CONFIG_KEYPAD_CYPRESS_TOUCH_USE_BLN
@@ -26,6 +27,11 @@ static bool p1_touchkey_suspended = false;
 #endif
 
 static bool buttons_enabled = true;
+
+static bool leds_on = true;
+static int leds_timeout = 1600;
+static struct timer_list leds_timer;
+static void leds_timer_callback(unsigned long data);
 
 #define _SUPPORT_TOUCH_AMPLITUDE_
 
@@ -127,6 +133,11 @@ static void touch_led_on(int val)
     if(val < 42)
         set = 1;
 
+    if(val > 0)
+        mod_timer(&leds_timer, jiffies + msecs_to_jiffies(leds_timeout));
+    else
+        mod_timer(&leds_timer, jiffies - 1);
+
     if(val > 0 && buttons_enabled)
     {
         if(set !=preset)
@@ -146,6 +157,7 @@ static void touch_led_on(int val)
             {
                 led_control(4);                                     // [Data] 2mA
                 preset = 2;
+                leds_on = true;
                 //printk(KERN_DEBUG "[TSP] keyled : 2mA\n");
             }
         }
@@ -155,7 +167,12 @@ static void touch_led_on(int val)
         gpio_direction_output(KEYLED_EN, 0);
         //printk(KERN_DEBUG "[TSP] keyled : off\n");
         preset = 0;
+        leds_on = false;
     }
+}
+
+void leds_timer_callback(unsigned long data) {
+    touch_led_on(0);
 }
 
 #if 0
@@ -209,9 +226,15 @@ static ssize_t key_led_store(struct device *dev, struct device_attribute *attr,
     }
 
 #if defined (LED_SWITCH)
-    if(led_sw == 1)
+    if(led_sw == 1) {
 #endif
-        touch_led_on(i);
+        if(i > 0)
+            touch_led_on(1);
+        else
+            touch_led_on(0);
+#if defined (LED_SWITCH)
+    }
+#endif
 
     return size;
 }
@@ -1576,6 +1599,13 @@ static irqreturn_t qt602240_interrupt(int irq, void *dev_id)
 {
     struct qt602240_data *data = dev_id;
 
+    if(!leds_on) {
+        leds_on = true;
+        touch_led_on(1);
+    } else {
+        mod_timer(&leds_timer, jiffies + msecs_to_jiffies(leds_timeout));
+    }
+
     qt602240_input_read(data);
 
     return IRQ_HANDLED;
@@ -2116,12 +2146,23 @@ void qt602240_inform_first_brightness(void)
 }
 EXPORT_SYMBOL(qt602240_inform_first_brightness);
 
+static ssize_t leds_timeout_read(struct device *dev, struct device_attribute *attr, char *buf) {
+	return sprintf(buf,"%d\n", leds_timeout);
+}
+
+static ssize_t leds_timeout_write(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
+{
+	sscanf(buf, "%d\n", &leds_timeout);
+	return size;
+}
+
 static DEVICE_ATTR(buttons_enabled, S_IRUGO | S_IWUGO , buttons_enabled_status_read, buttons_enabled_status_write);
 static DEVICE_ATTR(info, 0444, qt602240_info_show, NULL);
 static DEVICE_ATTR(object_table, 0444, qt602240_object_table_show, NULL);
 static DEVICE_ATTR(object, 0664, qt602240_object_show, qt602240_object_store);
 static DEVICE_ATTR(update_fw, 0664, NULL, qt602240_update_fw_store);
 static DEVICE_ATTR(update_status, 0664, qt602240_update_status_show, NULL);
+static DEVICE_ATTR(leds_timeout, S_IRUGO | S_IWUGO, leds_timeout_read, leds_timeout_write);
 
 static struct attribute *qt602240_attrs[] = {
 	&dev_attr_buttons_enabled.attr,
@@ -2130,6 +2171,7 @@ static struct attribute *qt602240_attrs[] = {
 	&dev_attr_object.attr,
 	&dev_attr_update_fw.attr,
 	&dev_attr_update_status.attr,
+	&dev_attr_leds_timeout.attr,
 //	&dev_attr_config_mode.attr,
 	NULL
 };
@@ -2423,6 +2465,11 @@ static int __devinit qt602240_probe(struct i2c_client *client,
 
     client->irq = IRQ_TOUCH_INT;
 
+#if defined (KEY_LED_CONTROL)
+    setup_timer( &leds_timer, leds_timer_callback, 0 );
+#endif
+
+
     INIT_WORK(&data->ta_work, qt602240_ta_worker);
 
     data->client = client;
@@ -2633,6 +2680,9 @@ static int __devinit qt602240_probe(struct i2c_client *client,
 
     err_free_irq:
     free_irq(client->irq, data);
+#if defined (KEY_LED_CONTROL)
+    del_timer( &leds_timer);
+#endif
     err_free_object:
     kfree(data->object_message);
     kfree(data->object_table);
@@ -2651,6 +2701,7 @@ static int __devexit qt602240_remove(struct i2c_client *client)
 	unregister_early_suspend(&data->early_suspend);
 #endif	/* CONFIG_HAS_EARLYSUSPEND */
 
+	del_timer(&leds_timer);
 	free_irq(data->irq, data);
 	input_unregister_device(data->input_dev);
 	kfree(data->object_message);
