@@ -653,7 +653,7 @@ static int acc_con_probe(struct platform_device *pdev)
 	acc_con_workqueue = create_singlethread_workqueue("acc_con_workqueue");
 	acc_con_interrupt_init();
 
-#if defined (CONFIG_MACH_P1) || defined (CONFIG_TARGET_LOCALE_EUR) || defined (CONFIG_TARGET_LOCALE_HKTW) || defined (CONFIG_TARGET_LOCALE_HKTW_FET) || defined (CONFIG_TARGET_LOCALE_VZW) || defined (CONFIG_TARGET_LOCALE_USAGSM)
+#if defined (CONFIG_TARGET_LOCALE_EUR) || defined (CONFIG_TARGET_LOCALE_HKTW) || defined (CONFIG_TARGET_LOCALE_HKTW_FET) || defined (CONFIG_TARGET_LOCALE_VZW) || defined (CONFIG_TARGET_LOCALE_USAGSM)
 	if(HWREV >=0xB)
 	{
 	INIT_WORK(&acc_ID_work, acc_ID_intr_handle);
@@ -762,7 +762,7 @@ static int acc_con_resume(struct platform_device *pdev)
 
 static int __init acc_con_init(void)
 {
-#if defined (CONFIG_MACH_P1) || defined (CONFIG_TARGET_LOCALE_EUR) || defined (CONFIG_TARGET_LOCALE_HKTW) || defined (CONFIG_TARGET_LOCALE_HKTW_FET) || defined (CONFIG_TARGET_LOCALE_VZW) || defined (CONFIG_TARGET_LOCALE_USAGSM)
+#if defined (CONFIG_TARGET_LOCALE_EUR) || defined (CONFIG_TARGET_LOCALE_HKTW) || defined (CONFIG_TARGET_LOCALE_HKTW_FET) || defined (CONFIG_TARGET_LOCALE_VZW) || defined (CONFIG_TARGET_LOCALE_USAGSM)
 	if(HWREV < 0x8)
 		return -1;
 #endif	

@@ -536,15 +536,12 @@
 #define GPIO_EAR_SEL            S5PV210_GPJ2(3)
 #define GPIO_FM_INT             S5PV210_GPJ2(4)
 #define GPIO_BT_WAKE            S5PV210_GPJ2(4)
-
-#if defined(CONFIG_SAMSUNG_P1L) || defined(CONFIG_SAMSUNG_P1N)
-
 #define GPIO_WLAN_WAKE          S5PV210_GPJ2(5)
 #define GPIO_WLAN_WAKE_AF       1
 
-#elif defined(CONFIG_SAMSUNG_P1)
+#if defined(CONFIG_SAMSUNG_P1)
 
-#define GPIO_FM_RST			S5PV210_GPJ2(5)
+#define GPIO_FM_RST		    	S5PV210_GPJ2(5)
 
 #endif
 

@@ -188,7 +188,7 @@ void lms700_powerup(void)
 
 		gpio_set_value(GPIO_LCD_LDO_EN, 1);		//backlight & LCD
 
-#if defined (CONFIG_MACH_P1) && defined (CONFIG_TARGET_LOCALE_EUR) || defined (CONFIG_TARGET_LOCALE_HKTW) || defined (CONFIG_TARGET_LOCALE_HKTW_FET) || defined (CONFIG_TARGET_LOCALE_VZW) || defined (CONFIG_TARGET_LOCALE_USAGSM)
+#if defined(CONFIG_TARGET_LOCALE_EUR) || defined (CONFIG_TARGET_LOCALE_HKTW) || defined (CONFIG_TARGET_LOCALE_HKTW_FET) || defined (CONFIG_TARGET_LOCALE_VZW) || defined (CONFIG_TARGET_LOCALE_USAGSM)
 		if(HWREV >= 13)		// above rev0.7 (EUR)
 #elif defined(CONFIG_TARGET_LOCALE_KOR)
 		if(HWREV >= 13)		// above rev1.1 (KOR)
@@ -225,7 +225,7 @@ void lms700_powerdown(void)
 	if(lms700_state.powered_up)
 		{
 		// Disable LDOs
-#if defined (CONFIG_MACH_P1) && defined (CONFIG_TARGET_LOCALE_EUR) || defined (CONFIG_TARGET_LOCALE_HKTW) || defined (CONFIG_TARGET_LOCALE_HKTW_FET) || defined (CONFIG_TARGET_LOCALE_VZW) || defined (CONFIG_TARGET_LOCALE_USAGSM)
+#if defined (CONFIG_TARGET_LOCALE_EUR) || defined (CONFIG_TARGET_LOCALE_HKTW) || defined (CONFIG_TARGET_LOCALE_HKTW_FET) || defined (CONFIG_TARGET_LOCALE_VZW) || defined (CONFIG_TARGET_LOCALE_USAGSM)
 		if(HWREV >= 13)		// above rev0.7 (EUR)
 #elif defined(CONFIG_TARGET_LOCALE_KOR)
 		if(HWREV >= 13)		// above rev1.1 (KOR)
