@@ -56,11 +56,40 @@ static const char bt_name[] = "bcm4329";
 static struct wake_lock bt_wake_lock;
 static struct rfkill *bt_sleep_rfk;
 #endif /* BT_SLEEP_ENABLE */
-
+#if defined(CONFIG_MACH_P1_CDMA)
+volatile int bt_is_running = 0;
+EXPORT_SYMBOL(bt_is_running);
+#endif
 #ifdef USE_LOCK_DVFS
 static struct rfkill *bt_lock_dvfs_rfk;
 static struct rfkill *bt_lock_dvfs_l2_rfk;
 #include <mach/cpu-freq-v210.h>
+#endif
+#if defined(CONFIG_MACH_P1_CDMA)
+void bt_uart_rts_ctrl(int flag)
+{
+	if(!gpio_get_value(GPIO_BT_nRST))
+		return;
+
+	if(flag) {
+		// BT RTS Set to HIGH
+		s3c_gpio_cfgpin(S5PV210_GPA0(3), S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(S5PV210_GPA0(3), S3C_GPIO_PULL_NONE);
+		gpio_set_value(S5PV210_GPA0(3), 1);
+
+		s3c_gpio_slp_cfgpin(S5PV210_GPA0(3), S3C_GPIO_SLP_OUT0);
+		s3c_gpio_slp_setpull_updown(S5PV210_GPA0(3), S3C_GPIO_PULL_NONE);
+	}
+	else {
+		// BT RTS Set to LOW
+		s3c_gpio_cfgpin(S5PV210_GPA0(3), S3C_GPIO_OUTPUT);
+		gpio_set_value(S5PV210_GPA0(3), 0);
+
+		s3c_gpio_cfgpin(S5PV210_GPA0(3), S3C_GPIO_SFN(2));
+		s3c_gpio_setpull(S5PV210_GPA0(3), S3C_GPIO_PULL_NONE);
+	}
+}
+EXPORT_SYMBOL(bt_uart_rts_ctrl);
 #endif
 
 static int bluetooth_set_power(void *data, enum rfkill_user_states state)
@@ -131,7 +160,9 @@ static int bluetooth_set_power(void *data, enum rfkill_user_states state)
 
 	case RFKILL_USER_STATE_SOFT_BLOCKED:
 		pr_debug("[BT] Device Powering OFF\n");
-
+#if defined(CONFIG_MACH_P1_CDMA)
+		bt_is_running = 0;
+#endif
 		ret = disable_irq_wake(irq);
 		if (ret < 0)
 			pr_err("[BT] unset wakeup src failed\n");
@@ -171,6 +202,9 @@ static int bluetooth_set_power(void *data, enum rfkill_user_states state)
 irqreturn_t bt_host_wake_irq_handler(int irq, void *dev_id)
 {
 	pr_debug("[BT] bt_host_wake_irq_handler start\n");
+#if defined(CONFIG_MACH_P1_CDMA)
+	bt_is_running = 1;
+#endif
 
 	wake_lock_timeout(&rfkill_wake_lock, 5*HZ);
 
@@ -198,6 +232,9 @@ static int bluetooth_set_sleep(void *data, enum rfkill_user_states state)
 	switch (state) {
 
 		case RFKILL_USER_STATE_UNBLOCKED:
+#if defined(CONFIG_MACH_P1_CDMA)
+			bt_is_running = 0;
+#endif
 			gpio_set_value(GPIO_BT_WAKE, 0);
 			pr_debug("[BT] GPIO_BT_WAKE = %d\n", gpio_get_value(GPIO_BT_WAKE) );
 			pr_debug("[BT] wake_unlock(bt_wake_lock)\n");
@@ -205,6 +242,9 @@ static int bluetooth_set_sleep(void *data, enum rfkill_user_states state)
 			break;
 
 		case RFKILL_USER_STATE_SOFT_BLOCKED:
+#if defined(CONFIG_MACH_P1_CDMA)
+			bt_is_running = 1;
+#endif
 			gpio_set_value(GPIO_BT_WAKE, 1);
 			pr_debug("[BT] GPIO_BT_WAKE = %d\n", gpio_get_value(GPIO_BT_WAKE) );
 			pr_debug("[BT] wake_lock(bt_wake_lock)\n");
@@ -280,11 +320,9 @@ static int bt_lock_dvfs_l2_rfkill_set_block(void *data, bool blocked)
 	return ret;
 }
 
-
 static const struct rfkill_ops bt_lock_dvfs_rfkill_ops = {
 	.set_block = bt_lock_dvfs_rfkill_set_block,
 };
-
 
 static const struct rfkill_ops bt_lock_dvfs_l2_rfkill_ops = {
 	.set_block = bt_lock_dvfs_l2_rfkill_set_block,
@@ -315,7 +353,11 @@ static int __init crespo_rfkill_probe(struct platform_device *pdev)
 	irq = IRQ_BT_HOST_WAKE;
 
 	ret = request_irq(irq, bt_host_wake_irq_handler,
+#if defined(CONFIG_MACH_P1_GSM)
 			IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
+#elif defined(CONFIG_MACH_P1_CDMA)
+			IRQF_TRIGGER_RISING,
+#endif
 			"bt_host_wake_irq_handler", NULL);
 
 	if (ret < 0) {
@@ -411,7 +453,7 @@ static int __init crespo_rfkill_probe(struct platform_device *pdev)
 	if (ret) {
 		pr_err("********ERROR IN REGISTERING THE bt_lock_dvfs_l2_rfk********\n");
 		goto err_lock_dvfs_l2_register;
-	}	
+	}
 #endif
 	return ret;
 
@@ -421,7 +463,7 @@ err_lock_dvfs_l2_register:
 
 err_dvfs_l2_lock_alloc:
 	rfkill_unregister(bt_lock_dvfs_rfk);
-	
+
 err_lock_dvfs_register:
 	rfkill_destroy(bt_lock_dvfs_rfk);
 
@@ -469,6 +511,9 @@ static int __init crespo_rfkill_init(void)
 	int rc = 0;
 	rc = platform_driver_register(&crespo_device_rfkill);
 
+#if defined(CONFIG_MACH_P1_CDMA)
+	bt_is_running = 0;
+#endif
 	return rc;
 }
 

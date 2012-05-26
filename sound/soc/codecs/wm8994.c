@@ -2001,6 +2001,8 @@ static int wm8994_init(struct wm8994_priv *wm8994_private)
 	msleep(50);
 	wm8994_write(codec, WM8994_POWER_MANAGEMENT_1, WM8994_VMID_SEL_NORMAL | WM8994_BIAS_ENA);
 
+    wm8994->hw_version = wm8994_read(codec, 0x100);	// Read Wm8994 version.
+    
 	wm8994_socdev->card->codec = codec;
 	wm8994_codec = codec;
 	/* register pcms */

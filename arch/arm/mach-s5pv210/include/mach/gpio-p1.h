@@ -80,7 +80,7 @@
 #define GPIO_HWREV_MODE1        S5PV210_GPB(6)
 #define GPIO_HWREV_MODE0        S5PV210_GPB(7)
 
-#elif defined(CONFIG_SAMSUNG_P1)
+#elif defined(CONFIG_SAMSUNG_P1) || defined(CONFIG_SAMSUNG_P1C)
 
 #define GPIO_BOOT_MODE          S5PV210_GPB(4)
 //#define GPIO_WLAN_BT_EN       S5PV210_GPB(5)
@@ -115,7 +115,7 @@
 #define GPIO_I2S_DATA_18V       S5PV210_GPC1(3)
 #define GPIO_GPC14              S5PV210_GPC1(4)
 
-#elif defined(CONFIG_SAMSUNG_P1)
+#elif defined(CONFIG_SAMSUNG_P1) || defined(CONFIG_SAMSUNG_P1C)
 
 #define BLOW_PCM_CLK			S5PV210_GPC1(0)
 #define GPIO_GPC11			    S5PV210_GPC1(1)
@@ -154,7 +154,7 @@
 
 #define GPIO_ATV_RSTn_REV10     S5PV210_GPD0(3)
 
-#elif defined(CONFIG_SAMSUNG_P1)
+#elif defined(CONFIG_SAMSUNG_P1) || defined(CONFIG_SAMSUNG_P1C)
 
 #define GPIO_GPD03			S5PV210_GPD0(3)
 
@@ -285,7 +285,7 @@
 
 #define GPIO_TOUCH_INT          S5PV210_GPG0(2)
 
-#elif defined(CONFIG_SAMSUNG_P1)
+#elif defined(CONFIG_SAMSUNG_P1) || defined(CONFIG_SAMSUNG_P1C)
 
 #define GPIO_ALS_SCL_28V		S5PV210_GPG0(2)
 
@@ -309,7 +309,7 @@
 
 #define GPIO_ISDBT_RSTn         S5PV210_GPG1(2)
 
-#elif defined(CONFIG_SAMSUNG_P1)
+#elif defined(CONFIG_SAMSUNG_P1) || defined(CONFIG_SAMSUNG_P1C)
 
 #define GPIO_WLAN_RST			S5PV210_GPG1(2)
 
@@ -407,7 +407,7 @@
 #define GPIO_TOUCH_EN           S5PV210_GPH2(1)
 #define GPIO_TOUCH_EN_AF        1
 
-#elif defined(CONFIG_SAMSUNG_P1)
+#elif defined(CONFIG_SAMSUNG_P1) || defined(CONFIG_SAMSUNG_P1C)
 
 #define GPIO_KBC1			    S5PV210_GPH2(1)
 #define GPIO_KBC1_AF			3
@@ -485,7 +485,7 @@
 #define GPIO_ISDBT_DATA         S5PV210_GPJ0(5)
 #define GPIO_ISDBT_ERR          S5PV210_GPJ0(6)
 
-#elif defined(CONFIG_SAMSUNG_P1)
+#elif defined(CONFIG_SAMSUNG_P1) || defined(CONFIG_SAMSUNG_P1C)
 
 #define GPIO_WLAN_BT_EN         S5PV210_GPJ0(0)
 #define GPIO_HWREV_MODE3		S5PV210_GPJ0(1)
@@ -506,6 +506,10 @@
 
 #define GPIO_WLAN_BT_EN         S5PV210_GPJ1(0)
 
+#elif defined(CONFIG_SAMSUNG_P1C)
+
+#define GPIO_PHONE_ON           S5PV210_GPJ1(0)
+
 #endif
 
 #define GPIO_VIBTONE_EN1        S5PV210_GPJ1(1)
@@ -516,7 +520,7 @@
 
 #define GPIO_ISDBT_PWR_EN       S5PV210_GPJ1(3)
 
-#elif defined(CONFIG_SAMSUNG_P1)
+#elif defined(CONFIG_SAMSUNG_P1) || defined(CONFIG_SAMSUNG_P1C)
 
 #define GPIO_TOUCH_EN			S5PV210_GPJ1(3)
 #define	GPIO_TOUCH_EN_AF		1
@@ -539,9 +543,9 @@
 #define GPIO_WLAN_WAKE          S5PV210_GPJ2(5)
 #define GPIO_WLAN_WAKE_AF       1
 
-#if defined(CONFIG_SAMSUNG_P1)
+#if defined(CONFIG_SAMSUNG_P1) || defined(CONFIG_SAMSUNG_P1C)
 
-#define GPIO_FM_RST		    	S5PV210_GPJ2(5)
+#define GPIO_FM_RST			    S5PV210_GPJ2(5)
 
 #endif
 
@@ -558,7 +562,7 @@
 #define GPIO_ATV_RSTn           S5PV210_GPJ3(2)
 #define GPIO_ISDBT_PWR_EN_REV10 S5PV210_GPJ3(2)
 
-#elif defined(CONFIG_SAMSUNG_P1)
+#elif defined(CONFIG_SAMSUNG_P1) || defined(CONFIG_SAMSUNG_P1C)
 
 #define _3_GPIO_TOUCH_EN		S5PV210_GPJ3(2)
 #define _3_GPIO_TOUCH_EN_AF		1
@@ -614,7 +618,7 @@
 #define GPIO_AP_NANDCS_AF       5
 #define GPIO_DIC_ID             S5PV210_MP01(5)
 
-#if defined(CONFIG_SAMSUNG_P1)
+#if defined(CONFIG_SAMSUNG_P1) || defined(CONFIG_SAMSUNG_P1C)
 
 #define GPIO_EAR_MICBIAS_EN     S5PV210_MP01(5)
 
@@ -674,7 +678,7 @@
 #define GPIO_LVDS_RST           S5PV210_MP04(5)
 #define NFC_SDA_18V             S5PV210_MP04(5)
 
-#if defined(CONFIG_SAMSUNG_P1)
+#if defined(CONFIG_SAMSUNG_P1) || defined(CONFIG_SAMSUNG_P1C)
 
 #define GPIO_GPS_CLK_EN			S5PV210_MP04(6)
 

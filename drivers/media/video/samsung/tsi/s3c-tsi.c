@@ -23,7 +23,7 @@
 #include <asm/page.h>
 #include <mach/irqs.h>
 #include <mach/gpio.h>
-#if defined (CONFIG_SAMSUNG_P1) 
+#if defined (CONFIG_SAMSUNG_P1) || defined (CONFIG_SAMSUNG_P1C)
 #include <plat/map.h>
 #include <plat/regs-clock.h>
 #include <plat/regs-tsi.h>
@@ -40,7 +40,7 @@
 #include <plat/gpio-cfg.h>
 #endif
 
-#if defined (CONFIG_SAMSUNG_P1)
+#if defined (CONFIG_SAMSUNG_P1) || defined (CONFIG_SAMSUNG_P1C)
 #define TSI_BUF_SIZE	(256*1024)
 #elif defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N)
 #define TSI_BUF_SIZE	(128*1024)
@@ -182,7 +182,7 @@ void s3c_tsi_set_gpio(void)
 
 	for(i=2;i< 7; i++)
 	{
-#if defined (CONFIG_SAMSUNG_P1)
+#if defined (CONFIG_SAMSUNG_P1) || defined (CONFIG_SAMSUNG_P1C)
 		s3c_gpio_cfgpin(S5PC11X_GPJ0(i), S3C_GPIO_SFN(5));
 		s3c_gpio_setpull(S5PC11X_GPJ0(i), S3C_GPIO_PULL_NONE);
 #elif defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N)
@@ -267,7 +267,7 @@ static int s3c_tsi_start(tsi_dev *tsi)
 		return -1;
 	}
 	pkt_size = pkt1->len;
-#if defined (CONFIG_SAMSUNG_P1) 
+#if defined (CONFIG_SAMSUNG_P1) || defined (CONFIG_SAMSUNG_P1C)
 	writel(pkt_size,(tsi->tsi_base+S3C_TS_SIZE));
 #elif defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N)
 	// when set the TS BUF SIZE to the S3C_TS_SIZE,
@@ -497,7 +497,7 @@ static ssize_t s3c_tsi_read(struct file *file, char *buf, size_t count, loff_t *
 	list_debug(&tsi->full_list);
 #endif
 
-#if defined (CONFIG_SAMSUNG_P1)  
+#if defined (CONFIG_SAMSUNG_P1) || defined (CONFIG_SAMSUNG_P1C)
 	while(count > 0){
 //deque packet from full list	
 		pkt = tsi_get_pkt(tsi,full);	
@@ -570,7 +570,7 @@ static ssize_t s3c_tsi_read(struct file *file, char *buf, size_t count, loff_t *
 		
 		if(list_empty(full))
 			tsi->new_pkt =0;
-#endif  //defined (CONFIG_SAMSUNG_P1)
+#endif  //defined (CONFIG_SAMSUNG_P1) || defined (CONFIG_SAMSUNG_P1C)
 
 #ifdef CONFIG_TSI_LIST_DEBUG1
 	tsi_list_dbg("Debugging Free list \n");
@@ -660,7 +660,7 @@ static int tsi_setup_bufs(tsi_dev *dev, struct list_head *head)
 	tsi_virt =(u32) dev->tsi_buf_virt;
 	tsi_size = dev->tsi_buf_size;
 	//num_pkt*47*4
-#if defined (CONFIG_SAMSUNG_P1)
+#if defined (CONFIG_SAMSUNG_P1) || defined (CONFIG_SAMSUNG_P1C)
 	buf_size = dev->tsi_conf->num_packet * TS_PKT_SIZE; //TSI generates interrupt after filling this many bytes
 #elif defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N)
 	buf_size = dev->tsi_conf->num_packet * TS_PKT_SIZE*TSI_PKT_CNT; //TSI generates interrupt after filling this many bytes
@@ -671,7 +671,7 @@ static int tsi_setup_bufs(tsi_dev *dev, struct list_head *head)
 		pkt = kmalloc(sizeof(tsi_pkt),GFP_KERNEL);	
 		if(!pkt)
 			return list_empty(head) ? -ENOMEM : 0 ;
-#if defined (CONFIG_SAMSUNG_P1)
+#if defined (CONFIG_SAMSUNG_P1) || defined (CONFIG_SAMSUNG_P1C)
 		pkt->addr = (tsi_phy + i*4*buf_size);
 		pkt->buf = (void *)(tsi_virt + i*4*buf_size);
 #elif defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N)
@@ -739,7 +739,7 @@ static int s3c_tsi_probe(struct platform_device *pdev)
 	conf->pid_flt_mode = BYPASS;
 	conf->byte_order = MSB2LSB; 
 	conf->sync_detect = S3C_TSI_SYNC_DET_MODE_TS_SYNC8;
-#if defined (CONFIG_SAMSUNG_P1) 
+#if defined (CONFIG_SAMSUNG_P1) || defined (CONFIG_SAMSUNG_P1C)
         conf->burst_len = 0; 
 #elif defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N)
 	// to avoid making interrupt during getting the TS from TS buffer,

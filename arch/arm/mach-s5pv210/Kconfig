@@ -163,11 +163,23 @@ config MACH_P1_GSM
 	help
 		"P1 GSM locale"
 
+config MACH_P1_CDMA
+	bool "CDMA"
+	depends on MACH_P1
+	help
+		"P1 CDMA locale"
+
 config SAMSUNG_P1
 	bool "P1"
 	depends on MACH_P1_GSM
 	help
 		"P1000 Device Model"
+
+config SAMSUNG_P1C
+	bool "P1C"
+	depends on MACH_P1_CDMA
+	help
+		"CDMA Device Model"
 
 config SAMSUNG_P1L
 	bool "P1L"

@@ -460,6 +460,9 @@ source "drivers/misc/iwmc3200top/Kconfig"
 config SAMSUNG_MODEMCTL
 	bool "Samsung Modem Control/IO Driver"
 
+config SAMSUNG_DPRAM
+	bool "Samsung CDMA Modem Control/IO Driver"
+
 config SVNET_WHITELIST
 	bool "Samsung Modem control White port list"
 	depends on SAMSUNG_MODEMCTL

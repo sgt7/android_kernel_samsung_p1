@@ -125,6 +125,7 @@ struct wm8994_priv {
 #endif
 	select_mic_route *universal_mic_path;
 	int testmode_config_flag;	// for testmode.
+	unsigned int hw_version;
 };
 
 #if AUDIO_COMMON_DEBUG
