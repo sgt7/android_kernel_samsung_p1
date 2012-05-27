@@ -157,29 +157,44 @@ config MACH_P1
 	help
 	  Machine support for P1000 GSM devices (P1000,P1000L and P1000N)
 
+if MACH_P1
+choice
+prompt "Select device type"
 config MACH_P1_GSM
 	bool "GSM"
 	depends on MACH_P1
 	help
-		"P1 GSM locale"
+		"Galaxy Tab GSM"
 
 config MACH_P1_CDMA
 	bool "CDMA"
 	depends on MACH_P1
 	help
-		"P1 CDMA locale"
+		"Galaxy Tab CDMA"
 
-config SAMSUNG_P1
-	bool "P1"
-	depends on MACH_P1_GSM
-	help
-		"P1000 Device Model"
+endchoice
+endif
 
+if MACH_P1_CDMA
+choice
+prompt "Select device model"
 config SAMSUNG_P1C
 	bool "P1C"
 	depends on MACH_P1_CDMA
 	help
 		"CDMA Device Model"
+
+endchoice
+endif
+
+if MACH_P1_GSM
+choice
+prompt "Select device model"
+config SAMSUNG_P1
+	bool "P1"
+	depends on MACH_P1_GSM
+	help
+		"P1000 Device Model"
 
 config SAMSUNG_P1L
 	bool "P1L"
@@ -192,6 +207,8 @@ config SAMSUNG_P1N
 	depends on MACH_P1_GSM
 	help
 		"P1000N Device Model"
+endchoice
+endif
 
 config S5PV210_SETUP_FB
 	bool
