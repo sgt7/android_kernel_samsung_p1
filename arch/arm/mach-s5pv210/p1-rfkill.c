@@ -285,12 +285,12 @@ static int bluetooth_lock_dvfs(void *data, enum rfkill_user_states state)
 			pr_debug("[BT] dvfs unlock\n");
 			break;
 		case RFKILL_USER_STATE_SOFT_BLOCKED:
-			s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_9, L9);
-			pr_debug("[BT] dvfs lock to L9\n");
+			s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_9, L7); // 200MHz
+			pr_debug("[BT] dvfs lock to L7\n");
 			break;
 		case RFKILL_USER_STATE_HARD_BLOCKED:
-			s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_9, L8);
-			pr_debug("[BT] dvfs lock to L8\n");
+			s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_9, L6);// 400MHz
+			pr_debug("[BT] dvfs lock to L6\n");
 			break;
 		default:
 			pr_err("[BT] bad bluetooth rfkill state %d\n", state);
