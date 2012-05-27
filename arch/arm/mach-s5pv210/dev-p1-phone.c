@@ -138,11 +138,12 @@ static void modemctl_cfg_gpio(void)
 		err = gpio_request(mdmctl_data.gpio_reset_req_n, "RST_REQN");
 		if (err) {
 			printk("fail to request gpio %s\n","RST_REQN");
-		} else {
+		} 
 #if defined(CONFIG_MACH_P1_GSM)
+        else {
 			gpio_direction_output(mdmctl_data.gpio_reset_req_n, GPIO_LEVEL_LOW);
-#endif
         }
+#endif
 	}
 
 	s3c_gpio_cfgpin(gpio_phone_active, S3C_GPIO_SFN(0xF));
