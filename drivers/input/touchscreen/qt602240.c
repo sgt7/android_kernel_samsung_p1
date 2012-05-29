@@ -1444,7 +1444,7 @@ static void qt602240_input_read(struct qt602240_data *data)
 			bChangeUpDn= 1;
 		} else if ((touch_status & 0xf0 ) == 0xc0) {                                  // Detect & Press  : 0x80 | 0x40
 			touch_message_flag = true;
-			s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_7, L4); // 1000MHz
+			s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_7, L1); // 800MHz
 			fingerInfo[id].pressure= 40;
 			fingerInfo[id].x= (int16_t)x;
 			fingerInfo[id].y= (int16_t)y;
