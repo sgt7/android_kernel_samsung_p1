@@ -32,7 +32,6 @@
 
 #include "pdump_km.h"
 
-
 IMG_VOID SGXInitClocks(PVRSRV_SGXDEV_INFO	*psDevInfo,
 					   IMG_UINT32			ui32PDUMPFlags)
 {
@@ -168,7 +167,7 @@ static IMG_VOID SGXResetSleep(PVRSRV_SGXDEV_INFO	*psDevInfo,
 #endif 
 
 	
-	OSWaitus(100 * 1000000 / psDevInfo->ui32CoreClockSpeed);
+	OSWaitus(0.5);
 	if (bPDump)
 	{
 		PDUMPIDLWITHFLAGS(30, ui32PDUMPFlags);
