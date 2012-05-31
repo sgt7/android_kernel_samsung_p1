@@ -52,6 +52,7 @@ static DEFINE_MUTEX(set_freq_lock);
 
 /* UV */
 extern int exp_UV_mV[7];
+extern int exp_int_UV_mV[7];
 
 unsigned int freq_uv_table[7][3] = {
     {1400000, 1500, 1500},
@@ -61,6 +62,16 @@ unsigned int freq_uv_table[7][3] = {
     {400000, 1050, 1050},
     {200000, 950, 950},
     {100000, 950, 950}
+};
+
+unsigned int freq_int_uv_table[7][3] = {
+    {1400000, 1175, 1175},
+    {1200000, 1175, 1175},
+    {1000000, 1100, 1100},
+    {800000, 1100, 1100},
+    {400000, 1100, 1100},
+    {200000, 1100, 1100},
+    {100000, 1000, 1000}
 };
 
 /* frequency */
@@ -542,7 +553,9 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 
 	arm_volt = (dvs_conf[index].arm_volt - (exp_UV_mV[index]*1000));
     freq_uv_table[index][2] =(int) arm_volt / 1000;
-	int_volt = dvs_conf[index].int_volt;
+	int_volt = (dvs_conf[index].int_volt - (exp_int_UV_mV[index]*1000));
+	freq_int_uv_table[index][2] = (int) int_volt / 1000;
+
 	
 	//printk("setting vdd %d for speed %d\n", arm_volt, arm_clk);
 	
