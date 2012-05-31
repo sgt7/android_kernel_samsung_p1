@@ -27,30 +27,22 @@
 #include <linux/earlysuspend.h>
 #endif
 
-//#define MDNIE_TUNING
-//#define CAMERA_FLASH_CONTROL
 #define KEY_LED_CONTROL
-#define KEY_LED_SELF
 #define ENABLE_NOISE_TEST_MODE
-#if defined(CONFIG_TARGET_LOCALE_KOR) || defined (CONFIG_TARGET_LOCALE_USAGSM)
-#define DRIVER_FILTER
-#endif
 
 #if defined (KEY_LED_CONTROL)
 // Key LED controller
 #define KEYLED_EN               S5PV210_GPD0(0)
 
-#define KEYLED_ADDRESS_CURRENT      17
-#define KEYLED_ADDRESS_MAX              20
-#define KEYLED_ADDRESS_LOW              21
-#define KEYLED_ADDRESS_ONOFF          22
+#define KEYLED_ADDRESS_CURRENT  17
+#define KEYLED_ADDRESS_MAX      20
+#define KEYLED_ADDRESS_LOW      21
+#define KEYLED_ADDRESS_ONOFF    22
 
-#define KEYLED_DATA_20MAX                1
-#define KEYLED_DATA_30MAX                2
-#define KEYLED_DATA_15MAX                3
-#define KEYLED_DATA_LOW                   4
-#define LED_SWITCH
-
+#define KEYLED_DATA_20MAX       1
+#define KEYLED_DATA_30MAX       2
+#define KEYLED_DATA_15MAX       3
+#define KEYLED_DATA_LOW         4
 #endif
 
 #if defined (CONFIG_SAMSUNG_P1) || defined (CONFIG_SAMSUNG_P1C)
@@ -70,7 +62,7 @@
 #define GPIO_OUTPUT		1
 #endif
 
-#define MAX_USING_FINGER_NUM	      10
+#define MAX_USING_FINGER_NUM    10
 
 #define I2C_M_WR 0 /* for i2c */
 #define I2C_MAX_SEND_LENGTH     300
