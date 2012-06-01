@@ -36,7 +36,6 @@
 int exp_UV_mV[7];
 extern unsigned int freq_uv_table[7][3];
 int enabled_freqs[7] = { 1, 1, 1, 1, 1, 1, 1 };
-extern unsigned int gpu[7][2];
 int exp_int_UV_mV[7];
 extern unsigned int freq_int_uv_table[7][3];
 
@@ -754,38 +753,6 @@ static ssize_t store_states_enabled_table(struct cpufreq_policy *policy, const c
 
 }
 
-static ssize_t show_gpu_clock_table(struct cpufreq_policy *policy, char *buf) {
- 
-  return sprintf(buf, "%d %d\n%d %d\n%d %d\n%d %d\n%d %d\n%d %d\n%d %d\n",
-    gpu[0][0], gpu[0][1],
-    gpu[1][0], gpu[1][1],
-    gpu[2][0], gpu[2][1],
-    gpu[3][0], gpu[3][1],
-    gpu[4][0], gpu[4][1],
-    gpu[5][0], gpu[5][1],
-    gpu[6][0], gpu[6][1]);
-}
- 	
-static ssize_t store_gpu_clock_table(struct cpufreq_policy *policy, const char *buf, int count) {
-	
-  unsigned int ret = -EINVAL;
-
-  ret = sscanf(buf, "%d %d\n%d %d\n%d %d\n%d %d\n%d %d\n%d %d\n%d %d\n",
-    &gpu[0][0], &gpu[0][1],
-    &gpu[1][0], &gpu[1][1],
-    &gpu[2][0], &gpu[2][1],
-    &gpu[3][0], &gpu[3][1],
-    &gpu[4][0], &gpu[4][1],
-    &gpu[5][0], &gpu[5][1],
-    &gpu[6][0], &gpu[6][1]);
-
-  if(ret != -1)
-    return -EINVAL;
-  else
-    return ret;
-
-}
-
 cpufreq_freq_attr_ro_perm(cpuinfo_cur_freq, 0400);
 cpufreq_freq_attr_ro(cpuinfo_min_freq);
 cpufreq_freq_attr_ro(cpuinfo_max_freq);
@@ -805,7 +772,6 @@ cpufreq_freq_attr_rw(scaling_setspeed);
 /* UV table */
 cpufreq_freq_attr_rw(UV_mV_table);
 cpufreq_freq_attr_rw(states_enabled_table);
-cpufreq_freq_attr_rw(gpu_clock_table);
 cpufreq_freq_attr_rw(int_UV_mV_table);
 
 static struct attribute *default_attrs[] = {
@@ -824,7 +790,6 @@ static struct attribute *default_attrs[] = {
 	&frequency_voltage_table.attr,
 	&frequency_int_voltage_table.attr,
 	&states_enabled_table.attr,
-	&gpu_clock_table.attr,
 	&int_UV_mV_table.attr,
 	NULL
 };
