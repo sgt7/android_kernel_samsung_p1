@@ -29,8 +29,23 @@ static ssize_t pvr_oc_store(struct kobject *kobj, struct kobj_attribute *attr, c
 {
 	sscanf(buf, "%du", &pvr_oc);
 
-	if (pvr_oc == 1) pvr_clk_val = 320000000;
-	else pvr_clk_val = 200000000;
+	switch(pvr_oc) {
+	    case 1:
+            pvr_clk_val = 260000000;
+		    break;
+
+	    case 2:
+            pvr_clk_val = 320000000;
+		    break;
+
+	    case 3:
+            pvr_clk_val = 370000000;
+		    break;
+
+	    default:
+            pvr_clk_val = 200000000;
+		    break;
+	}
 
 	printk("## [GPU OC] : Clock Speed == %d MHz ##\n", pvr_clk_val / 1000000);
 
