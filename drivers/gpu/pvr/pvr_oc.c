@@ -31,15 +31,15 @@ static ssize_t pvr_oc_store(struct kobject *kobj, struct kobj_attribute *attr, c
 
 	switch(pvr_oc) {
 	    case 1:
-            pvr_clk_val = 260000000;
+            pvr_clk_val = 240000000;
 		    break;
 
 	    case 2:
-            pvr_clk_val = 320000000;
+            pvr_clk_val = 280000000;
 		    break;
 
 	    case 3:
-            pvr_clk_val = 370000000;
+            pvr_clk_val = 320000000;
 		    break;
 
 	    default:
