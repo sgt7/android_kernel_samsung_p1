@@ -943,20 +943,11 @@ static int __init s5pv210_cpufreq_driver_init(struct cpufreq_policy *policy)
 			sizeof(struct s3c_freq));
 	previous_arm_volt = (dvs_conf[level].arm_volt + (exp_UV_mV[level] * 1000));
 
-#ifdef CONFIG_DVFS_LIMIT
-	for(i = 0; i < DVFS_LOCK_TOKEN_NUM; i++)
-		g_dvfslockval[i] = MAX_PERF_LEVEL;
-#endif
-
 #ifdef CONFIG_LIVE_OC
 	liveoc_init();
 #endif
 
-	cpufreq_frequency_table_cpuinfo(policy, freq_table);
-	/* set default min and max policies to safe speeds */
-	policy->max = 1000000;
-	policy->min = 100000;
-	return 0;
+	return cpufreq_frequency_table_cpuinfo(policy, freq_table);
 }
 
 static int s5pv210_cpufreq_notifier_event(struct notifier_block *this,
@@ -976,7 +967,11 @@ static int s5pv210_cpufreq_notifier_event(struct notifier_block *this,
 		policy->min = policy->max = SLEEP_FREQ;
 
 		/* Call "internal" version as policy is already locked. */
+#ifdef CONFIG_LIVE_OC
+		ret = __cpufreq_driver_target(policy, sleep_freq, DISABLE_FURTHER_CPUFREQ);
+#else
 		ret = __cpufreq_driver_target(policy, SLEEP_FREQ, DISABLE_FURTHER_CPUFREQ);
+#endif
 
 		unlock_policy_rwsem_write(policy->cpu);
 suspend_lock_fail:
@@ -989,7 +984,12 @@ suspend_no_policy:
 	case PM_POST_SUSPEND:
 		if ((policy = cpufreq_cpu_get(0)) == NULL)
 			return NOTIFY_OK;
+
+#ifdef CONFIG_LIVE_OC
+		cpufreq_driver_target(policy, sleep_freq, ENABLE_FURTHER_CPUFREQ);
+#else
 		cpufreq_driver_target(policy, SLEEP_FREQ, ENABLE_FURTHER_CPUFREQ);
+#endif
 		cpufreq_cpu_put(policy);
 
 		/* Reevaluate the user-specified cpufreq policy, which reverts the
