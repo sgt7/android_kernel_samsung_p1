@@ -53,6 +53,8 @@
 #include "srvkm.h"
 #include "ttrace.h"
 
+#include <linux/pvr_oc.h>
+
 #define VAR(x) #x
 
  
