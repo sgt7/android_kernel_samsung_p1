@@ -947,7 +947,16 @@ static int __init s5pv210_cpufreq_driver_init(struct cpufreq_policy *policy)
 	liveoc_init();
 #endif
 
-	return cpufreq_frequency_table_cpuinfo(policy, freq_table);
+#ifdef CONFIG_DVFS_LIMIT
+	for(i = 0; i < DVFS_LOCK_TOKEN_NUM; i++)
+		g_dvfslockval[i] = MAX_PERF_LEVEL;
+#endif
+
+	cpufreq_frequency_table_cpuinfo(policy, freq_table);
+	/* set default min and max policies to safe speeds */
+	policy->max = 1000000;
+	policy->min = 100000;
+	return 0;
 }
 
 static int s5pv210_cpufreq_notifier_event(struct notifier_block *this,
