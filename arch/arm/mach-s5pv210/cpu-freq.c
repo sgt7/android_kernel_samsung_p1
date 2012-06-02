@@ -415,7 +415,7 @@ static void s5pv210_cpufreq_clksrcs_MPLL2APLL(unsigned int index,
 	switch (index) {
 	case OC0:
 		/* APLL FOUT becomes 1400 Mhz */
-		__raw_writel(PLL45XX_APLL_VAL_1200, S5P_APLL_CON);
+		__raw_writel(PLL45XX_APLL_VAL_1400, S5P_APLL_CON);
 		break;
 	case OC1:
 		/* APLL FOUT becomes 1200 Mhz */
