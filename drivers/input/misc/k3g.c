@@ -391,20 +391,17 @@ static ssize_t k3g_set_delay(struct device *dev,
 	else
 		disable_irq(k3g_data->client->irq);
 
-	/* round to the nearest supported ODR that is equal or above than
+	/* round to the nearest supported ODR that is less than
 	 * the requested value
 	 */
-	for (i = 0; i < ARRAY_SIZE(odr_delay_table); i++) {
-		if (delay_ns < odr_delay_table[i].delay_ns)
+	for (i = 0; i < ARRAY_SIZE(odr_delay_table); i++)
+		if (delay_ns <= odr_delay_table[i].delay_ns) {
+			odr_value = odr_delay_table[i].odr;
+			delay_ns = odr_delay_table[i].delay_ns;
+			k3g_data->time_to_read = delay_ns;
+			k3g_data->entries = 1;
 			break;
-	}
-	if (i > 0)
-		i--;
-
-	odr_value = odr_delay_table[i].odr;
-	delay_ns = odr_delay_table[i].delay_ns;
-	k3g_data->time_to_read = delay_ns;
-	k3g_data->entries = 1;
+		}
 
 	if (delay_ns >= odr_delay_table[3].delay_ns) {
 		if (delay_ns >= MAX_DELAY) {

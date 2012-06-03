@@ -30,8 +30,8 @@
 #include <mach/regs-clock.h>
 #include <mach/regs-gpio.h>
 #include <plat/gpio-cfg.h>
-#include <plat/devs.h>
 #include <linux/moduleparam.h>
+
 
 struct sec_switch_struct {
 	struct sec_switch_platform_data *pdata;
@@ -44,11 +44,6 @@ struct sec_switch_wq {
 	struct sec_switch_struct *sdata;
 	struct list_head entry;
 };
-
-#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
-extern void samsung_enable_function(int mode);
-#endif
-extern int askon_status;
 
 extern struct device *switch_dev;
 static int switchsel;
@@ -119,7 +114,7 @@ static ssize_t usb_sel_store(struct device *dev, struct device_attribute *attr, 
 	return size;
 }
 
-static DEVICE_ATTR(usb_sel, S_IRUGO |S_IWGRP | S_IWUSR, usb_sel_show, usb_sel_store);
+static DEVICE_ATTR(usb_sel, 0664, usb_sel_show, usb_sel_store);
 
 
 static ssize_t uart_switch_show(struct device *dev, struct device_attribute *attr, char *buf)
@@ -167,7 +162,7 @@ static ssize_t uart_switch_store(struct device *dev, struct device_attribute *at
 	return size;
 }
 
-static DEVICE_ATTR(uart_sel, S_IRUGO | S_IWGRP | S_IWUSR, uart_switch_show, uart_switch_store);
+static DEVICE_ATTR(uart_sel, 0664, uart_switch_show, uart_switch_store);
 
 
 // for sysfs control (/sys/class/sec/switch/usb_state)
@@ -188,7 +183,7 @@ static ssize_t usb_state_store(struct device *dev, struct device_attribute *attr
 	return size;
 }
 
-static DEVICE_ATTR(usb_state, S_IRUGO | S_IWGRP | S_IWUSR, usb_state_show, usb_state_store);
+static DEVICE_ATTR(usb_state, 0664, usb_state_show, usb_state_store);
 
 
 // for sysfs control (/sys/class/sec/switch/disable_vbus)
@@ -208,7 +203,7 @@ static ssize_t disable_vbus_store(struct device *dev, struct device_attribute *a
 	return size;
 }
 
-static DEVICE_ATTR(disable_vbus, S_IRUGO | S_IWGRP | S_IWUSR, disable_vbus_show, disable_vbus_store);
+static DEVICE_ATTR(disable_vbus, 0664, disable_vbus_show, disable_vbus_store);
 
 
 static void sec_switch_init_work(struct work_struct *work)
@@ -219,22 +214,16 @@ static void sec_switch_init_work(struct work_struct *work)
 	int usb_sel = 0;
 	int uart_sel = 0;
 	int ret = 0;
-	int samsung_kies_sel,ums_sel,mtp_sel,vtp_sel,askon_sel;
 
 //	printk("%s : called!!\n", __func__);
-         if (sec_get_param_value &&
-            secsw->pdata &&
-            secsw->pdata->set_regulator &&
-            secsw->pdata->get_phy_init_status &&
-            secsw->pdata->get_phy_init_status()) {
-                sec_get_param_value(__SWITCH_SEL, &secsw->switch_sel);
-                cancel_delayed_work(&wq->work_q);
-         }
-	 //else if (!regulator_get(NULL, "vbus_ap")  || !(secsw->pdata->get_phy_init_status())) {
-         else  {
-		schedule_delayed_work(&wq->work_q, msecs_to_jiffies(1000));
+
+	if (!regulator_get(NULL, "vbus_ap")  || !(secsw->pdata->get_phy_init_status())) {
+		schedule_delayed_work(&wq->work_q, msecs_to_jiffies(100));
 		return ;
-	       }
+	}
+	else {
+		cancel_delayed_work(&wq->work_q);
+	}
 
 	if(secsw->pdata && secsw->pdata->get_regulator) {
 		ret = secsw->pdata->get_regulator();
@@ -293,7 +282,7 @@ static int sec_switch_probe(struct platform_device *pdev)
 	printk("%s : *** switch_sel (0x%x)\n", __func__, switchsel);
 
 	secsw->pdata = pdata;
-	secsw->switch_sel = 1;
+	secsw->switch_sel = switchsel;
 
 	dev_set_drvdata(switch_dev, secsw);
 

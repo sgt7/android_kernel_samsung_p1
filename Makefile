@@ -1,7 +1,7 @@
 VERSION = 2
 PATCHLEVEL = 6
 SUBLEVEL = 35
-EXTRAVERSION = .7
+EXTRAVERSION = .13
 NAME = Yokohama
 
 # *DOCUMENTATION*
@@ -352,8 +352,11 @@ KBUILD_CPPFLAGS := -D__KERNEL__
 KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
-		   -Wno-format-security \
-		   -fno-delete-null-pointer-checks
+		   -Wno-format-security -mfloat-abi=hard \
+		   -fno-delete-null-pointer-checks -mtune=cortex-a8 -mfpu=neon -fno-gcse -funsafe-math-optimizations -ffinite-math-only -fgcse-las \
+                   -fgcse-sm -fgcse-las -ftree-loop-linear -ftree-loop-im -ftree-loop-ivcanon -fivopts -funroll-loops -fbtr-bb-exclusive \
+                   --param l2-cache-size=512 --param l1-cache-size=64 --param simultaneous-prefetches=6 --param prefetch-latency=400 --param l1-cache-line-size=64 -mvectorize-with-neon-quad \
+                   -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo-scheduled-loops -fvect-cost-model
 KBUILD_AFLAGS   := -D__ASSEMBLY__
 
 # Read KERNELRELEASE from include/config/kernel.release (if it exists)

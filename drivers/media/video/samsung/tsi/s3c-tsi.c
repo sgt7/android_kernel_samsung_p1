@@ -23,29 +23,28 @@
 #include <asm/page.h>
 #include <mach/irqs.h>
 #include <mach/gpio.h>
-#if defined(CONFIG_MACH_P1_LTN) 
-#include <mach/map.h>
-#include <mach/regs-clock.h>
-#include <mach/regs-tsi.h>
-#else
+#if defined (CONFIG_SAMSUNG_P1) || defined (CONFIG_SAMSUNG_P1C)
 #include <plat/map.h>
 #include <plat/regs-clock.h>
 #include <plat/regs-tsi.h>
 #endif
 #include <plat/gpio-cfg.h>
-
-#if defined(CONFIG_MACH_P1_LTN) 
+#if defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N)
+#include <mach/map.h>
+#include <mach/regs-clock.h>
+#include <mach/regs-tsi.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/wait.h>
-#include <linux/poll.h>  
+#include <linux/poll.h>
+#include <plat/gpio-cfg.h>
 #endif
 
-#if defined(CONFIG_MACH_P1_LTN) 
+#if defined (CONFIG_SAMSUNG_P1) || defined (CONFIG_SAMSUNG_P1C)
+#define TSI_BUF_SIZE	(256*1024)
+#elif defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N)
 #define TSI_BUF_SIZE	(128*1024)
 #define TSI_PKT_CNT      16
-#else
-#define TSI_BUF_SIZE	(256*1024)
 #endif
 
 enum filter_mode 
@@ -97,7 +96,7 @@ typedef struct
 	void __iomem 	*tsi_base;
 	int tsi_irq;
 	int running;
-#if defined(CONFIG_PM) && defined(CONFIG_MACH_P1_LTN)	//latin_cam:kihyung.nam, power management operation added
+#if defined (CONFIG_PM) && ( defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N) ) //latin_cam:kihyung.nam, power management operation added
 	int last_running_state;
 #endif
 	int new_pkt;
@@ -183,13 +182,12 @@ void s3c_tsi_set_gpio(void)
 
 	for(i=2;i< 7; i++)
 	{
-#if defined(CONFIG_MACH_P1_LTN)
-		s3c_gpio_cfgpin(S5PV210_GPJ0(i), S3C_GPIO_SFN(5));
-		s3c_gpio_setpull(S5PV210_GPJ0(i), S3C_GPIO_PULL_NONE);
-
-#else	
+#if defined (CONFIG_SAMSUNG_P1) || defined (CONFIG_SAMSUNG_P1C)
 		s3c_gpio_cfgpin(S5PC11X_GPJ0(i), S3C_GPIO_SFN(5));
 		s3c_gpio_setpull(S5PC11X_GPJ0(i), S3C_GPIO_PULL_NONE);
+#elif defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N)
+		s3c_gpio_cfgpin(S5PV210_GPJ0(i), S3C_GPIO_SFN(5));
+		s3c_gpio_setpull(S5PV210_GPJ0(i), S3C_GPIO_PULL_NONE);
 #endif		
 	}
 }
@@ -269,7 +267,9 @@ static int s3c_tsi_start(tsi_dev *tsi)
 		return -1;
 	}
 	pkt_size = pkt1->len;
-#if defined(CONFIG_MACH_P1_LTN) 
+#if defined (CONFIG_SAMSUNG_P1) || defined (CONFIG_SAMSUNG_P1C)
+	writel(pkt_size,(tsi->tsi_base+S3C_TS_SIZE));
+#elif defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N)
 	// when set the TS BUF SIZE to the S3C_TS_SIZE,
 	// if you want get a 10-block TS from TSIF,
 	// you should set the value of S3C_TS_SIZE as 47*10(not 188*10)
@@ -277,8 +277,6 @@ static int s3c_tsi_start(tsi_dev *tsi)
 	// So, pkt_size which is counted to BYTES must be divided by 4(2 bit shift lefted)
 
 	writel(pkt_size>>2,(tsi->tsi_base+S3C_TS_SIZE));
-#else
-	writel(pkt_size,(tsi->tsi_base+S3C_TS_SIZE));
 #endif
 	s3c_tsi_set_dest_addr(pkt1->addr,(u32)(tsi->tsi_base+S3C_TS_BASE));
 		
@@ -406,7 +404,7 @@ void s3c_tsi_rx_int(tsi_dev *tsi)
 		}
 	list_move_tail(&pkt->list,&tsi->partial_list);
 
-#if defined(CONFIG_MACH_P1_LTN) 
+#if defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N)
 	//namkh, request from Abraham
 	// If there arise a buffer-full interrupt,
 	// a new ts buffer address should be set.
@@ -467,7 +465,7 @@ int s3c_tsi_mmap(struct file *filp, struct vm_area_struct *vma)
 	return 0;
 }
 
-#if defined(CONFIG_MACH_P1_LTN) 
+#if defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N)
 static unsigned int	s3c_tsi_poll(struct file *file, poll_table *wait)
 {
 	unsigned int mask = 0;
@@ -499,40 +497,7 @@ static ssize_t s3c_tsi_read(struct file *file, char *buf, size_t count, loff_t *
 	list_debug(&tsi->full_list);
 #endif
 
-#if defined(CONFIG_MACH_P1_LTN)  
-	tsi_dbg("entered to s3c_tsi_read\n");
-				ret = wait_event_interruptible(tsi->read_wq,tsi->new_pkt);
-				if(ret < 0)
-				{
-					tsi_dbg("woken up from signal..returning\n");
-					return ret;
-				}
-				pkt = tsi_get_pkt(tsi,full);    
-				
-
-	pkt_size = pkt->len;		//pkt_size should be multiple of 188 bytes.
-
-	tsi_dbg("pkt_size is %d\n", pkt_size);
-		if(pkt_size > count)
-			pkt_size = count;
-
-		if (copy_to_user((buf+len), pkt->buf, pkt_size)) {
-					tsi_dbg("copy user fail\n");
-                                ret = -EFAULT;
-		return ret;
-                        }
-
-		len += pkt_size;		
- 		count -= pkt_size;
-		tsi_dbg("len is%d count %d pkt_size %d\n",len,count,pkt_size);
-		ret = len;
-		spin_lock_irqsave(&tsi->tsi_lock,flags);
-		list_move(&pkt->list,&tsi->free_list);
-		spin_unlock_irqrestore(&tsi->tsi_lock,flags);
-		
-		if(list_empty(full))
-			tsi->new_pkt =0;
-#else
+#if defined (CONFIG_SAMSUNG_P1) || defined (CONFIG_SAMSUNG_P1C)
 	while(count > 0){
 //deque packet from full list	
 		pkt = tsi_get_pkt(tsi,full);	
@@ -572,7 +537,40 @@ static ssize_t s3c_tsi_read(struct file *file, char *buf, size_t count, loff_t *
 			tsi->new_pkt =0;
 
 	}
-#endif  //defined(CONFIG_MACH_P1_LTN)
+#elif defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N)
+	tsi_dbg("entered to s3c_tsi_read\n");
+				ret = wait_event_interruptible(tsi->read_wq,tsi->new_pkt);
+				if(ret < 0)
+				{
+					tsi_dbg("woken up from signal..returning\n");
+					return ret;
+				}
+				pkt = tsi_get_pkt(tsi,full);    
+				
+
+	pkt_size = pkt->len;		//pkt_size should be multiple of 188 bytes.
+
+	tsi_dbg("pkt_size is %d\n", pkt_size);
+		if(pkt_size > count)
+			pkt_size = count;
+
+		if (copy_to_user((buf+len), pkt->buf, pkt_size)) {
+					tsi_dbg("copy user fail\n");
+                                ret = -EFAULT;
+		return ret;
+                        }
+
+		len += pkt_size;		
+ 		count -= pkt_size;
+		tsi_dbg("len is%d count %d pkt_size %d\n",len,count,pkt_size);
+		ret = len;
+		spin_lock_irqsave(&tsi->tsi_lock,flags);
+		list_move(&pkt->list,&tsi->free_list);
+		spin_unlock_irqrestore(&tsi->tsi_lock,flags);
+		
+		if(list_empty(full))
+			tsi->new_pkt =0;
+#endif  //defined (CONFIG_SAMSUNG_P1) || defined (CONFIG_SAMSUNG_P1C)
 
 #ifdef CONFIG_TSI_LIST_DEBUG1
 	tsi_list_dbg("Debugging Free list \n");
@@ -624,7 +622,7 @@ static int s3c_tsi_ioctl(struct inode *inode, struct file *file, unsigned int cm
 static int s3c_tsi_open(struct inode *inode, struct file *file)
 {
 	tsi_dev *s3c_tsi = platform_get_drvdata(s3c_tsi_dev);
-#if defined(CONFIG_MACH_P1_LTN) // Fix the TSI data problem (Don't generated waking up sleep state)
+#if defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N) // Fix the TSI data problem (Don't generated waking up sleep state)
 	s3c_tsi_setup(s3c_tsi);
 #endif
 	file->private_data = s3c_tsi;
@@ -637,7 +635,7 @@ static struct file_operations tsi_fops = {
 	release:	s3c_tsi_release,
 	ioctl:		s3c_tsi_ioctl,
 	read:		s3c_tsi_read,
-#if defined(CONFIG_MACH_P1_LTN) 
+#if defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N)
 	poll:		s3c_tsi_poll,
 #endif
 	mmap:		s3c_tsi_mmap,
@@ -662,10 +660,10 @@ static int tsi_setup_bufs(tsi_dev *dev, struct list_head *head)
 	tsi_virt =(u32) dev->tsi_buf_virt;
 	tsi_size = dev->tsi_buf_size;
 	//num_pkt*47*4
-#if defined(CONFIG_MACH_P1_LTN) 
-	buf_size = dev->tsi_conf->num_packet * TS_PKT_SIZE*TSI_PKT_CNT; //TSI generates interrupt after filling this many bytes
-#else
+#if defined (CONFIG_SAMSUNG_P1) || defined (CONFIG_SAMSUNG_P1C)
 	buf_size = dev->tsi_conf->num_packet * TS_PKT_SIZE; //TSI generates interrupt after filling this many bytes
+#elif defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N)
+	buf_size = dev->tsi_conf->num_packet * TS_PKT_SIZE*TSI_PKT_CNT; //TSI generates interrupt after filling this many bytes
 #endif
 	num_buf = (tsi_size / buf_size);
 
@@ -673,13 +671,13 @@ static int tsi_setup_bufs(tsi_dev *dev, struct list_head *head)
 		pkt = kmalloc(sizeof(tsi_pkt),GFP_KERNEL);	
 		if(!pkt)
 			return list_empty(head) ? -ENOMEM : 0 ;
-#if defined(CONFIG_MACH_P1_LTN) 
+#if defined (CONFIG_SAMSUNG_P1) || defined (CONFIG_SAMSUNG_P1C)
+		pkt->addr = (tsi_phy + i*4*buf_size);
+		pkt->buf = (void *)(tsi_virt + i*4*buf_size);
+#elif defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N)
 		// Address should be byte-aligned
 		pkt->addr =((u32)tsi_phy + i*buf_size);
 		pkt->buf = (void *)(u8 *)((u32)tsi_virt + i*buf_size);
-#else
-		pkt->addr = (tsi_phy + i*4*buf_size);
-		pkt->buf = (void *)(tsi_virt + i*4*buf_size);
 #endif
 		pkt->len = buf_size;
 		list_add_tail(&pkt->list,head);	
@@ -741,14 +739,14 @@ static int s3c_tsi_probe(struct platform_device *pdev)
 	conf->pid_flt_mode = BYPASS;
 	conf->byte_order = MSB2LSB; 
 	conf->sync_detect = S3C_TSI_SYNC_DET_MODE_TS_SYNC8;
-#if defined(CONFIG_MACH_P1_LTN) 
+#if defined (CONFIG_SAMSUNG_P1) || defined (CONFIG_SAMSUNG_P1C)
+        conf->burst_len = 0; 
+#elif defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N)
 	// to avoid making interrupt during getting the TS from TS buffer,
 	// we use the burst-length as 8 beat.
 	// This burst-length may be changed next time.
 
 	conf->burst_len = 2; 
-#else
-        conf->burst_len = 0; 
 #endif
 	conf->byte_swap = 1; //little endian
 	conf->pad_pattern = 0;  //this might vary from bd to bd
@@ -813,7 +811,7 @@ static int s3c_tsi_probe(struct platform_device *pdev)
 	init_waitqueue_head(&tsi_priv->read_wq);
 	tsi_priv->new_pkt = 0;
 	tsi_priv->running = 0;
-#if defined(CONFIG_PM) && defined(CONFIG_MACH_P1_LTN)	//latin_cam:kihyung.nam, power management operation added
+#if defined (CONFIG_PM) && ( defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N) )	//latin_cam:kihyung.nam, power management operation added
 	tsi_priv->last_running_state = tsi_priv->running;
 #endif
 //get the dma coherent mem
@@ -899,7 +897,7 @@ static int s3c_tsi_remove(struct platform_device *dev)
 }
 
 
-#if defined(CONFIG_PM) && defined(CONFIG_MACH_P1_LTN)	//latin_cam:kihyung.nam, power management operation added
+#if defined (CONFIG_PM) && ( defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N) )	//latin_cam:kihyung.nam, power management operation added
 static int s3c_tsi_suspend(struct platform_device *pdev, pm_message_t state)
 {
 	tsi_dev *tsi = platform_get_drvdata(s3c_tsi_dev);
@@ -930,13 +928,13 @@ static int s3c_tsi_resume(struct platform_device *pdev)
 
 	return 0;
 }
-#endif  //defined(CONFIG_PM) && defined(CONFIG_MACH_P1_LTN)
+#endif  //defined (CONFIG_PM) && ( defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N) )
 
 static struct platform_driver s3c_tsi_driver = {
 	.probe		= s3c_tsi_probe,
 	.remove		= s3c_tsi_remove,
 	.shutdown	= NULL,
-#if defined(CONFIG_PM) && defined(CONFIG_MACH_P1_LTN)	//latin_cam:kihyung.nam, power management operation added
+#if defined (CONFIG_PM) && ( defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N) )	//latin_cam:kihyung.nam, power management operation added
 	.suspend	= s3c_tsi_suspend,
 	.resume		= s3c_tsi_resume,
 #else

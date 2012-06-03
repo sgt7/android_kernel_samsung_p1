@@ -52,6 +52,7 @@ static void remapkey_timer(unsigned long data)
         {
             keycode = KEY_PREVIOUSSONG;
         }
+
         input_report_key(g_data->input_dev, keycode, 1);
         input_report_key(g_data->input_dev, keycode, 0);
         input_sync(g_data->input_dev);
@@ -403,7 +404,7 @@ static ssize_t caps_lock_led(struct device *dev, struct device_attribute *attr, 
 
     return size;
 }
-static DEVICE_ATTR(keyboard_led, S_IRUGO | S_IWUSR | S_IWGRP, NULL, caps_lock_led);
+static DEVICE_ATTR(keyboard_led, 0664, NULL, caps_lock_led);
 
 static int __devinit dock_keyboard_probe(struct platform_device *pdev)
 {

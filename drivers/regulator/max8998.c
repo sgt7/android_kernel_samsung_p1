@@ -538,7 +538,7 @@ static __devinit int max8998_pmic_probe(struct platform_device *pdev)
 	struct max8998_platform_data *pdata = dev_get_platdata(iodev->dev);
 	struct regulator_dev **rdev;
 	struct max8998_data *max8998;
-	int i, ret, size,on_off_1;
+	int i, ret, size;
 
 	if (!pdata) {
 		dev_err(pdev->dev.parent, "No platform init data supplied\n");
@@ -582,13 +582,6 @@ static __devinit int max8998_pmic_probe(struct platform_device *pdev)
 		}
 	}
 
-	ret = max8998_read_reg(max8998->iodev, MAX8998_REG_ONOFF1, &on_off_1);
-	if (ret) {
-			dev_err(max8998->dev, "Error reading MAX8998_REG_ONOFF4\n");
-			goto err;
-	}
-	on_off_1 = 0x3E & on_off_1; //0x3F modified to 0x3E to disable LDO5 as it grounded through a capacitor
-	max8998_write_reg(max8998->iodev, MAX8998_REG_ONOFF1 ,on_off_1 );
 
 	return 0;
 err:
@@ -601,32 +594,6 @@ err:
 
 	return ret;
 }
-static int max8998_pmic_suspend(struct platform_device *pdev, pm_message_t state)
-{
-        struct max8998_dev *iodev = dev_get_drvdata(pdev->dev.parent);
-        int ret; 
-        u8 reg2, on_off_2;
-        ret = max8998_read_reg(iodev,MAX8998_REG_ONOFF2, &on_off_2);
-        if (ret) {
-                        printk("Error reading MAx8998_REG_ONOFF2  \n");
-                        goto err;
-        }
-        on_off_2 = 0xF7 & on_off_2;
-        ret = max8998_write_reg(iodev, MAX8998_REG_ONOFF2 ,on_off_2 );
-        if (ret) {
-			printk("Error writing MAx8998_REG_ONOFF2  \n");
-                        goto err;
-        }
-err:
-return 0;
-}
-
-static int max8998_pmic_resume(struct platform_device *pdev, pm_message_t state)
-{
-
-	return 0;
-}
-
 
 static int __devexit max8998_pmic_remove(struct platform_device *pdev)
 {
@@ -650,8 +617,6 @@ static struct platform_driver max8998_pmic_driver = {
 		.owner = THIS_MODULE,
 	},
 	.probe = max8998_pmic_probe,
-	.suspend = max8998_pmic_suspend,
-	.resume = max8998_pmic_resume,
 	.remove = __devexit_p(max8998_pmic_remove),
 };
 

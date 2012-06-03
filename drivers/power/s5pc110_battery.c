@@ -128,8 +128,6 @@ struct chg_data {
 	struct max8998_charger_callbacks callbacks;
 };
 
-static bool disable_charger;
-
 static char *supply_list[] = {
 	"battery",
 };
@@ -512,7 +510,7 @@ static int s3c_cable_status_update(struct chg_data *chg)
 
 	/* if max8998 has detected vdcin */
 	if (max8998_check_vdcin(chg)) {
-		if (chg->bat_info.dis_reason || disable_charger) {
+		if (chg->bat_info.dis_reason) {
 			pr_info("%s : battery status discharging : %d\n",
 				__func__, chg->bat_info.dis_reason);
 			/* have vdcin, but cannot charge */
@@ -776,8 +774,6 @@ static __devinit int max8998_charger_probe(struct platform_device *pdev)
 	chg->last_poll = alarm_get_elapsed_realtime();
 	alarm_init(&chg->alarm, ANDROID_ALARM_ELAPSED_REALTIME_WAKEUP,
 		s3c_battery_alarm);
-
-	disable_charger = 0;
 
 	/* init power supplier framework */
 	ret = power_supply_register(&pdev->dev, &chg->psy_bat);

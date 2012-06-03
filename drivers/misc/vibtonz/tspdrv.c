@@ -84,8 +84,8 @@ static int g_nMajor = 0;
 #include "VibeOSKernelLinuxTime.c"
 
 /* timed_output */
-#define VIBRATOR_PERIOD	44640
-#define VIBRATOR_DUTY	42408
+#define VIBRATOR_PERIOD	44540
+#define VIBRATOR_DUTY	44500
 #if 1
 static int vibrator_period = VIBRATOR_PERIOD;
 static int vibrator_duty = VIBRATOR_DUTY;

@@ -103,6 +103,10 @@ void s5pv210_setup_sdhci1_cfg_gpio(struct platform_device *dev, int width)
 void s5pv210_setup_sdhci2_cfg_gpio(struct platform_device *dev, int width)
 {
 	unsigned int gpio;
+#if defined(CONFIG_MACH_P1_CDMA)
+	unsigned int memory_enable;
+		memory_enable = S5PV210_GPJ1(1);
+#endif
 
 	switch (width) {
 	/* Channel 2 supports 4 and 8-bit bus width */
@@ -129,6 +133,11 @@ void s5pv210_setup_sdhci2_cfg_gpio(struct platform_device *dev, int width)
 	default:
 		printk(KERN_ERR "Wrong SD/MMC bus width : %d\n", width);
 	}
+#if defined(CONFIG_MACH_P1_CDMA)
+	s3c_gpio_cfgpin(memory_enable, S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(memory_enable, S3C_GPIO_PULL_NONE);
+	gpio_set_value(memory_enable, 1);
+#endif
 }
 
 void s5pv210_setup_sdhci3_cfg_gpio(struct platform_device *dev, int width)
@@ -280,18 +289,31 @@ unsigned int universal_sdhci2_detect_ext_cd(void)
 	printk(KERN_DEBUG "eint pend %x  eint mask %x",
 		readl(S5P_EINT_PEND(3)), readl(S5P_EINT_MASK(3)));
 #endif
+#if defined(CONFIG_MACH_P1_GSM)
 	card_status = gpio_get_value(GPIO_T_FLASH_DETECT) ? 0 : 1; /* active low */
 	printk(KERN_DEBUG " Universal: Card status  %s\n", 
 		card_status ? "inserted" : "removed");
 	return card_status;
+#elif defined(CONFIG_MACH_P1_CDMA)
+	card_status = gpio_get_value(S5PV210_GPH3(4));
+	printk(KERN_DEBUG "Universal : Card status %d\n", card_status ? 0 : 1);
+	return card_status ? 0 : 1;
+#endif
 }
 
 void universal_sdhci2_cfg_ext_cd(void)
 {
 	printk(KERN_DEBUG "Universal :SD Detect configuration\n");
+#if defined(CONFIG_MACH_P1_GSM)
 	s3c_gpio_cfgpin(GPIO_T_FLASH_DETECT, S3C_GPIO_SFN(GPIO_T_FLASH_DETECT_AF));
 	s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_NONE);
 	set_irq_type(IRQ_EINT(28), IRQ_TYPE_EDGE_BOTH);
+#elif defined(CONFIG_MACH_P1_CDMA)
+ s3c_gpio_cfgpin(S5PV210_GPH3(4),S3C_GPIO_SFN(0xf));
+                set_irq_type(IRQ_EINT(28), IRQ_TYPE_EDGE_BOTH);
+                s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_NONE);
+
+#endif
 }
 
 #ifdef CONFIG_MACH_P1

@@ -10,31 +10,8 @@
  *  option) any later version.
  *
  */
- #include "qt602240.h"
- #include <linux/bln.h>
-
+#include "qt602240.h"
 #include <linux/timer.h>
-#include <linux/device.h>
-#define CONFIG_KEYPAD_CYPRESS_TOUCH_USE_BLN
-#ifdef CONFIG_KEYPAD_CYPRESS_TOUCH_USE_BLN
-#include <linux/miscdevice.h>
-#define BACKLIGHTNOTIFICATION_VERSION 8
-
-static bool bln_enabled = false; // indicates if BLN function is enabled/allowed (default: false, app enables it on boot)
-static bool BacklightNotification_ongoing = false; // indicates ongoing LED Notification
-static bool bln_blink_enabled = false;  // indicates blink is set
-static bool p1_touchkey_suspended = false;
-#endif
-
-static bool buttons_enabled = true;
-
-static bool leds_on = true;
-static int leds_timeout = 1600;
-static struct timer_list leds_timer;
-static void leds_timer_callback(unsigned long data);
-
-#define _SUPPORT_TOUCH_AMPLITUDE_
-
 /******************************************************************************
 *
 *
@@ -63,9 +40,13 @@ static report_finger_info_t fingerInfo[MAX_USING_FINGER_NUM];
 static bool set_mode_for_ta = false;		// true: TA or USB, false: normal
 static int set_mode_for_amoled = 0;		//0: TFt-LCD, 1: AMOLED
 static int gFirmware_Update_State = FW_UPDATE_READY;
-#if defined (CONFIG_TARGET_LOCALE_KOR) || defined (CONFIG_TARGET_LOCALE_USAGSM)
-static bool gbfilter =false;
-#endif
+
+static bool buttons_enabled = true;
+
+static bool leds_on = true;
+static int leds_timeout = 1600;
+static struct timer_list leds_timer;
+static void leds_timer_callback(unsigned long data);
 
 extern struct class *sec_class;
 
@@ -78,16 +59,10 @@ static void qt602240_late_resume(struct early_suspend *);
 #endif	/* CONFIG_HAS_EARLYSUSPEND */
 
 static int qt602240_write_object(struct qt602240_data *data, u8 type, u8 offset, u8 val);
-		
 static bool cal_check_flag = false;
 static unsigned int qt_time_point=0;
 static unsigned int qt_time_diff=0;
 static unsigned int qt_timer_state =0;
-#if defined (LED_SWITCH)
-static unsigned int p_time_point=0;
-static unsigned int p_time_diff=0;
-static int led_sw= 1;
-#endif
 
 #if defined (KEY_LED_CONTROL)
 void led_control(int data)
@@ -225,353 +200,16 @@ static ssize_t key_led_store(struct device *dev, struct device_attribute *attr,
         printk(KERN_ERR"[TSP] keyled write error\n");
     }
 
-#if defined (LED_SWITCH)
-    if(led_sw == 1) {
-#endif
-        if(i > 0)
-            touch_led_on(1);
-        else
-            touch_led_on(0);
-#if defined (LED_SWITCH)
-    }
-#endif
+    if(i > 0)
+        touch_led_on(1);
+    else
+        touch_led_on(0);
 
     return size;
 }
 static DEVICE_ATTR(brightness, S_IRUGO | S_IWUSR, NULL, key_led_store);
 
 #endif      //KEY_LED_CONTROL
-
-#ifdef CONFIG_KEYPAD_CYPRESS_TOUCH_USE_BLN
-/* bln start */
-
-static void enable_touchkey_backlights(void)
-{
-   init_led();
-   touch_led_on(1);
-}
-
-static void disable_touchkey_backlights(void)
-{
-   touch_led_on(false);
-}
-
-static void enable_led_notification(void)
-{
-  if (bln_enabled) {
-    enable_touchkey_backlights();
-    pr_info("%s: notification led enabled\n", __FUNCTION__);
-  }
-}
-
-static void disable_led_notification(void)
-{
-  pr_info("%s: notification led disabled\n", __FUNCTION__);
-
-  bln_blink_enabled = false;
-
-  if (p1_touchkey_suspended)
-    disable_touchkey_backlights();
-
-  BacklightNotification_ongoing = false;
-}
-
-static ssize_t backlightnotification_status_read(struct device *dev,
-						 struct device_attribute *attr, char *buf)
-{
-  return sprintf(buf, "%u\n", (bln_enabled ? 1 : 0));
-}
-
-static ssize_t backlightnotification_status_write(struct device *dev,
-						  struct device_attribute *attr, const char *buf, size_t size)
-{
-  unsigned int data;
-  if(sscanf(buf, "%u\n", &data) == 1) {
-    pr_devel("%s: %u \n", __FUNCTION__, data);
-    if(data == 0 || data == 1) {
-      if(data == 1) {
-        pr_info("%s: backlightnotification function enabled\n", __FUNCTION__);
-        bln_enabled = true;
-      }
-
-      if(data == 0) {
-        pr_info("%s: backlightnotification function disabled\n", __FUNCTION__);
-        bln_enabled = false;
-        if (BacklightNotification_ongoing)
-          disable_led_notification();
-      }
-    } else {
-      pr_info("%s: invalid input range %u\n", __FUNCTION__, data);
-    }
-  } else {
-    pr_info("%s: invalid input\n", __FUNCTION__);
-  }
-
-  return size;
-}
-
-static ssize_t notification_led_status_read(struct device *dev,
-					    struct device_attribute *attr, char *buf)
-{
-  return sprintf(buf,"%u\n", (BacklightNotification_ongoing ? 1 : 0));
-}
-
-static ssize_t notification_led_status_write(struct device *dev,
-					     struct device_attribute *attr, const char *buf, size_t size)
-{
-  unsigned int data;
-
-  if (sscanf(buf, "%u\n", &data) == 1) {
-    if (data == 0 || data == 1) {
-      pr_devel("%s: %u \n", __FUNCTION__, data);
-      if (data == 1)
-	enable_led_notification();
-
-      if (data == 0)
-	disable_led_notification();
-    } else {
-      pr_info("%s: wrong input %u\n", __FUNCTION__, data);
-    }
-  } else {
-    pr_info("%s: input error\n", __FUNCTION__);
-  }
-
-  return size;
-}
-
-static ssize_t blink_control_read(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
-  return sprintf(buf, "%u\n", (bln_blink_enabled ? 1 : 0));
-}
-
-static ssize_t blink_control_write(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
-{
-  unsigned int data;
-
-  if (sscanf(buf, "%u\n", &data) == 1) {
-    if (data == 0 || data == 1) {
-      if (BacklightNotification_ongoing) {
-	pr_devel("%s: %u \n", __FUNCTION__, data);
-	if (data == 1) {
-	  bln_blink_enabled = true;
-	  disable_touchkey_backlights();
-	}
-
-	if(data == 0) {
-	  bln_blink_enabled = false;
-	  enable_touchkey_backlights();
-	}
-      }
-    } else {
-      pr_info("%s: wrong input %u\n", __FUNCTION__, data);
-    }
-  } else {
-    pr_info("%s: input error\n", __FUNCTION__);
-  }
-
-  return size;
-}
-
-static ssize_t backlightnotification_version(struct device *dev, struct device_attribute *attr, char *buf) {
-  return sprintf(buf, "%u\n", BACKLIGHTNOTIFICATION_VERSION);
-}
-
-static DEVICE_ATTR(blink_control, S_IRUGO | S_IWUGO , blink_control_read, blink_control_write);
-static DEVICE_ATTR(enabled, S_IRUGO | S_IWUGO , backlightnotification_status_read, backlightnotification_status_write);
-static DEVICE_ATTR(notification_led, S_IRUGO | S_IWUGO , notification_led_status_read, notification_led_status_write);
-static DEVICE_ATTR(version, S_IRUGO , backlightnotification_version, NULL);
-
-static struct attribute *bln_notification_attributes[] = {
-  &dev_attr_blink_control.attr,
-  &dev_attr_enabled.attr,
-  &dev_attr_notification_led.attr,
-  &dev_attr_version.attr,
-  NULL
-};
-
-static struct attribute_group bln_notification_group = {
-  .attrs  = bln_notification_attributes,
-};
-
-static struct miscdevice backlightnotification_device = {
-  .minor = MISC_DYNAMIC_MINOR,
-  .name = "backlightnotification",
-};
-/* bln end */
-#endif
-
-#ifdef CONFIG_GENERIC_BLN
-static void p1_touchkey_bln_enable(void)
-{
-   init_led();
-   touch_led_on(255);
-}
-
-static void p1_touchkey_bln_disable(void)
-{
-  touch_led_on(false);
-}
-
-static struct bln_implementation p1_touchkey_bln = {
-  .enable = p1_touchkey_bln_enable,
-  .disable = p1_touchkey_bln_disable,
-};
-#endif
-
-static int press_time(void)
-{
-    p_time_diff = jiffies_to_msecs(jiffies) - p_time_point;
-    if(p_time_diff >2000)
-    	return 1;
-    else
-    	return 0;
-}
-
-#if defined(DRIVER_FILTER)
-#if defined (CONFIG_TARGET_LOCALE_KOR) || defined (CONFIG_TARGET_LOCALE_USAGSM)
-static void equalize_coordinate(bool detect, u8 id, u16 *px, u16 *py)
-{
-    static int tcount[MAX_USING_FINGER_NUM] = { 0, };
-    static u16 pre_x[MAX_USING_FINGER_NUM][4] = {{0}, };
-    static u16 pre_y[MAX_USING_FINGER_NUM][4] = {{0}, };
-    int coff[4] = {0,};
-    int distance = 0;
-
-    if(detect)
-    {
-        tcount[id] = 0;
-    }
-
-    pre_x[id][tcount[id]%4] = *px;
-    pre_y[id][tcount[id]%4] = *py;
-
-    if(gbfilter)
-    {
-         if(tcount[id] >3)
-        {
-            *px = (u16)((*px + pre_x[id][(tcount[id]-1)%4] + pre_x[id][(tcount[id]-2)%4] + pre_x[id][(tcount[id]-3)%4] )/4);
-            *py = (u16)((*py+ pre_y[id][(tcount[id]-1)%4] + pre_y[id][(tcount[id]-2)%4]+ pre_y[id][(tcount[id]-3)%4])/4);
-        }
-        else switch(tcount[id])
-        {
-            case 2:
-            {
-                *px = (u16)((*px + pre_x[id][(tcount[id]-1)%4])>>1);
-                *py = (u16)((*py + pre_y[id][(tcount[id]-1)%4])>>1);
-                break;
-            }
-
-            case 3:
-            {
-                *px = (u16)((*px + pre_x[id][(tcount[id]-1)%4] + pre_x[id][(tcount[id]-2)%4])/3);
-                *py = (u16)((*py + pre_y[id][(tcount[id]-1)%4] + pre_y[id][(tcount[id]-2)%4])/3);
-                break;
-            }
-
-            default:
-                break;
-        }
-
-    }
-    else if(tcount[id] >3)
-    {
-        {
-            distance = abs(pre_x[id][(tcount[id]-1)%4] - *px) + abs(pre_y[id][(tcount[id]-1)%4] - *py);
-
-            coff[0] = (u8)(2 + distance/5);
-            if(coff[0] < 8)
-            {
-                coff[0] = max(2, coff[0]);
-                coff[1] = min((8 - coff[0]), (coff[0]>>1)+1);
-                coff[2] = min((8 - coff[0] - coff[1]), (coff[1]>>1)+1);
-                coff[3] = 8 - coff[0] - coff[1] - coff[2];
-
-    //            printk(KERN_DEBUG "[TSP] %d, %d, %d, %d \n", coff[0], coff[1], coff[2], coff[3]);
-
-                *px = (u16)((*px*(coff[0]) + pre_x[id][(tcount[id]-1)%4]*(coff[1])
-                    + pre_x[id][(tcount[id]-2)%4]*(coff[2]) + pre_x[id][(tcount[id]-3)%4]*(coff[3]))/8);
-                *py = (u16)((*py*(coff[0]) + pre_y[id][(tcount[id]-1)%4]*(coff[1])
-                    + pre_y[id][(tcount[id]-2)%4]*(coff[2]) + pre_y[id][(tcount[id]-3)%4]*(coff[3]))/8);
-            }
-            else
-            {
-                *px = (u16)((*px*4 + pre_x[id][(tcount[id]-1)%4])/5);
-                *py = (u16)((*py*4 + pre_y[id][(tcount[id]-1)%4])/5);
-            }
-        }
-     }
-    tcount[id]++;
-}
-
-#else   //CONFIG_TARGET_LOCALE_KOR
-static void equalize_coordinate(bool detect, u8 id, u16 *px, u16 *py)
-{
-    static int tcount[MAX_USING_FINGER_NUM] = { 0, };
-    static u16 pre_x[MAX_USING_FINGER_NUM][4] = {{0}, };
-    static u16 pre_y[MAX_USING_FINGER_NUM][4] = {{0}, };
-    int coff[4] = {0,};
-    int distance = 0;
-
-    if(detect)
-    {
-        tcount[id] = 0;
-    }
-
-    pre_x[id][tcount[id]%4] = *px;
-    pre_y[id][tcount[id]%4] = *py;
-
-    if(tcount[id] >3)
-    {
-        distance = abs(pre_x[id][(tcount[id]-1)%4] - *px) + abs(pre_y[id][(tcount[id]-1)%4] - *py);
-
-        coff[0] = (u8)(4 + distance/5);
-        if(coff[0] < 8)
-        {
-            coff[0] = max(4, coff[0]);
-            coff[1] = min((10 - coff[0]), (coff[0]>>1)+1);
-            coff[2] = min((10 - coff[0] - coff[1]), (coff[1]>>1)+1);
-            coff[3] = 10 - coff[0] - coff[1] - coff[2];
-
-//            printk(KERN_DEBUG "[TSP] %d, %d, %d, %d \n", coff[0], coff[1], coff[2], coff[3]);
-
-            *px = (u16)((*px*(coff[0]) + pre_x[id][(tcount[id]-1)%4]*(coff[1])
-                + pre_x[id][(tcount[id]-2)%4]*(coff[2]) + pre_x[id][(tcount[id]-3)%4]*(coff[3]))/10);
-            *py = (u16)((*py*(coff[0]) + pre_y[id][(tcount[id]-1)%4]*(coff[1])
-                + pre_y[id][(tcount[id]-2)%4]*(coff[2]) + pre_y[id][(tcount[id]-3)%4]*(coff[3]))/10);
-        }
-        else
-        {
-            *px = (u16)((*px*4 + pre_x[id][(tcount[id]-1)%4])/5);
-            *py = (u16)((*py*4 + pre_y[id][(tcount[id]-1)%4])/5);
-        }
-    }
-#if 0
-    else switch(tcount[id])
-    {
-        case 2:
-        {
-            *px = (u16)((*px + pre_x[id][(tcount[id]-1)%4])>>1);
-            *py = (u16)((*py + pre_y[id][(tcount[id]-1)%4])>>1);
-            break;
-        }
-
-        case 3:
-        {
-            *px = (u16)((*px + pre_x[id][(tcount[id]-1)%4] + pre_x[id][(tcount[id]-2)%4])/3);
-            *py = (u16)((*py + pre_y[id][(tcount[id]-1)%4] + pre_y[id][(tcount[id]-2)%4])/3);
-            break;
-        }
-
-        default:
-            break;
-    }
-#endif
-
-    tcount[id]++;
-}
-#endif
-#endif  //DRIVER_FILTER
 
 static void release_all_fingers(struct input_dev *input_dev)
 {
@@ -748,11 +386,7 @@ static int QT602240_Multitouch_Config_Init(struct qt602240_data *data)
     touchscreen_config.mrgtimeout = 0x00;
     touchscreen_config.movhysti = 16;   //0x1;    // Move hysteresis, initial
     touchscreen_config.movhystn = 10;  //0x1     // Move hysteresis, next
-#if defined(CONFIG_TARGET_LOCALE_KOR) || defined (CONFIG_TARGET_LOCALE_USAGSM)
-    touchscreen_config.movfilter = 0x0c;              // Filter Limit[6:4] , Adapt threshold [3:0]
-#else
     touchscreen_config.movfilter = 0x0b;              // Filter Limit[6:4] , Adapt threshold [3:0]
-#endif
     touchscreen_config.numtouch= 0x0a;
     touchscreen_config.tchdi = 0x01;
     touchscreen_config.mrghyst = 0x5;               // Merge hysteresis
@@ -771,11 +405,7 @@ static int QT602240_Multitouch_Config_Init(struct qt602240_data *data)
     touchscreen_config.xedgedist = 0x00;
     touchscreen_config.yedgectrl = 0x00;
     touchscreen_config.yedgedist = 0x00;
-#ifdef CONFIG_TARGET_LOCALE_USAGSM
-    touchscreen_config.jumplimit = 18;
-#else
     touchscreen_config.jumplimit = 10;            // ??*8
-#endif
 
     return (qt602240_reg_write(data, TOUCH_MULTITOUCHSCREEN_T9, (void *) &touchscreen_config));
 }
@@ -824,11 +454,7 @@ static int QT602240_Noise_Config_Init(struct qt602240_data *data)
 
 //    int version = data->info->version;
     //0x8 : Enable Median filter, 0x4 : Enable Frequency hopping, 0x1 : Enable
-#if defined(CONFIG_TARGET_LOCALE_KOR) || defined (CONFIG_TARGET_LOCALE_USAGSM)
     noise_suppression_config.ctrl = 0x0d;    //Median filter off, report enable
-#else
-    noise_suppression_config.ctrl = 0x0d;    //Median filter off, report enable
-#endif
     noise_suppression_config.reserved = 0;
     noise_suppression_config.reserved1 = 0;
     noise_suppression_config.gcaful1 = 0;        // Upper limit for the GCAF
@@ -838,19 +464,11 @@ static int QT602240_Noise_Config_Init(struct qt602240_data *data)
     noise_suppression_config.actvgcafvalid = 3;//0x0f;   //Minium number of samples in active mode
     noise_suppression_config.noisethr = 20;       //0x0f;  // Threshold for the noise signal
     noise_suppression_config.freqhopscale = 0x00;//0x1e;
-#if defined(CONFIG_TARGET_LOCALE_KOR) || defined (CONFIG_TARGET_LOCALE_USAGSM)
-    noise_suppression_config.freq[0] = 11;
-    noise_suppression_config.freq[1] = 15;
-    noise_suppression_config.freq[2] = 36;
-    noise_suppression_config.freq[3] = 45;
-    noise_suppression_config.freq[4] = 55;
-#else
     noise_suppression_config.freq[0] = 10;
     noise_suppression_config.freq[1] = 15;
     noise_suppression_config.freq[2] = 20;
     noise_suppression_config.freq[3] = 25;
     noise_suppression_config.freq[4] = 30;
-#endif
     noise_suppression_config.idlegcafvalid = 3;
 
     /* Write Noise suppression config to chip. */
@@ -866,11 +484,7 @@ static int QT602240_CTE_Config_Init(struct qt602240_data *data)
     cte_config.cmd = 0x00;
     cte_config.mode = 0x02;
     cte_config.idlegcafdepth = 0x8;//0x20      //Size of sampling window in idle acquisition mode
-#if defined(CONFIG_TARGET_LOCALE_KOR) || defined (CONFIG_TARGET_LOCALE_USAGSM)
     cte_config.actvgcafdepth = 32;//0x63   //Size of sampling window in active acquisition mode
-#else
-    cte_config.actvgcafdepth = 32;//0x63   //Size of sampling window in active acquisition mode
-#endif
     cte_config.voltage = 0x0a;                    // 0.01 * 10 + 2.7
 
      /* Write CTE config to chip. */
@@ -1280,8 +894,8 @@ static void check_chip_calibration(struct qt602240_data *data)
         /* process counters and decide if we must re-calibrate or if cal was good */
         if((tch_ch>0) && (atch_ch == 0))  //jwlee change.
         {
-	anti_cnt = 0;
-                bad_cnt = 0;        
+			anti_cnt = 0;
+            bad_cnt = 0;        
             /* cal was good - don't need to check any more */
             //hugh 0312
             if(!check_abs_time())
@@ -1342,8 +956,8 @@ static void check_chip_calibration(struct qt602240_data *data)
 
             if(anti_cnt > 5)
             {
-              printk(KERN_DEBUG "[TSP] anti_cnt:%d\n", anti_cnt);
-	anti_cnt = 0;
+                printk(KERN_DEBUG "[TSP] anti_cnt:%d\n", anti_cnt);
+				anti_cnt = 0;
                 calibrate_chip(data);
                 qt_timer_state=0;
             }
@@ -1363,37 +977,37 @@ static void check_chip_calibration(struct qt602240_data *data)
 }
 
 static ssize_t buttons_enabled_status_write(struct device *dev,
-      struct device_attribute *attr, const char *buf, size_t size)
+	struct device_attribute *attr, const char *buf, size_t size)
 {
-  unsigned int data;
-  if(sscanf(buf, "%u\n", &data) == 1) {
-    pr_devel("%s: %u \n", __FUNCTION__, data);
-    if(data == 0 || data == 1) {
-      if(data == 1) {
-        pr_info("%s: key function enabled\n", __FUNCTION__);
-        buttons_enabled = true;
-        touch_led_on(255);
-      }
+	unsigned int data;
+	if(sscanf(buf, "%u\n", &data) == 1) {
+		pr_devel("%s: %u \n", __FUNCTION__, data);
+		if(data == 0 || data == 1) {
+			if(data == 1) {
+				pr_info("%s: key function enabled\n", __FUNCTION__);
+				buttons_enabled = true;
+				touch_led_on(255);
+			}
 
-      if(data == 0) {
-        pr_info("%s: key function disabled\n", __FUNCTION__);
-        buttons_enabled = false;
-        touch_led_on(false);
-      }
-    } else {
-      pr_info("%s: invalid input range %u\n", __FUNCTION__, data);
-    }
-  } else {
-    pr_info("%s: invalid input\n", __FUNCTION__);
-  }
+			if(data == 0) {
+				pr_info("%s: key function disabled\n", __FUNCTION__);
+				buttons_enabled = false;
+				touch_led_on(false);
+			}
+		} else {
+			pr_info("%s: invalid input range %u\n", __FUNCTION__, data);
+		}
+	} else {
+		pr_info("%s: invalid input\n", __FUNCTION__);
+	}
 
-  return size;
+	return size;
 }
 
 static ssize_t buttons_enabled_status_read(struct device *dev,
-				  struct device_attribute *attr, char *buf)
+	struct device_attribute *attr, char *buf)
 {
-  return sprintf(buf, "%u\n", (buttons_enabled ? 1 : 0));
+	return sprintf(buf, "%u\n", (buttons_enabled ? 1 : 0));
 }
 
 static void qt602240_input_read(struct qt602240_data *data)
@@ -1444,20 +1058,14 @@ static void qt602240_input_read(struct qt602240_data *data)
 			bChangeUpDn= 1;
 		} else if ((touch_status & 0xf0 ) == 0xc0) {                                  // Detect & Press  : 0x80 | 0x40
 			touch_message_flag = true;
-			s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_7, L2); // 1000MHz
+			s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_7, L1); // 800MHz
 			fingerInfo[id].pressure= 40;
 			fingerInfo[id].x= (int16_t)x;
 			fingerInfo[id].y= (int16_t)y;
 			bChangeUpDn= 1;
-#if defined(DRIVER_FILTER)
-			equalize_coordinate(1, id, &fingerInfo[id].x, &fingerInfo[id].y);
-#endif
 		} else if ((touch_status & 0xf0 ) == 0x90 ) {	                      // Detect & Move : 0x80 | 0x10
 			fingerInfo[id].x= (int16_t)x;
 			fingerInfo[id].y= (int16_t)y;
-#if defined(DRIVER_FILTER)
-			equalize_coordinate(0, id, &fingerInfo[id].x, &fingerInfo[id].y);
-#endif
 		}
 		else
 			printk(KERN_DEBUG "[TSP] Unknown state(%x)! \n", touch_status);
@@ -1470,22 +1078,22 @@ static void qt602240_input_read(struct qt602240_data *data)
 			for (i= 0; i<MAX_USING_FINGER_NUM; ++i ) {
 				if (fingerInfo[i].pressure == -1 )
 					continue;
-                if (fingerInfo[i].pressure > 0) {
+				if (fingerInfo[i].pressure > 0) {
 #ifdef CONFIG_TOUCHSCREEN_QT602240_ROT90
-                    input_report_abs(input_dev, ABS_MT_POSITION_X, fingerInfo[i].y);
-                    input_report_abs(input_dev, ABS_MT_POSITION_Y, QT602240_MAX_XC - 1 - fingerInfo[i].x);
+					input_report_abs(input_dev, ABS_MT_POSITION_X, fingerInfo[i].y);
+					input_report_abs(input_dev, ABS_MT_POSITION_Y, QT602240_MAX_XC - 1 - fingerInfo[i].x);
 #else
-                    input_report_abs(input_dev, ABS_MT_POSITION_X, fingerInfo[i].x);
-                    input_report_abs(input_dev, ABS_MT_POSITION_Y, fingerInfo[i].y);
+					input_report_abs(input_dev, ABS_MT_POSITION_X, fingerInfo[i].x);
+					input_report_abs(input_dev, ABS_MT_POSITION_Y, fingerInfo[i].y);
 #endif
-                    input_report_abs(input_dev, ABS_MT_TOUCH_MAJOR, fingerInfo[i].pressure);
-                    input_report_abs(input_dev, ABS_MT_WIDTH_MAJOR, fingerInfo[i].size);
-                    input_report_abs(input_dev, ABS_MT_TRACKING_ID, fingerInfo[i].id);
-                    input_report_abs(input_dev, ABS_MT_TOUCH_MAJOR, fingerInfo[i].pressure);
-                    input_report_key(input_dev, BTN_TOUCH, 1);
-                } else if (fingerInfo[i].pressure == 0) {
-                    fingerInfo[i].pressure= -1;
-                }
+					input_report_abs(input_dev, ABS_MT_TOUCH_MAJOR, fingerInfo[i].pressure);
+					input_report_abs(input_dev, ABS_MT_WIDTH_MAJOR, fingerInfo[i].size);
+					input_report_abs(input_dev, ABS_MT_TRACKING_ID, fingerInfo[i].id);
+					input_report_abs(input_dev, ABS_MT_TOUCH_MAJOR, fingerInfo[i].pressure);
+					input_report_key(input_dev, BTN_TOUCH, 1);
+				} else if (fingerInfo[i].pressure == 0) {
+					fingerInfo[i].pressure= -1;
+				}
 				input_mt_sync(input_dev);
 			}
 			input_sync(input_dev);
@@ -1507,33 +1115,11 @@ static void qt602240_input_read(struct qt602240_data *data)
 				input_report_key(input_dev, tsp_keycodes[i], 0);
 				input_sync(input_dev);
 				tsp_keystatus[i] = KEY_RELEASE;
-#if defined (LED_SWITCH)
-				if(i == 0) {
-					if(p_time_point > 0) {
-						if(press_time()){
-							if (led_sw){
-								touch_led_on(false);
-								led_sw= 0;
-							} else {
-								init_led();
-								touch_led_on(255);
-								led_sw= 1;
-							}
-						}
-					}
-					p_time_point= 0;
-				}
-#endif
 			} else if (message->message[1] & (0x1<<i) ) {
 				if(message->message[0] & 0x80) {                                  // detect
 					input_report_key(input_dev, tsp_keycodes[i], 1);
 					input_sync(input_dev);
 					tsp_keystatus[i] = KEY_PRESS;
-#if defined (LED_SWITCH)
-					if(i == 0) {
-						p_time_point = jiffies_to_msecs(jiffies);
-					}
-#endif
 				}
 			}
 		}
@@ -1801,27 +1387,6 @@ static int qt602240_initialize(struct qt602240_data *data)
 	calibrate_chip(data);
 
 	QT602240_Multitouch_Threshold_High(data);
-
-	#ifdef CONFIG_KEYPAD_CYPRESS_TOUCH_USE_BLN
-	pr_info("%s misc_register(%s)\n", __FUNCTION__, backlightnotification_device.name);
-	ret = misc_register(&backlightnotification_device);
-	if (ret) {
-	  pr_err("%s misc_register(%s) fail\n", __FUNCTION__,
-		 backlightnotification_device.name);
-	} else {
-	  /* add the backlightnotification attributes */
-	  if (sysfs_create_group(&backlightnotification_device.this_device->kobj,
-				 &bln_notification_group) < 0) {
-	    pr_err("%s sysfs_create_group fail\n", __FUNCTION__);
-	    pr_err("Failed to create sysfs group for device (%s)!\n",
-		   backlightnotification_device.name);
-	  }
-	}
-	#endif
-
-	#ifdef CONFIG_GENERIC_BLN
-		register_bln_implementation(&p1_touchkey_bln);
-	#endif
 
 	return 0;
 }
@@ -2416,31 +1981,6 @@ static ssize_t key_threshold_store(struct device *dev, struct device_attribute *
 static DEVICE_ATTR(firmware1, S_IRUGO | S_IWUSR, firmware1_show, firmware1_store);
 static DEVICE_ATTR(key_threshold, S_IRUGO | S_IWUSR, key_threshold_show, key_threshold_store);
 
-#if defined (CONFIG_TARGET_LOCALE_KOR) || defined (CONFIG_TARGET_LOCALE_USAGSM)
-static ssize_t tsp_filter_store(struct device *dev, struct device_attribute *attr,
-		const char *buf, size_t size)
-{
-    int i, ret =0;
-    if(sscanf(buf,"%d",&i)==1)
-    {
-        if( i == 0x1)
-        {
-            gbfilter = true;
-        }
-        else
-        {
-            gbfilter = false;
-        }
-    }
-    else
-        printk(KERN_DEBUG "[TSP] threshold write error\n");
-
-    return size;
-}
-//static DEVICE_ATTR(tsp_filter, S_IRUGO | S_IWUSR, NULL, tsp_filter_store);
-static DEVICE_ATTR(tsp_filter, S_IRUGO | S_IWUSR | S_IWOTH | S_IXOTH, NULL, tsp_filter_store);
-#endif
-
 static int __devinit qt602240_probe(struct i2c_client *client,
 		const struct i2c_device_id *id)
 {
@@ -2465,10 +2005,7 @@ static int __devinit qt602240_probe(struct i2c_client *client,
 
     client->irq = IRQ_TOUCH_INT;
 
-#if defined (KEY_LED_CONTROL)
-    setup_timer( &leds_timer, leds_timer_callback, 0 );
-#endif
-
+    setup_timer(&leds_timer, leds_timer_callback, 0);
 
     INIT_WORK(&data->ta_work, qt602240_ta_worker);
 
@@ -2573,13 +2110,6 @@ static int __devinit qt602240_probe(struct i2c_client *client,
     	pr_err("Failed to create device file(%s)!\n", dev_attr_key_threshold.attr.name);
     }
 
-#if defined (CONFIG_TARGET_LOCALE_KOR) || defined (CONFIG_TARGET_LOCALE_USAGSM)
-    if (device_create_file(ts_dev, &dev_attr_tsp_filter) < 0)
-    {
-        pr_err("Failed to create device file(%s)!\n", dev_attr_tsp_filter.attr.name);
-    }
-#endif
-
 #ifdef ENABLE_NOISE_TEST_MODE
     qt602240_noise_test = device_create(sec_class, NULL, 0, NULL, "qt602240_noise_test");
 
@@ -2648,12 +2178,6 @@ static int __devinit qt602240_probe(struct i2c_client *client,
 #if defined (KEY_LED_CONTROL)
     init_led();
 
-#if defined(KEY_LED_SELF)
-    touch_led_on(255);
-#endif
-#if defined(LED_SWITCH)
-    led_sw= 1;
-#endif
 	
     leds_class = class_create(THIS_MODULE, "leds");
     if (IS_ERR(leds_class))
@@ -2680,9 +2204,7 @@ static int __devinit qt602240_probe(struct i2c_client *client,
 
     err_free_irq:
     free_irq(client->irq, data);
-#if defined (KEY_LED_CONTROL)
-    del_timer( &leds_timer);
-#endif
+    del_timer(&leds_timer);
     err_free_object:
     kfree(data->object_message);
     kfree(data->object_table);
@@ -2743,7 +2265,6 @@ static int qt602240_suspend(struct i2c_client *client, pm_message_t mesg)
 
 #if defined (KEY_LED_CONTROL)
     touch_led_on(false);
-    p1_touchkey_suspended = true;
 #endif      //KEY_LED_CONTROL
 
     qt_timer_state = 0;
@@ -2795,19 +2316,9 @@ static int qt602240_resume(struct i2c_client *client)
     }
     calibrate_chip(data);
 
-#if defined (LED_SWITCH)
-    if (led_sw == 1){
-#endif
 #if defined (KEY_LED_CONTROL)
-		init_led();
-		p1_touchkey_suspended = false;
-#if defined(KEY_LED_SELF)
-		touch_led_on(255);
-#endif
+        init_led();
 #endif      //KEY_LED_CONTROL
-#if defined (LED_SWITCH)
-    }
-#endif
     enable_irq(data->irq);
 
 }

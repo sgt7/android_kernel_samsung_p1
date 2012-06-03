@@ -15,6 +15,7 @@ typedef unsigned short		word;
 
 #define DRV_NAME "MHD_sii9234"
 #define DRV_VERSION "0.1"
+
 #define MHD_MAX_LENGTH	4096
 #define GPIO_LOW 0
 #define GPIO_HIGH 1

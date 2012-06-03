@@ -638,4 +638,196 @@ int kernel_sec_check_debug_level_high(void)
 }
 EXPORT_SYMBOL(kernel_sec_check_debug_level_high);
 
+
+//{{ GAF3.0 debug information for forced RAM dump
+extern struct GAForensicINFO GAFINFO;
+static void dump_one_task_info( struct task_struct *tsk, bool isMain )
+{
+    char stat_array[3] = {'R', 'S', 'D'};
+    char stat_ch;
+    char *pThInf = tsk->stack;
+
+    stat_ch = tsk->state <= TASK_UNINTERRUPTIBLE ? stat_array[tsk->state] : '?';
+    printk( KERN_INFO "%8d  %8d  %8d     %16lld      %c (%d)    %3d     %08x     %c %s\n",
+          tsk->pid, (int)(tsk->utime), (int)(tsk->stime), tsk->se.exec_start, stat_ch, (int)(tsk->state),
+          *(int*)(pThInf + GAFINFO.thread_info_struct_cpu),
+          (int)tsk, isMain?'*':' ', tsk->comm );
+
+    if( tsk->state == TASK_RUNNING || tsk->state == TASK_UNINTERRUPTIBLE ) {
+	    show_stack( tsk, NULL );
+    }
+}
+
+static void dump_all_task_info()
+{
+    struct task_struct *frst_tsk;
+    struct task_struct *curr_tsk;
+    struct task_struct *frst_thr;
+    struct task_struct *curr_thr;
+
+    printk( KERN_INFO "\n" );
+    printk( KERN_INFO " current proc : %d %s\n", current->pid, current->comm );
+    printk( KERN_INFO " -----------------------------------------------------------------------------------\n" );
+    printk( KERN_INFO "     pid     uTime     sTime              exec(ns)     stat     cpu     task_struct\n" );
+    printk( KERN_INFO " -----------------------------------------------------------------------------------\n" );
+
+    //processes
+    frst_tsk = &init_task;
+    curr_tsk = frst_tsk;
+    while( curr_tsk != NULL ) {
+    	dump_one_task_info( curr_tsk,  true );
+        //threads
+        if( curr_tsk->thread_group.next != NULL ) {
+        	frst_thr = container_of( curr_tsk->thread_group.next, struct task_struct, thread_group );
+        	curr_thr = frst_thr;
+            if( frst_thr != curr_tsk ) {
+            	while( curr_thr != NULL ) {
+            	    dump_one_task_info( curr_thr, false );
+            	    curr_thr = container_of( curr_thr->thread_group.next, struct task_struct, thread_group );
+                    if( curr_thr == curr_tsk ) break;
+            	}
+            }
+        }
+    	curr_tsk = container_of( curr_tsk->tasks.next, struct task_struct, tasks );
+        if( curr_tsk == frst_tsk ) break;
+    }
+
+    printk( KERN_INFO " -----------------------------------------------------------------------------------\n" );
+}
+
+
+#include <linux/kernel_stat.h>
+
+#ifndef arch_irq_stat_cpu
+#define arch_irq_stat_cpu(cpu) 0
+#endif
+#ifndef arch_irq_stat
+#define arch_irq_stat() 0
+#endif
+#ifndef arch_idle_time
+#define arch_idle_time(cpu) 0
+#endif
+
+static void dump_cpu_stat()
+{
+	int i, j;
+	unsigned long jif;
+	cputime64_t user, nice, system, idle, iowait, irq, softirq, steal;
+	cputime64_t guest, guest_nice;
+	u64 sum = 0;
+	u64 sum_softirq = 0;
+	unsigned int per_softirq_sums[NR_SOFTIRQS] = {0};
+	struct timespec boottime;
+	unsigned int per_irq_sum;
+
+	user = nice = system = idle = iowait =
+		irq = softirq = steal = cputime64_zero;
+	guest = guest_nice = cputime64_zero;
+	getboottime(&boottime);
+	jif = boottime.tv_sec;
+
+	for_each_possible_cpu(i) {
+		user = cputime64_add(user, kstat_cpu(i).cpustat.user);
+		nice = cputime64_add(nice, kstat_cpu(i).cpustat.nice);
+		system = cputime64_add(system, kstat_cpu(i).cpustat.system);
+		idle = cputime64_add(idle, kstat_cpu(i).cpustat.idle);
+		idle = cputime64_add(idle, arch_idle_time(i));
+		iowait = cputime64_add(iowait, kstat_cpu(i).cpustat.iowait);
+		irq = cputime64_add(irq, kstat_cpu(i).cpustat.irq);
+		softirq = cputime64_add(softirq, kstat_cpu(i).cpustat.softirq);
+		//steal = cputime64_add(steal, kstat_cpu(i).cpustat.steal);
+		//guest = cputime64_add(guest, kstat_cpu(i).cpustat.guest);
+		//guest_nice = cputime64_add(guest_nice,
+		//	kstat_cpu(i).cpustat.guest_nice);
+		for_each_irq_nr(j) {
+			sum += kstat_irqs_cpu(j, i);
+		}
+		sum += arch_irq_stat_cpu(i);
+
+		for (j = 0; j < NR_SOFTIRQS; j++) {
+			unsigned int softirq_stat = kstat_softirqs_cpu(j, i);
+
+			per_softirq_sums[j] += softirq_stat;
+			sum_softirq += softirq_stat;
+		}
+	}
+	sum += arch_irq_stat();
+
+    printk(KERN_INFO "\n");
+	printk(KERN_INFO " cpu     user:%llu  nice:%llu  system:%llu  idle:%llu  iowait:%llu  irq:%llu  softirq:%llu %llu %llu "
+		"%llu\n",
+		(unsigned long long)cputime64_to_clock_t(user),
+		(unsigned long long)cputime64_to_clock_t(nice),
+		(unsigned long long)cputime64_to_clock_t(system),
+		(unsigned long long)cputime64_to_clock_t(idle),
+		(unsigned long long)cputime64_to_clock_t(iowait),
+		(unsigned long long)cputime64_to_clock_t(irq),
+		(unsigned long long)cputime64_to_clock_t(softirq),
+		(unsigned long long)0, //cputime64_to_clock_t(steal),
+		(unsigned long long)0, //cputime64_to_clock_t(guest),
+		(unsigned long long)0);//cputime64_to_clock_t(guest_nice));
+    printk(KERN_INFO " -----------------------------------------------------------------------------------\n" );
+
+	for_each_online_cpu(i) {
+
+		/* Copy values here to work around gcc-2.95.3, gcc-2.96 */
+		user = kstat_cpu(i).cpustat.user;
+		nice = kstat_cpu(i).cpustat.nice;
+		system = kstat_cpu(i).cpustat.system;
+		idle = kstat_cpu(i).cpustat.idle;
+		idle = cputime64_add(idle, arch_idle_time(i));
+		iowait = kstat_cpu(i).cpustat.iowait;
+		irq = kstat_cpu(i).cpustat.irq;
+		softirq = kstat_cpu(i).cpustat.softirq;
+		//steal = kstat_cpu(i).cpustat.steal;
+		//guest = kstat_cpu(i).cpustat.guest;
+		//guest_nice = kstat_cpu(i).cpustat.guest_nice;
+    	printk(KERN_INFO " cpu %d   user:%llu  nice:%llu  system:%llu  idle:%llu  iowait:%llu  irq:%llu  softirq:%llu %llu %llu "
+	    	"%llu\n",
+			i,
+			(unsigned long long)cputime64_to_clock_t(user),
+			(unsigned long long)cputime64_to_clock_t(nice),
+			(unsigned long long)cputime64_to_clock_t(system),
+			(unsigned long long)cputime64_to_clock_t(idle),
+			(unsigned long long)cputime64_to_clock_t(iowait),
+			(unsigned long long)cputime64_to_clock_t(irq),
+			(unsigned long long)cputime64_to_clock_t(softirq),
+			(unsigned long long)0, //cputime64_to_clock_t(steal),
+			(unsigned long long)0, //cputime64_to_clock_t(guest),
+			(unsigned long long)0);//cputime64_to_clock_t(guest_nice));
+	}
+    printk(KERN_INFO " -----------------------------------------------------------------------------------\n" );
+
+    printk(KERN_INFO "\n");
+	printk(KERN_INFO " irq : %llu", (unsigned long long)sum);
+    printk(KERN_INFO " -----------------------------------------------------------------------------------\n" );
+
+	/* sum again ? it could be updated? */
+	for_each_irq_nr(j) {
+		per_irq_sum = 0;
+		for_each_possible_cpu(i)
+			per_irq_sum += kstat_irqs_cpu(j, i);
+
+		if(per_irq_sum)  printk(KERN_INFO " irq-%d : %u\n", j, per_irq_sum);
+	}
+    printk(KERN_INFO " -----------------------------------------------------------------------------------\n" );
+
+    printk(KERN_INFO "\n");
+	printk(KERN_INFO " softirq : %llu", (unsigned long long)sum_softirq);
+    printk(KERN_INFO " -----------------------------------------------------------------------------------\n" );
+
+	for (i = 0; i < NR_SOFTIRQS; i++)
+		if(per_softirq_sums[i]) printk(KERN_INFO " softirq-%d : %u", i, per_softirq_sums[i]);
+    printk(KERN_INFO " -----------------------------------------------------------------------------------\n" );
+	return 0;
+}
+
+void dump_debug_info_forced_ramd_dump()
+{
+	dump_all_task_info();
+	dump_cpu_stat();
+}
+EXPORT_SYMBOL(dump_debug_info_forced_ramd_dump);
+//}} GAF3.0
+
 #endif // CONFIG_KERNEL_DEBUG_SEC

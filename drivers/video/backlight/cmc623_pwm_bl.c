@@ -242,7 +242,7 @@ static void cmc623_pwm_backlight_ctl(struct platform_device *pdev, int intensity
 	// brightness tuning
 	tune_level = cmc623_pwm_get_tune(intensity);
 
-	// printk("[cmc]%d(%d)\n", intensity, tune_level);
+	printk("[cmc]%d(%d)\n", intensity, tune_level);
 
 	cmc623_pwm_apply_brightness(pdev, tune_level);
 }
@@ -264,8 +264,8 @@ static void cmc623_pwm_send_intensity(struct backlight_device *bd)
 	if (bd->props.power != FB_BLANK_UNBLANK ||
 		bd->props.fb_blank != FB_BLANK_UNBLANK ||
 		cmc623_pwm_suspended)
-	{
-		// printk("[cmc]i:%d(c:%d)\n", intensity, current_intensity);
+		{
+		printk("[cmc]i:%d(c:%d)\n", intensity, current_intensity);
 		if(!current_intensity)
 			return;
 		msleep(1);

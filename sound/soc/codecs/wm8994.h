@@ -120,6 +120,9 @@ struct wm8994_priv {
 	enum call_recording_channel call_record_ch;
 	select_route *universal_playback_path;
 	select_route *universal_voicecall_path;
+#ifdef CONFIG_TARGET_LOCALE_KOR
+	select_route *universal_voipcall_path;
+#endif
 	select_mic_route *universal_mic_path;
 	int testmode_config_flag;	// for testmode.
 	unsigned int hw_version;

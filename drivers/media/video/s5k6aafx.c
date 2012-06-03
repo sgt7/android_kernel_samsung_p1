@@ -806,7 +806,7 @@ static int s5k6aafx_s_parm(struct v4l2_subdev *sd, struct v4l2_streamparm *parms
 	return err;
 }
 
-#if defined(CONFIG_TARGET_LOCALE_LTN)
+#if defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N)
 //latin_cam VT CAM Antibanding
 static int s5k6aafx_set_60hz_antibanding(struct v4l2_subdev *sd)
 {
@@ -886,7 +886,7 @@ static int s5k6aafx_init(struct v4l2_subdev *sd, u32 val)
 		return err;
 	}
 
-#if defined(CONFIG_TARGET_LOCALE_LTN)
+#if defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N)
 	//latin_cam VT Cam Antibanding
 	if (state->anti_banding == ANTI_BANDING_60HZ)
 	{
@@ -1306,7 +1306,7 @@ static int s5k6aafx_set_white_balance(struct v4l2_subdev *sd, struct v4l2_contro
 				sizeof(s5k6aafx_wb_daylight) / sizeof(s5k6aafx_wb_daylight[0]));
 			break;
 
-		case WHITE_BALANCE_CLOUDY:
+		case WHITE_BALANCE_CLOUDY_DAYLIGHT:
 			err = s5k6aafx_write_regs(sd, s5k6aafx_wb_cloudy, \
 				sizeof(s5k6aafx_wb_cloudy) / sizeof(s5k6aafx_wb_cloudy[0]));
 			break;
@@ -1579,7 +1579,7 @@ static int s5k6aafx_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 			break;
 			//CID_CAMERA_VGA_BLUR
 
-#if defined(CONFIG_TARGET_LOCALE_LTN)
+#if defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N)
 		//latin_cam VT Camera Antibanding
 		case V4L2_CID_CAMERA_ANTI_BANDING:
 			state->anti_banding = ctrl->value;

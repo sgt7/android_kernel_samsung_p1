@@ -67,11 +67,6 @@
 /* flag to ignore all characters comming in */
 #define RXSTAT_DUMMY_READ (0x10000000)
 
-#if defined(CONFIG_KEYBOARD_P1)
-static bool g_keyboard =false;
-extern void send_keyevent(unsigned int key_code);
-#endif
-
 static inline struct s3c24xx_uart_port *to_ourport(struct uart_port *port)
 {
 	return container_of(port, struct s3c24xx_uart_port, port);
@@ -268,13 +263,7 @@ s3c24xx_serial_rx_chars(int irq, void *dev_id)
 					    S3C2410_UERSTAT_OVERRUN))
 				flag = TTY_FRAME;
 		}
-	#if defined(CONFIG_KEYBOARD_P1)
-            	if((port->line == 2)&&(g_keyboard))
-            	{
-                	if(ch != 0)
-                    		send_keyevent(ch);
-            	}
-	#endif
+
 		if (uart_handle_sysrq_char(port, ch))
 			goto ignore_char;
 
@@ -318,8 +307,7 @@ static irqreturn_t s3c24xx_serial_tx_chars(int irq, void *id)
 	while (!uart_circ_empty(xmit) && count-- > 0) {
 		if (rd_regl(port, S3C2410_UFSTAT) & ourport->info->tx_fifofull)
 			break;
-		if(!((port->line == 2)&&g_keyboard))
-            		wr_regb(port, S3C2410_UTXH, xmit->buf[xmit->tail]);
+            wr_regb(port, S3C2410_UTXH, xmit->buf[xmit->tail]);
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		port->icount.tx++;
 	}
@@ -365,8 +353,7 @@ static unsigned int s3c24xx_serial_get_mctrl(struct uart_port *port)
 static void s3c24xx_serial_set_mctrl(struct uart_port *port, unsigned int mctrl)
 {
 	/* todo - possibly remove AFC and do manual CTS */
-	if(port->line == 0){
-        unsigned int umcon = 0;
+	unsigned int umcon = 0;
 	umcon = rd_regl(port, S3C2410_UMCON);
 	if (mctrl & TIOCM_RTS)
 		umcon |= S3C2410_UMCOM_AFC;
@@ -374,7 +361,6 @@ static void s3c24xx_serial_set_mctrl(struct uart_port *port, unsigned int mctrl)
 		umcon &= ~S3C2410_UMCOM_AFC;
 
 	wr_regl(port, S3C2410_UMCON, umcon);
-        }
 }
 
 static void s3c24xx_serial_break_ctl(struct uart_port *port, int break_state)
@@ -704,11 +690,6 @@ static void s3c24xx_serial_set_termios(struct uart_port *port,
 	/*
 	 * Ask the core to calculate the divisor for us.
 	 */
-#if defined(CONFIG_KEYBOARD_P1)	 
-        if((port->line == 2)&&g_keyboard)
-            baud = 9600;
-        else
-#endif
         baud = uart_get_baud_rate(port, termios, old, 0, 3000000);
 
 
@@ -1371,56 +1352,8 @@ static void
 s3c24xx_serial_console_write(struct console *co, const char *s,
 			     unsigned int count)
 {
-#if defined(CONFIG_KEYBOARD_P1)
-    if(!g_keyboard)
-#endif
     uart_console_write(cons_uart, s, count, s3c24xx_serial_console_putchar);
 }
-
-#if defined(CONFIG_KEYBOARD_P1) && !defined(CONFIG_FIQ_DEBUGGER)
-void dock_keyboard_tx(u8 val)
-{    
-    wr_regb(cons_uart, S3C2410_UTXH, val);
-}
-EXPORT_SYMBOL(dock_keyboard_tx);
-
-int change_console_baud_rate(int baud)
-{
-    unsigned int ubrdiv;
-    unsigned long rate;    
-    struct s3c24xx_uart_clksrc clksrc;
-    struct clk *clk;;
-
-    s3c24xx_serial_getsource(cons_uart, &clksrc);
-
-    clk = clk_get(cons_uart->dev, clksrc.name);
-    if (!IS_ERR(clk) && clk != NULL)
-    {
-        rate = clk_get_rate(clk) / clksrc.divisor;
-    }
-    else
-    {
-        return -EINVAL;
-    }
-
-    ubrdiv= ((rate / 16) / baud) - 1;
-    
-    if(baud == 9600)
-    {
-        g_keyboard = true;
-    }
-    else
-    {
-        g_keyboard = false;
-    }
-
-    wr_regl(cons_uart, S3C2410_UBRDIV, ubrdiv);
-    printk(KERN_DEBUG "[Keyboard] baud : %d, ubrdiv : %x\n", baud, ubrdiv);
-    return 0;
-    
-}
-EXPORT_SYMBOL(change_console_baud_rate);
-#endif
 
 static void __init
 s3c24xx_serial_get_options(struct uart_port *port, int *baud,

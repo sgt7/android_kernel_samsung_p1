@@ -238,7 +238,7 @@ struct cpufreq_driver {
 	int	(*bios_limit)	(int cpu, unsigned int *limit);
 
 	int	(*exit)		(struct cpufreq_policy *policy);
-	int	(*suspend)	(struct cpufreq_policy *policy);
+	int	(*suspend)	(struct cpufreq_policy *policy, pm_message_t pmsg);
 	int	(*resume)	(struct cpufreq_policy *policy);
 	struct freq_attr	**attr;
 };
@@ -344,17 +344,6 @@ static inline unsigned int cpufreq_quick_get(unsigned int cpu)
 }
 #endif
 
-#ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_FLEXRATE
-extern int cpufreq_ondemand_flexrate_request(unsigned int rate_ms,
-					     unsigned int duration);
-#else
-static inline int cpufreq_ondemand_flexrate_request(unsigned int rate_ms,
-						    unsigned int duration)
-{
-	return 0;
-}
-#endif
-
 
 /*********************************************************************
  *                       CPUFREQ DEFAULT GOVERNOR                    *
@@ -379,9 +368,6 @@ extern struct cpufreq_governor cpufreq_gov_userspace;
 #elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_ONDEMAND)
 extern struct cpufreq_governor cpufreq_gov_ondemand;
 #define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_ondemand)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_ONDEMANDX)
-extern struct cpufreq_governor cpufreq_gov_ondemandx;
-#define CPUFREQ_DEFAULT_GOVERNOR  (&cpufreq_gov_ondemandx)
 #elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_CONSERVATIVE)
 extern struct cpufreq_governor cpufreq_gov_conservative;
 #define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_conservative)
@@ -435,5 +421,24 @@ void cpufreq_frequency_table_get_attr(struct cpufreq_frequency_table *table,
 
 void cpufreq_frequency_table_put_attr(unsigned int cpu);
 
+
+/*********************************************************************
+ *                     UNIFIED DEBUG HELPERS                         *
+ *********************************************************************/
+
+#define CPUFREQ_DEBUG_CORE	1
+#define CPUFREQ_DEBUG_DRIVER	2
+#define CPUFREQ_DEBUG_GOVERNOR	4
+
+#ifdef CONFIG_CPU_FREQ_DEBUG
+
+extern void cpufreq_debug_printk(unsigned int type, const char *prefix, 
+				 const char *fmt, ...);
+
+#else
+
+#define cpufreq_debug_printk(msg...) do { } while(0)
+
+#endif /* CONFIG_CPU_FREQ_DEBUG */
 
 #endif /* _LINUX_CPUFREQ_H */

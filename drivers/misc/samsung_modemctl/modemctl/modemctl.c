@@ -167,11 +167,11 @@ static ssize_t show_sim(struct device *d,
 static ssize_t show_phoneactive(struct device *d,
 		struct device_attribute *attr, char *buf);
 
-static DEVICE_ATTR(control, 0664, show_control, store_control);
-static DEVICE_ATTR(status, 0664, show_status, NULL);
-static DEVICE_ATTR(debug, 0664, show_debug, NULL);
-static DEVICE_ATTR(sim, 0664, show_sim, NULL);
-static DEVICE_ATTR(phoneactive, 0664, show_phoneactive, NULL);
+static DEVICE_ATTR(control, S_IRUSR | S_IRGRP | S_IWUSR | S_IWGRP, show_control, store_control);
+static DEVICE_ATTR(status, S_IRUGO, show_status, NULL);
+static DEVICE_ATTR(debug, S_IRUGO, show_debug, NULL);
+static DEVICE_ATTR(sim, S_IRUGO, show_sim, NULL);
+static DEVICE_ATTR(phoneactive, S_IRUGO, show_phoneactive, NULL);
 
 static struct attribute *modemctl_attributes[] = {
 	&dev_attr_control.attr,
@@ -188,6 +188,7 @@ static const struct attribute_group modemctl_group = {
 
 /* declare mailbox init function for xmm */
 extern void onedram_init_mailbox(void);
+#if defined(CONFIG_MACH_P1_GSM)
 static void xmm_reset(struct modemctl *mc);
 
 static void xmm_on(struct modemctl *mc)
@@ -201,25 +202,20 @@ static void xmm_on(struct modemctl *mc)
 	/* call mailbox init : BA goes to high, AB goes to low */
 	onedram_init_mailbox();
 	gpio_set_value(mc->gpio_cp_reset, 0);
+
 	if(mc->gpio_reset_req_n)
 		gpio_set_value(mc->gpio_reset_req_n, 0);
+
 	msleep(40);
 
 	if(mc->gpio_phone_on)
 		gpio_set_value(mc->gpio_phone_on, 1);
+
 	gpio_set_value(mc->gpio_cp_reset, 1);
 
 	msleep(100); /*wait modem stable */
 
-//	if(mc->gpio_reset_req_n)
-//		gpio_set_value(mc->gpio_reset_req_n, 1);
-
-//	msleep(10);
 	gpio_set_value(mc->gpio_pda_active, 1);
-	
-	//msleep(1000);
-	//xmm_reset(mc);
-	//msleep(100);
 }
 
 static void xmm_off(struct modemctl *mc)
@@ -232,15 +228,61 @@ static void xmm_off(struct modemctl *mc)
 	if(mc->gpio_reset_req_n)
 		gpio_set_value(mc->gpio_reset_req_n, 0);
 
-	//msleep(1);
-	
 	if(mc->gpio_phone_on)
 		gpio_set_value(mc->gpio_phone_on, 0);
+
 	gpio_set_value(mc->gpio_cp_reset, 0);
 
 	onedram_init_mailbox();
 }
+#elif defined(CONFIG_MACH_P1_CDMA)
+static void xmm_on(struct modemctl *mc)
+{
+	dev_dbg(mc->dev, "%s\n", __func__);
+	if(!mc->gpio_cp_reset)
+		return;
 
+	/* ensure pda active pin set to low */
+	gpio_set_value(mc->gpio_pda_active, 0);
+	/* call mailbox init : BA goes to high, AB goes to low */
+	onedram_init_mailbox();
+	/* ensure cp_reset pin set to low */
+	gpio_set_value(mc->gpio_cp_reset, 0);
+	if(mc->gpio_reset_req_n)
+		gpio_direction_output(mc->gpio_reset_req_n, 0);
+
+	msleep(500);
+
+	//gpio_set_value(mc->gpio_cp_reset, 1);
+	if(mc->gpio_phone_on)
+		gpio_set_value(mc->gpio_phone_on, 1);
+	gpio_set_value(mc->gpio_cp_reset, 0);
+	msleep(100);  /* no spec, confirm later exactly how much time
+			needed to initialize CP with RESET_PMU_N */
+
+	gpio_set_value(mc->gpio_cp_reset, 1);
+	/* Follow RESET timming delay not Power-On timming,
+	   because CP_RST & PHONE_ON have been set high already. */
+	// msleep(30);  /* > 26.6 + 2 msec */
+	//msleep(40);     /* > 37.2 + 2 msec */
+	msleep(100); /*wait modem stable */
+
+	gpio_set_value(mc->gpio_pda_active, 1);
+	if(mc->gpio_reset_req_n)
+		gpio_direction_input(mc->gpio_reset_req_n);
+}
+
+static void xmm_off(struct modemctl *mc)
+{
+	dev_dbg(mc->dev, "%s\n", __func__);
+	if(!mc->gpio_cp_reset)
+		return;
+
+	if(mc->gpio_phone_on)
+		gpio_set_value(mc->gpio_phone_on, 0);
+	gpio_set_value(mc->gpio_cp_reset, 0);
+}
+#endif
 static void xmm_reset(struct modemctl *mc)
 {
 	dev_dbg(mc->dev, "%s\n", __func__);

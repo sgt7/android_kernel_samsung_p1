@@ -228,9 +228,9 @@ enum s5p_gpio_number {
 
 #include <plat/gpio-cfg.h>
 
-#if defined(CONFIG_MACH_P1_LTN)
+#if defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N)
 #include "gpio-p1.h"
-#endif	/* CONFIG_MACH_P1 */
+#endif	/* P1L or P1N */
 
 extern int s3c_gpio_slp_cfgpin(unsigned int pin, unsigned int to);
 extern s3c_gpio_pull_t s3c_gpio_get_slp_cfgpin(unsigned int pin);

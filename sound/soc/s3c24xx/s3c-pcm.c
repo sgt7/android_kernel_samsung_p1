@@ -27,32 +27,11 @@
 #include <sound/soc.h>
 
 #include <plat/audio.h>
-//#include <plat/dma.h>
-
-#include <mach/dma.h>
-#include <mach/regs-clock.h>
+#include <plat/dma.h>
 
 #include "s3c-dma.h"
 #include "s3c-pcm.h"
-#include "s3c-pcmdev.h"
 
-static unsigned char vtcallActive = 0;
-static u32 clk_en_dis_play  = 0;
-static u32 clk_en_dis_rec  = 0;
-static unsigned char* curr_pos;
-static u32 remaining_len;
-
-struct s3c_pcmdev_info {
-	void __iomem	*regs;
-	struct clk	*pcm_clk;
-	struct clk	*clk_src;
-	u32		clk_rate;
-	u32		pcmctl;
-	u32		pcmclkctl;
-	u32		pcmirqctl;
-};
-
-static struct s3c_pcmdev_info s3c_pcmdev;
 static struct s3c2410_dma_client s3c_pcm_dma_client_out = {
 	.name		= "PCM Stereo out"
 };
@@ -65,14 +44,10 @@ static struct s3c_dma_params s3c_pcm_stereo_out[] = {
 	[0] = {
 		.client		= &s3c_pcm_dma_client_out,
 		.dma_size	= 4,
-		.channel	= DMACH_PCMDEV_OUT,
-		.dma_addr	= S3C_PA_PCM + S3C_PCM_TXFIFO,
 	},
 	[1] = {
 		.client		= &s3c_pcm_dma_client_out,
 		.dma_size	= 4,
-		.channel	= DMACH_PCMDEV_OUT,
-		.dma_addr	= S3C_PA_PCM + S3C_PCM_TXFIFO,
 	},
 };
 
@@ -80,14 +55,10 @@ static struct s3c_dma_params s3c_pcm_stereo_in[] = {
 	[0] = {
 		.client		= &s3c_pcm_dma_client_in,
 		.dma_size	= 4,
-		.channel	= DMACH_PCMDEV_IN,
-		.dma_addr	= S3C_PA_PCM + S3C_PCM_RXFIFO,
 	},
 	[1] = {
 		.client		= &s3c_pcm_dma_client_in,
 		.dma_size	= 4,
-		.channel	= DMACH_PCMDEV_IN,
-		.dma_addr	= S3C_PA_PCM + S3C_PCM_RXFIFO,
 	},
 };
 
@@ -102,66 +73,59 @@ static void s3c_pcm_snd_txctrl(struct s3c_pcm_info *pcm, int on)
 {
 	void __iomem *regs = pcm->regs;
 	u32 ctl, clkctl;
-	u32 value;
 
-
-	value = readl(regs + S3C_PCM_CTL);
+	clkctl = readl(regs + S3C_PCM_CLKCTL);
+	ctl = readl(regs + S3C_PCM_CTL);
+	ctl &= ~(S3C_PCM_CTL_TXDIPSTICK_MASK
+			 << S3C_PCM_CTL_TXDIPSTICK_SHIFT);
 
 	if (on) {
-		value &= ~(S3C_PCMCTL_TXFIFO_DIPSTICK_MASK |
-			S3C_PCMCTL_TX_DMA_EN | S3C_PCMCTL_TXFIFO_EN);
-		value |= (0x8<<S3C_PCMCTL_TXFIFO_DIPSTICK_SHIFT) |
-			S3C_PCMCTL_TX_DMA_EN | S3C_PCMCTL_TXFIFO_EN;
-
-		writel(value, regs + S3C_PCM_CTL);
-		pr_debug("%s: PCM_CTL=0X%x,PCM_CLKCTL=0X%x\n", __func__,
-			readl(regs +S3C_PCM_CTL),
-			readl(regs + S3C_PCM_CLKCTL));
+		ctl |= S3C_PCM_CTL_TXDMA_EN;
+		ctl |= S3C_PCM_CTL_TXFIFO_EN;
+		ctl |= S3C_PCM_CTL_ENABLE;
+		ctl |= (0x20<<S3C_PCM_CTL_TXDIPSTICK_SHIFT);
+		clkctl |= S3C_PCM_CLKCTL_SERCLK_EN;
 	} else {
-		value &= ~(S3C_PCMCTL_TX_DMA_EN | S3C_PCMCTL_TXFIFO_EN);
-		writel(value, regs + S3C_PCM_CTL);
-		value = readl(regs +S3C_PCM_IRQ_CTL);
-		value &= ~(0x7FFF);
-		pr_debug("%s: PCM_CTL=0X%x,PCM_CLKCTL=0X%x\n", __func__,
-			readl(regs +S3C_PCM_CTL),
-			readl(regs + S3C_PCM_CLKCTL));
+		ctl &= ~S3C_PCM_CTL_TXDMA_EN;
+		ctl &= ~S3C_PCM_CTL_TXFIFO_EN;
+
+		if (!(ctl & S3C_PCM_CTL_RXFIFO_EN)) {
+			ctl &= ~S3C_PCM_CTL_ENABLE;
+			if (!pcm->idleclk)
+				clkctl |= S3C_PCM_CLKCTL_SERCLK_EN;
+		}
 	}
-	pr_debug("%s: PCM_IRQ_STAT=0X%x,PCM_FIFO_STAT=0X%x,IRQ_CTL=0x%x\n",
-		__func__, readl(regs +S3C_PCM_IRQ_STAT),
-		readl(regs + S3C_PCM_FIFO_STAT),
-		readl(regs +S3C_PCM_IRQ_CTL));
+
+	writel(clkctl, regs + S3C_PCM_CLKCTL);
+	writel(ctl, regs + S3C_PCM_CTL);
 }
 
 static void s3c_pcm_snd_rxctrl(struct s3c_pcm_info *pcm, int on)
 {
 	void __iomem *regs = pcm->regs;
 	u32 ctl, clkctl;
-	u32 value;
+
+	ctl = readl(regs + S3C_PCM_CTL);
+	clkctl = readl(regs + S3C_PCM_CLKCTL);
 
 	if (on) {
-		value = readl(regs + S3C_PCM_CTL);
-		value &= ~(S3C_PCMCTL_RXFIFO_DIPSTICK_MASK |
-			S3C_PCMCTL_RX_DMA_EN | S3C_PCMCTL_RXFIFO_EN);
-		value |= (0x8 << S3C_PCMCTL_RXFIFO_DIPSTICK_SHIFT) |
-			S3C_PCMCTL_RX_DMA_EN | S3C_PCMCTL_RXFIFO_EN;
-		writel(value, regs + S3C_PCM_CTL);
-		pr_debug("%s: PCM_CTL=0X%x,PCM_CLKCTL=0X%x\n", __func__,
-			readl(regs +S3C_PCM_CTL),
-			readl(regs + S3C_PCM_CLKCTL));
+		ctl |= S3C_PCM_CTL_RXDMA_EN;
+		ctl |= S3C_PCM_CTL_RXFIFO_EN;
+		ctl |= S3C_PCM_CTL_ENABLE;
+		clkctl |= S3C_PCM_CLKCTL_SERCLK_EN;
 	} else {
-		value = readl(regs + S3C_PCM_CTL);
-		value &= ~(S3C_PCMCTL_RX_DMA_EN | S3C_PCMCTL_RXFIFO_EN);
-		writel(value, regs + S3C_PCM_CTL);
-		pr_debug("%s: PCM_CTL=0X%x,PCM_CLKCTL=0X%x\n", __func__,
-			readl(regs +S3C_PCM_CTL),
-			readl(regs + S3C_PCM_CLKCTL));
+		ctl &= ~S3C_PCM_CTL_RXDMA_EN;
+		ctl &= ~S3C_PCM_CTL_RXFIFO_EN;
+
+		if (!(ctl & S3C_PCM_CTL_TXFIFO_EN)) {
+			ctl &= ~S3C_PCM_CTL_ENABLE;
+			if (!pcm->idleclk)
+				clkctl |= S3C_PCM_CLKCTL_SERCLK_EN;
+		}
 	}
-	pr_debug("%s: PCM_IRQ_STAT=0X%x,PCM_FIFO_STAT=0X%x,IRQ_CTL=0x%x\n",
-		__func__, readl(regs + S3C_PCM_IRQ_STAT),
-		readl(regs + S3C_PCM_FIFO_STAT),
-		readl(regs +S3C_PCM_IRQ_CTL));
-        pr_debug("%s: S5P_CLK_SRC6=0x%x,S5P_CLKGATE_IP3=0x%x\n", __func__,
-		readl(S5P_CLK_SRC6),readl(S5P_CLKGATE_IP3));
+
+	writel(clkctl, regs + S3C_PCM_CLKCTL);
+	writel(ctl, regs + S3C_PCM_CTL);
 }
 
 static int s3c_pcm_trigger(struct snd_pcm_substream *substream, int cmd,
@@ -171,7 +135,7 @@ static int s3c_pcm_trigger(struct snd_pcm_substream *substream, int cmd,
 	struct s3c_pcm_info *pcm = to_info(rtd->dai->cpu_dai);
 	unsigned long flags;
 
-	pr_debug("Entered %s\n", __func__);
+	dev_dbg(pcm->dev, "Entered %s\n", __func__);
 
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
@@ -220,257 +184,58 @@ static int s3c_pcm_hw_params(struct snd_pcm_substream *substream,
 	int sclk_div, sync_div;
 	unsigned long flags;
 	u32 clkctl;
-	u32 bfs, rfs, clk_div;
-	u32 value, clk_rate;
-	u32 audioclk,tmp;
 
-	pr_debug("Entered %s\n", __func__);
+	dev_dbg(pcm->dev, "Entered %s\n", __func__);
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		dma_data = pcm->dma_playback;
 	else
 		dma_data = pcm->dma_capture;
 
-	if (params_format(params) == SNDRV_PCM_FORMAT_U8)
-		dma_data->dma_size = 2;
-
 	snd_soc_dai_set_dma_data(dai->cpu_dai, substream, dma_data);
 
-	spin_lock_irqsave(&pcm->lock, flags);
+	/* Strictly check for sample size */
 	switch (params_format(params)) {
-        case SNDRV_PCM_FORMAT_S8:
-                bfs = 16;
-                rfs = 256;              /* Can take any RFS value for AP */
-                break;
-        case SNDRV_PCM_FORMAT_S16_LE:
-                bfs = 32;
-                rfs = 256;              /* Can take any RFS value for AP */
-                break;
-        case SNDRV_PCM_FORMAT_S20_3LE:
-        case SNDRV_PCM_FORMAT_S24_LE:
-		/* B'coz 48-BFS needs atleast 512-RFS
-		 * acc to *S5P6440* UserManual
-		 */
-		bfs = 48;
-		rfs = 512;
+	case SNDRV_PCM_FORMAT_S16_LE:
 		break;
-        case SNDRV_PCM_FORMAT_S32_LE:
-		/* Impossible, as the AP doesn't support 64fs or more BFS */
 	default:
-		pr_err("%s: Default format not supported\n", __func__);
-                return -EINVAL;
-        }
-
-	/* Enable the interrupts */
-	value = readl(regs + S3C_PCM_IRQ_CTL);
-	value |= S3C_PCMIRQSTAT_TXFIFO_ALMOST_EMPTY;
-	value |= S3C_PCMIRQ_EN_IRQ_TO_ARM;
-
-	clk = clk_get(NULL, RATESRCCLK);
-	if (IS_ERR(clk)) {
-		pr_err("%s: failed to get %s\n", __func__, RATESRCCLK);
-		return -EBUSY;
-	}
-	clk_disable(clk);
-	clk_div = readl(S5P_CLK_DIV6);
-	clk_div &= ~(0xF<<4);
- 
-	switch (params_rate(params)) {
-	case 8000:
-		clk_set_rate(clk, 49152000);
-		clk_div |= (3<<4);
-		writel(clk_div, S5P_CLK_DIV6);
-                audioclk = (49152000/4);
-                break;
-
-        case 16000:
-		clk_set_rate(clk, 49152000);
-		clk_div |= (1<<4);
-		writel(clk_div, S5P_CLK_DIV6);
-                audioclk = (49152000/2);
-                break;
-
-        case 32000:
-		clk_set_rate(clk, 49152000);
-                audioclk = 49152000;
-		clk_div |= (0<<4);
-                writel(clk_div, S5P_CLK_DIV6);
-                break;
- 
-	case 64000:
-		clk_set_rate(clk, 49152000);
-                audioclk = 49152000;
-		clk_div |= (0<<4);
-                writel(clk_div, S5P_CLK_DIV6);
-                break;
-
-       	case 48000:
-		clk_set_rate(clk, 73728000);
-                audioclk = 73728000;
-		clk_div |= (0<<4);
-                writel(clk_div, S5P_CLK_DIV6);
-                break;
-
-       	case 96000:
-                clk_set_rate(clk, 73728000);
-		audioclk = 73728000;
-		clk_div |= (0<<4);
-                writel(clk_div, S5P_CLK_DIV6);
-                break;
-
-       	case 11025:
-		clk_set_rate(clk, 67738000);
-                audioclk = 67738000/4;
-		clk_div |= (3<<4);
-                writel(clk_div, S5P_CLK_DIV6);
-		break;
-
-       	case 22050:
-		clk_set_rate(clk, 67738000);
-                audioclk = 67738000/2;
-		clk_div |= (1<<4);
-                writel(clk_div, S5P_CLK_DIV6);
-		break;
-
-       	case 44100:
-		clk_set_rate(clk, 67738000);
-                audioclk = 67738000;
-		clk_div |= (0<<4);
-                writel(clk_div, S5P_CLK_DIV6);
-		break;
-
-      	case 88200:
-                clk_set_rate(clk, 67738000);
-		audioclk = 67738000;
-		clk_div |= (0<<4);
-                writel(clk_div, S5P_CLK_DIV6);
-               	break;
-       	default:
-       		pr_err("%s: Required Rate =%d..not supported\n", __func__,
-			params_rate(params));
 		return -EINVAL;
-        }
+	}
 
-	clk_rate = (params_rate(params)*bfs);
-	tmp = ((audioclk/(clk_rate))/2)-1;
-	pr_debug("%s: clk_rate=%d,sclk_div=%d,clk_div6=0x%x,smaple_rate=%d\n",
-		__func__, clk_rate, tmp, readl(S5P_CLK_DIV6),
-		params_rate(params));
-	sclk_div = tmp;
+	spin_lock_irqsave(&pcm->lock, flags);
 
-	sync_div = bfs-1;
+	/* Get hold of the PCMSOURCE_CLK */
+	clkctl = readl(regs + S3C_PCM_CLKCTL);
+	if (clkctl & S3C_PCM_CLKCTL_SERCLKSEL_PCLK)
+		clk = pcm->pclk;
+	else
+		clk = pcm->cclk;
 
-	value = readl(regs + S3C_PCM_CLKCTL);
-	value &= ~(S3C_PCMCLKCTL_SCLK_DIV | S3C_PCMCLKCTL_SYNC_DIV);
-        value |= (sclk_div << 9);
-        value |= (sync_div << 0);
+	/* Set the SCLK divider */
+	sclk_div = clk_get_rate(clk) / pcm->sclk_per_fs /
+					params_rate(params) / 2 - 1;
 
-        writel(value, regs + S3C_PCM_CLKCTL);
+	clkctl &= ~(S3C_PCM_CLKCTL_SCLKDIV_MASK
+			<< S3C_PCM_CLKCTL_SCLKDIV_SHIFT);
+	clkctl |= ((sclk_div & S3C_PCM_CLKCTL_SCLKDIV_MASK)
+			<< S3C_PCM_CLKCTL_SCLKDIV_SHIFT);
 
-	clk_enable(clk);
-        s3c_pcmdev.clk_rate = clk_get_rate(s3c_pcmdev.clk_src);
-        pr_debug("%s: Setting FOUTepll to %dHz\n", __func__, 	s3c_pcmdev.clk_rate);
+	/* Set the SYNC divider */
+	sync_div = pcm->sclk_per_fs - 1;
 
-        s3c_pcmdev.clk_rate = clk_get_rate(s3c_pcmdev.pcm_clk);
-        clk_put(clk);
+	clkctl &= ~(S3C_PCM_CLKCTL_SYNCDIV_MASK
+				<< S3C_PCM_CLKCTL_SYNCDIV_SHIFT);
+	clkctl |= ((sync_div & S3C_PCM_CLKCTL_SYNCDIV_MASK)
+				<< S3C_PCM_CLKCTL_SYNCDIV_SHIFT);
+
+	writel(clkctl, regs + S3C_PCM_CLKCTL);
 
 	spin_unlock_irqrestore(&pcm->lock, flags);
 
-	pr_debug("PCMSOURCE_CLK-%lu SCLK=%ufs SCLK_DIV=%d SYNC_DIV=%d\n",
+	dev_dbg(pcm->dev, "PCMSOURCE_CLK-%lu SCLK=%ufs SCLK_DIV=%d SYNC_DIV=%d\n",
 				clk_get_rate(clk), pcm->sclk_per_fs,
 				sclk_div, sync_div);
 
-	return 0;
-}
-
-static bool value_saved = false;
-static int s3c_pcm_startup(struct snd_pcm_substream *substream,
-	struct snd_soc_dai *socdai)
-{
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_dai_link *dai = rtd->dai;
-	struct s3c_pcm_info *pcm = to_info(dai->cpu_dai);
-	void __iomem *regs = pcm->regs;
-
-	pr_debug("%s:\n", __func__);
-
-	if (vtcallActive == 1) {
-		pr_debug("%s : clock is already setup!!", __func__);
-		return 0;
-	}
-
-	if (!clk_en_dis_rec && !clk_en_dis_play) {
-		clk_enable(s3c_pcmdev.clk_src);
-		clk_enable(s3c_pcmdev.pcm_clk);
-		if (value_saved == true) {
-			writel(s3c_pcmdev.pcmctl,
-				regs + S3C_PCM_CTL);
-			writel(s3c_pcmdev.pcmclkctl,
-				regs + S3C_PCM_CLKCTL);
-			writel(s3c_pcmdev.pcmirqctl,
-				regs + S3C_PCM_IRQ_CTL);
-			value_saved = false;
-		}
-		pr_info("%s: enabled pcm clocks finally\n", __func__);
-	}
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		clk_en_dis_play =1;
-	else
-		clk_en_dis_rec = 1;
-
-	writel(readl(regs + S3C_PCM_CLKCTL) | S3C_PCMCLKCTL_SERCLK_EN,
-		regs + S3C_PCM_CLKCTL);
-	writel(readl(regs +S3C_PCM_CTL) | S3C_PCMCTL_ENABLE,
-		regs + S3C_PCM_CTL);
-	pr_debug("%s: PCM_CTL=0X%x,PCM_CLKCTL=0X%x\n", __func__,
-		readl(regs +S3C_PCM_CTL),
-		readl(regs + S3C_PCM_CLKCTL));
-	return 0;
-}
-
-static void s3c_pcm_shutdown(struct snd_pcm_substream *substream,
-	struct snd_soc_dai *socdai)
-{
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_dai_link *dai = rtd->dai;
-	struct s3c_pcm_info *pcm = to_info(dai->cpu_dai);
-	void __iomem *regs = pcm->regs;
-	u32 value;
-
-	if (vtcallActive == 1) {
-		pr_debug("%s : vtcall is using!!", __func__);
-		return;
-	}
-
-	value = readl(regs + S3C_PCM_CTL);
-	value &= ~(S3C_PCMCTL_ENABLE);
-        writel(value, regs + S3C_PCM_CTL);
-        writel(readl(regs + S3C_PCM_CLKCTL) &
-		~S3C_PCMCLKCTL_SERCLK_EN, regs + S3C_PCM_CLKCTL);
-
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-                clk_en_dis_play = 0;
-        else
-                clk_en_dis_rec =  0;
-
-	if ((!clk_en_dis_play) && (!clk_en_dis_rec)) {
-		if(value_saved == true)
-			return;
-		s3c_pcmdev.pcmctl= readl(regs + S3C_PCM_CTL);
-	        s3c_pcmdev.pcmclkctl = readl(regs + S3C_PCM_CLKCTL);
-        	s3c_pcmdev.pcmirqctl = readl(regs + S3C_PCM_IRQ_CTL);
-		value_saved = true;
-		clk_disable(s3c_pcmdev.pcm_clk);
-		clk_disable(s3c_pcmdev.clk_src);
-		pr_info("%s: disabled pcm clocks finally\n", __func__);
-	}
-}
-
-static int s3c_pcm_prepare(struct snd_pcm_substream *substream,
-	struct snd_soc_dai *dai)
-{
-
-	pr_debug("%s:\n", __func__);
 	return 0;
 }
 
@@ -482,35 +247,63 @@ static int s3c_pcm_set_fmt(struct snd_soc_dai *cpu_dai,
 	unsigned long flags;
 	int ret = 0;
 	u32 ctl;
-	u32 value;
 
-	pr_debug("Entered %s\n", __func__);
+	dev_dbg(pcm->dev, "Entered %s\n", __func__);
 
 	spin_lock_irqsave(&pcm->lock, flags);
 
-	value = readl(regs + S3C_PCM_CTL);
-	value &= ~(S3C_PCMCTL_TX_MSB_POS_MASK | S3C_PCMCTL_RX_MSB_POS_MASK);
- 
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-        case SND_SOC_DAIFMT_I2S: /* Data starts (MSB) 1 clock after PCMSYNC signal */
-		value |= S3C_PCMCTL_TX_MSB_POS1 | S3C_PCMCTL_RX_MSB_POS1;
-                break;
-	case SND_SOC_DAIFMT_DSP_B:
-		value |= S3C_PCMCTL_TX_MSB_POS0 | S3C_PCMCTL_RX_MSB_POS0;
-                break;
-	case SND_SOC_DAIFMT_DSP_A:
-                value |= S3C_PCMCTL_TX_MSB_POS1 | S3C_PCMCTL_RX_MSB_POS1;
-                break;
-        default:
-		pr_info("%s: Invalid DAI format specified - 0x%x\n",
-			__func__, fmt & SND_SOC_DAIFMT_FORMAT_MASK);
-                return -EINVAL;
-        }
+	ctl = readl(regs + S3C_PCM_CTL);
 
-	writel(value, regs + S3C_PCM_CTL);
-	pr_debug("%s: PCM_CTL=0X%x,PCM_CLKCTL=0X%x\n", __func__,
-		readl(regs +S3C_PCM_CTL),
-		readl(regs + S3C_PCM_CLKCTL));
+	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
+	case SND_SOC_DAIFMT_NB_NF:
+		/* Nothing to do, NB_NF by default */
+		break;
+	default:
+		dev_err(pcm->dev, "Unsupported clock inversion!\n");
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBS_CFS:
+		/* Nothing to do, Master by default */
+		break;
+	default:
+		dev_err(pcm->dev, "Unsupported master/slave format!\n");
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	switch (fmt & SND_SOC_DAIFMT_CLOCK_MASK) {
+	case SND_SOC_DAIFMT_CONT:
+		pcm->idleclk = 1;
+		break;
+	case SND_SOC_DAIFMT_GATED:
+		pcm->idleclk = 0;
+		break;
+	default:
+		dev_err(pcm->dev, "Invalid Clock gating request!\n");
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_DSP_A:
+		ctl |= S3C_PCM_CTL_TXMSB_AFTER_FSYNC;
+		ctl |= S3C_PCM_CTL_RXMSB_AFTER_FSYNC;
+		break;
+	case SND_SOC_DAIFMT_DSP_B:
+		ctl &= ~S3C_PCM_CTL_TXMSB_AFTER_FSYNC;
+		ctl &= ~S3C_PCM_CTL_RXMSB_AFTER_FSYNC;
+		break;
+	default:
+		dev_err(pcm->dev, "Unsupported data format!\n");
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	writel(ctl, regs + S3C_PCM_CTL);
+
 exit:
 	spin_unlock_irqrestore(&pcm->lock, flags);
 
@@ -521,6 +314,16 @@ static int s3c_pcm_set_clkdiv(struct snd_soc_dai *cpu_dai,
 						int div_id, int div)
 {
 	struct s3c_pcm_info *pcm = to_info(cpu_dai);
+
+	switch (div_id) {
+	case S3C_PCM_SCLK_PER_FS:
+		pcm->sclk_per_fs = div;
+		break;
+
+	default:
+		return -EINVAL;
+	}
+
 	return 0;
 }
 
@@ -530,12 +333,26 @@ static int s3c_pcm_set_sysclk(struct snd_soc_dai *cpu_dai,
 	struct s3c_pcm_info *pcm = to_info(cpu_dai);
 	void __iomem *regs = pcm->regs;
 	u32 clkctl = readl(regs + S3C_PCM_CLKCTL);
-	u32 value;	
-	pr_debug("%s:\n", __func__);
-	s3c_pcmdev.clk_rate = clk_get_rate(s3c_pcmdev.pcm_clk);
-	value = readl(regs + S3C_PCM_CLKCTL);
-	value |= ~(S3C_PCMCLKCTL_SERCLK_SEL); /* ..using  SCLK_* clock source */
-	writel(value, regs + S3C_PCM_CLKCTL);
+
+	switch (clk_id) {
+	case S3C_PCM_CLKSRC_PCLK:
+		clkctl |= S3C_PCM_CLKCTL_SERCLKSEL_PCLK;
+		break;
+
+	case S3C_PCM_CLKSRC_MUX:
+		clkctl &= ~S3C_PCM_CLKCTL_SERCLKSEL_PCLK;
+
+		if (clk_get_rate(pcm->cclk) != freq)
+			clk_set_rate(pcm->cclk, freq);
+
+		break;
+
+	default:
+		return -EINVAL;
+	}
+
+	writel(clkctl, regs + S3C_PCM_CLKCTL);
+
 	return 0;
 }
 
@@ -544,10 +361,7 @@ static struct snd_soc_dai_ops s3c_pcm_dai_ops = {
 	.set_clkdiv	= s3c_pcm_set_clkdiv,
 	.trigger	= s3c_pcm_trigger,
 	.hw_params	= s3c_pcm_hw_params,
-	.prepare	= s3c_pcm_prepare,
 	.set_fmt	= s3c_pcm_set_fmt,
-	.startup	= s3c_pcm_startup,
-	.shutdown	= s3c_pcm_shutdown,
 };
 
 #define S3C_PCM_RATES  SNDRV_PCM_RATE_8000_96000
@@ -559,19 +373,16 @@ static struct snd_soc_dai_ops s3c_pcm_dai_ops = {
 	.symmetric_rates = 1,					\
 	.ops = &s3c_pcm_dai_ops,				\
 	.playback = {						\
-		.channels_min	= 1,				\
+		.channels_min	= 2,				\
 		.channels_max	= 2,				\
 		.rates		= S3C_PCM_RATES,		\
-		.formats	= SNDRV_PCM_FMTBIT_S16_LE |	\
-				SNDRV_PCM_FMTBIT_S8 |		\
-				SNDRV_PCM_FMTBIT_U16_LE,	\
+		.formats	= SNDRV_PCM_FMTBIT_S16_LE,	\
 	},							\
 	.capture = {						\
-		.channels_min	= 1,				\
+		.channels_min	= 2,				\
 		.channels_max	= 2,				\
 		.rates		= S3C_PCM_RATES,		\
-		.formats	= SNDRV_PCM_FMTBIT_S8 |		\
-				SNDRV_PCM_FMTBIT_S16_LE		\
+		.formats	= SNDRV_PCM_FMTBIT_S16_LE,	\
 	},							\
 }
 
@@ -581,41 +392,12 @@ struct snd_soc_dai s3c_pcm_dai[] = {
 };
 EXPORT_SYMBOL_GPL(s3c_pcm_dai);
 
-/* TODO: Added to use in interrupt mode.
- * interrupt mode implementation has to be done
- */
-static irqreturn_t s3c_pcmdev_irq(int irqno, void *dev_id)
-{
-	u32 irq_status;
-	static u32 count;
-
-	irq_status = readl(s3c_pcmdev.regs + S3C_PCM_IRQ_STAT);
-	pr_debug("%s: irq count %d, status = 0x%x..fifo_stat =0x%x\n", 
-		__func__, count++, irq_status,
-		readl(s3c_pcmdev.regs + S3C_PCM_FIFO_STAT));
-
-	pr_debug("%s: IRQ..check point..curr_pos=0x%x..\n", __func__,
-		(u32)curr_pos);
-	if (remaining_len) {
-		writel(0x1,s3c_pcmdev.regs + S3C_PCM_CLRINT);
-	}
-	else
-		writel(0x1,s3c_pcmdev.regs + S3C_PCM_CLRINT);
-
-	return IRQ_HANDLED;
-}
-int s3c_pcmdev_clock_control(int enable)
-{
-	vtcallActive = enable;
-	return 0;
-}
 static __devinit int s3c_pcm_dev_probe(struct platform_device *pdev)
 {
 	struct s3c_pcm_info *pcm;
 	struct snd_soc_dai *dai;
 	struct resource *mem_res, *dmatx_res, *dmarx_res;
 	struct s3c_audio_pdata *pcm_pdata;
-	struct clk *cm, *cf;
 	int ret;
 
 	/* Check for valid device index */
@@ -625,6 +407,25 @@ static __devinit int s3c_pcm_dev_probe(struct platform_device *pdev)
 	}
 
 	pcm_pdata = pdev->dev.platform_data;
+
+	/* Check for availability of necessary resource */
+	dmatx_res = platform_get_resource(pdev, IORESOURCE_DMA, 0);
+	if (!dmatx_res) {
+		dev_err(&pdev->dev, "Unable to get PCM-TX dma resource\n");
+		return -ENXIO;
+	}
+
+	dmarx_res = platform_get_resource(pdev, IORESOURCE_DMA, 1);
+	if (!dmarx_res) {
+		dev_err(&pdev->dev, "Unable to get PCM-RX dma resource\n");
+		return -ENXIO;
+	}
+
+	mem_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!mem_res) {
+		dev_err(&pdev->dev, "Unable to get register resource\n");
+		return -ENXIO;
+	}
 
 	if (pcm_pdata && pcm_pdata->cfg_gpio && pcm_pdata->cfg_gpio(pdev)) {
 		dev_err(&pdev->dev, "Unable to configure gpio\n");
@@ -639,77 +440,55 @@ static __devinit int s3c_pcm_dev_probe(struct platform_device *pdev)
 	dai = &s3c_pcm_dai[pdev->id];
 	dai->dev = &pdev->dev;
 
-	pcm->regs = ioremap(S3C_PA_PCM, 0x100);
+	/* Default is 128fs */
+	pcm->sclk_per_fs = 128;
+
+	pcm->cclk = clk_get(&pdev->dev, "audio-bus");
+	if (IS_ERR(pcm->cclk)) {
+		dev_err(&pdev->dev, "failed to get audio-bus\n");
+		ret = PTR_ERR(pcm->cclk);
+		goto err1;
+	}
+	clk_enable(pcm->cclk);
+
+	/* record our pcm structure for later use in the callbacks */
+	dai->private_data = pcm;
+
+	if (!request_mem_region(mem_res->start,
+				resource_size(mem_res), "samsung-pcm")) {
+		dev_err(&pdev->dev, "Unable to request register region\n");
+		ret = -EBUSY;
+		goto err2;
+	}
+
+	pcm->regs = ioremap(mem_res->start, 0x100);
 	if (pcm->regs == NULL) {
 		dev_err(&pdev->dev, "cannot ioremap registers\n");
 		ret = -ENXIO;
 		goto err3;
 	}
 
-	s3c_pcmdev.regs = pcm->regs;
-
-	ret = request_irq(IRQ_S3C_PCM, s3c_pcmdev_irq, 0, "s3c-pcmdev", pdev);
-	if (ret < 0) {
-		pr_err("%s: fail to claim pcmdev irq , ret = %d\n",
-			__func__, ret);
-		iounmap(s3c_pcmdev.regs);
-		return -ENODEV;
-	}
-	/* Default is 128fs */
-	pcm->sclk_per_fs = 128;
-
-	s3c_pcmdev.pcm_clk = clk_get(&pdev->dev, "pcm");
-	if (IS_ERR(s3c_pcmdev.pcm_clk)) {
+	pcm->pclk = clk_get(&pdev->dev, "pcm");
+	if (IS_ERR(pcm->pclk)) {
 		dev_err(&pdev->dev, "failed to get pcm_clock\n");
 		ret = -ENOENT;
 		goto err4;
 	}
-
-	s3c_pcmdev.clk_rate = clk_get_rate(s3c_pcmdev.pcm_clk);
-	s3c_pcmdev.clk_src = clk_get(&pdev->dev, "sclk_audio");
-	if (IS_ERR(s3c_pcmdev.clk_src)) {
-		dev_err(&pdev->dev, "failed to get sclk_audio\n");
-		ret = PTR_ERR(s3c_pcmdev.clk_src);
-		goto err1;
-	}
-
-	cm = clk_get(NULL, EXTPRNT);
-	if (IS_ERR(cm)) {
-		pr_err("%s: failed to get %s\n", __func__, EXTPRNT);
-	}
-
-	if (clk_set_parent(s3c_pcmdev.clk_src, cm)) {
-		pr_err("%s: failed to set mOUTepll as parent of scklkaudio1\n",
-			__func__);
-	}
-
-	cf = clk_get(NULL, "fout_epll");
-	if (IS_ERR(cf)) {
-		pr_err("%s: failed to get fout_epll\n", __func__);
-	}
-
-	if (clk_set_parent(cm, cf)){
-		pr_err("%s: failed to set FOUTepll as parent of MOUTepll\n",
-			__func__);
-	}
-	s3c_pcmdev.clk_rate = clk_get_rate(s3c_pcmdev.clk_src);
-	/* record our pcm structure for later use in the callbacks */
-	dai->private_data = pcm;
-
-
-	//clk_enable(pcm->cclk);
-	//clk_enable(pcm->pclk);
-
-	clk_put(cf);
-	clk_put(cm);
-	s3c_pcm_snd_txctrl(pcm, 0);
-	s3c_pcm_snd_rxctrl(pcm, 0);
+	clk_enable(pcm->pclk);
 
 	ret = snd_soc_register_dai(dai);
 	if (ret != 0) {
 		dev_err(&pdev->dev, "failed to get pcm_clock\n");
 		goto err5;
 	}
+
+	s3c_pcm_stereo_in[pdev->id].dma_addr = mem_res->start
+							+ S3C_PCM_RXFIFO;
+	s3c_pcm_stereo_out[pdev->id].dma_addr = mem_res->start
+							+ S3C_PCM_TXFIFO;
+
+	s3c_pcm_stereo_in[pdev->id].channel = dmarx_res->start;
+	s3c_pcm_stereo_out[pdev->id].channel = dmatx_res->start;
 
 	pcm->dma_capture = &s3c_pcm_stereo_in[pdev->id];
 	pcm->dma_playback = &s3c_pcm_stereo_out[pdev->id];
@@ -718,14 +497,14 @@ static __devinit int s3c_pcm_dev_probe(struct platform_device *pdev)
 
 err5:
 	clk_disable(pcm->pclk);
-	clk_put(s3c_pcmdev.pcm_clk);
+	clk_put(pcm->pclk);
 err4:
 	iounmap(pcm->regs);
 err3:
 	release_mem_region(mem_res->start, resource_size(mem_res));
 err2:
-	clk_disable(s3c_pcmdev.clk_src);
-	clk_put(s3c_pcmdev.clk_src);
+	clk_disable(pcm->cclk);
+	clk_put(pcm->cclk);
 err1:
 	return ret;
 }
@@ -740,49 +519,13 @@ static __devexit int s3c_pcm_dev_remove(struct platform_device *pdev)
 	mem_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	release_mem_region(mem_res->start, resource_size(mem_res));
 
-	clk_disable(s3c_pcmdev.clk_src);
-	clk_disable(s3c_pcmdev.pcm_clk);
-	clk_put(s3c_pcmdev.pcm_clk);
-	clk_put(s3c_pcmdev.clk_src);
+	clk_disable(pcm->cclk);
+	clk_disable(pcm->pclk);
+	clk_put(pcm->pclk);
+	clk_put(pcm->cclk);
 
 	return 0;
 }
-
-#ifdef CONFIG_PM
-static int s3c_pcm_dev_suspend(struct platform_device *dev, pm_message_t state)
-{
-	pr_debug("%s:\n", __func__);
-
-	s3c_pcmdev.pcmctl= readl(s3c_pcmdev.regs + S3C_PCM_CTL);
-	s3c_pcmdev.pcmclkctl = readl(s3c_pcmdev.regs + S3C_PCM_CLKCTL);
-	s3c_pcmdev.pcmirqctl = readl(s3c_pcmdev.regs + S3C_PCM_IRQ_CTL);
-
-	if ((clk_en_dis_play)||(clk_en_dis_rec)) {
-		clk_disable(s3c_pcmdev.pcm_clk);
-        	clk_disable(s3c_pcmdev.clk_src);
-	}
-	return 0;
-}
-
-static int s3c_pcm_dev_resume(struct platform_device *dev)
-{
-	pr_debug("%s:\n", __func__);
-
-	if ((clk_en_dis_play)||(clk_en_dis_rec)) {
-		clk_enable(s3c_pcmdev.pcm_clk);
-        	clk_enable(s3c_pcmdev.clk_src);
-	}
-
-	writel(s3c_pcmdev.pcmctl, s3c_pcmdev.regs + S3C_PCM_CTL);
-	writel(s3c_pcmdev.pcmclkctl, s3c_pcmdev.regs + S3C_PCM_CLKCTL);
-	writel(s3c_pcmdev.pcmirqctl, s3c_pcmdev.regs + S3C_PCM_IRQ_CTL);
-
-	return 0;
-}
-#else
-#define s3c_pcmdev_suspend NULL
-#define s3c_pcmdev_resume NULL
-#endif
 
 static struct platform_driver s3c_pcm_driver = {
 	.probe  = s3c_pcm_dev_probe,
@@ -791,8 +534,6 @@ static struct platform_driver s3c_pcm_driver = {
 		.name = "samsung-pcm",
 		.owner = THIS_MODULE,
 	},
-	.suspend = s3c_pcm_dev_suspend,
-	.resume = s3c_pcm_dev_resume,
 };
 
 static int __init s3c_pcm_init(void)

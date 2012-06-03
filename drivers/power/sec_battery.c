@@ -79,6 +79,8 @@
 #define LOW_BLOCK_TEMP			0
 #define LOW_RECOVER_TEMP		30
 
+#define BATTERY_CURRENT
+
 struct battery_info {
 	s32 batt_vol;		/* Battery voltage from ADC */
 	u32 batt_temp;		/* Battery Temperature (C) from ADC */
@@ -88,6 +90,7 @@ struct battery_info {
 	u32 batt_vcell;
 	u32 batt_soc;
 	u32 charging_status;
+	u32 batt_current;
 	bool batt_is_full;      /* 0 : Not full 1: Full */
 	bool batt_improper_ta;  /* 1: improper ta */	
 };
@@ -188,6 +191,9 @@ static struct device_attribute sec_battery_attrs[] = {
 	SEC_BATTERY_ATTR(charging_mode_booting),
 	SEC_BATTERY_ATTR(batt_temp_check),
 	SEC_BATTERY_ATTR(batt_full_check),
+#endif
+#ifdef BATTERY_CURRENT
+	SEC_BATTERY_ATTR(batt_current),
 #endif
 };
 
@@ -418,7 +424,16 @@ static int sec_bat_get_property(struct power_supply *bat_ps,
 	case POWER_SUPPLY_PROP_TECHNOLOGY:
 		val->intval = POWER_SUPPLY_TECHNOLOGY_LION;
 		break;
+#ifdef BATTERY_CURRENT
+        case BATT_CURRENT:
+	  if (chg->pdata && chg->pdata->psy_fuelgauge &&
+	          chg->pdata->psy_fuelgauge->get_property &&
+	          chg->pdata->psy_fuelgauge->get_property(
+		          chg->pdata->psy_fuelgauge, psp, val) < 0)
+	          return -EINVAL;
+	  break;
 
+#endif  
 	default:
 		return -EINVAL;
 	}
@@ -823,8 +838,7 @@ static int sec_cable_status_update(struct chg_data *chg)
 	    chg->pdata->pmic_charger->get_connection_status &&
 	    chg->pdata->pmic_charger->get_connection_status())
 	{
-		if (!chg->pdata->get_jig_status())
-			vdc_status = true;
+		vdc_status = true;
 		if (chg->bat_info.dis_reason) {
 			pr_info("%s : battery status discharging : %d\n",
 				__func__, chg->bat_info.dis_reason);
@@ -977,7 +991,7 @@ static ssize_t sec_bat_show_attrs(struct device *dev,
 				POWER_SUPPLY_PROP_VOLTAGE_NOW, &value);
 			chg->bat_info.batt_vcell = value.intval;
 		}
-		i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", (chg->bat_info.batt_vcell) / 1000);
+		i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", chg->bat_info.batt_vcell);
 		break;
 
 	case BATT_TEMP:
@@ -1035,6 +1049,20 @@ static ssize_t sec_bat_show_attrs(struct device *dev,
 		i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", chg->bat_info.batt_is_full);
 		break;
 #endif
+#ifdef BATTERY_CURRENT
+		case BATT_CURRENT:
+		  if (chg->pdata &&
+                    chg->pdata->psy_fuelgauge &&
+		      chg->pdata->psy_fuelgauge->get_property) {
+		    chg->pdata->psy_fuelgauge->get_property(
+							    chg->pdata->psy_fuelgauge,
+							    POWER_SUPPLY_PROP_CURRENT_NOW, &value);
+		    chg->bat_info.batt_current = value.intval;
+		  }
+		  i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", chg->bat_info.batt_current);
+		  break;
+#endif
+
 	default:
 		i = -EINVAL;
 	}

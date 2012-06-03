@@ -43,8 +43,6 @@
 #define ONEDRAM_REG_OFFSET 0xFFF800
 #define ONEDRAM_REG_SIZE 0x800
 
-static DEFINE_MUTEX(onedram_mutex);
-
 struct onedram_reg_mapped {
 	u32 sem;
 	u32 reserved1[7];
@@ -129,7 +127,7 @@ static ssize_t show_debug(struct device *d,
 	return p - buf;
 }
 
-static DEVICE_ATTR(debug, 0664, show_debug, NULL);
+static DEVICE_ATTR(debug, S_IRUGO, show_debug, NULL);
 
 static struct attribute *onedram_attributes[] = {
 	&dev_attr_debug.attr,
@@ -565,13 +563,12 @@ static int onedram_mmap(struct file *filp, struct vm_area_struct *vma)
 	return 0;
 }
 
-static long onedram_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+static int onedram_ioctl(struct inode *inode, struct file *filp,
+		unsigned int cmd, unsigned long arg)
 {
-	struct cdev *cdev = filp->f_dentry->d_inode->i_cdev;
+	struct cdev *cdev = inode->i_cdev;
 	struct onedram *od = container_of(cdev, struct onedram, cdev);
 	int r;
-
-	mutex_lock(&onedram_mutex);
 
 	switch (cmd) {
 	case ONEDRAM_GET_AUTH:
@@ -588,8 +585,6 @@ static long onedram_ioctl(struct file *filp, unsigned int cmd, unsigned long arg
 		break;
 	}
 
-	mutex_unlock(&onedram_mutex);
-
 	return r;
 }
 
@@ -603,7 +598,7 @@ static const struct file_operations onedram_fops = {
 	.open = onedram_open,
 	.release = onedram_release,
 	.mmap = onedram_mmap,
-	.unlocked_ioctl = onedram_ioctl,
+	.ioctl = onedram_ioctl,
 };
 
 static int _register_chrdev(struct onedram *od)
@@ -862,8 +857,14 @@ static int __devinit onedram_probe(struct platform_device *pdev)
 				irq);
 		goto err;
 	}
+
+	r = enable_irq_wake(irq);
+	if(r) {
+		dev_err(&pdev->dev, "failed to set wakeup source(%d)\n",
+				irq);
+		goto err;
+	}
 	od->irq = irq;
-	enable_irq_wake(od->irq);
 
 	r = _register_chrdev(od);
 	if (r) {

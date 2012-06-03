@@ -174,7 +174,7 @@ static void lcd_device_release(struct device *dev)
 }
 
 static struct device_attribute lcd_device_attributes[] = {
-	__ATTR(lcd_power, 0664, lcd_show_power, lcd_store_power),
+	__ATTR(lcd_power, 0644, lcd_show_power, lcd_store_power),
 	__ATTR(contrast, 0644, lcd_show_contrast, lcd_store_contrast),
 	__ATTR(max_contrast, 0444, lcd_show_max_contrast, NULL),
 	__ATTR_NULL,

@@ -124,7 +124,7 @@
 
 static inline int rt_policy(int policy)
 {
-	if (policy == SCHED_FIFO || policy == SCHED_RR)
+	if (unlikely(policy == SCHED_FIFO || policy == SCHED_RR))
 		return 1;
 	return 0;
 }
@@ -873,26 +873,6 @@ static inline u64 global_rt_runtime(void)
 static inline int task_current(struct rq *rq, struct task_struct *p)
 {
 	return rq->curr == p;
-}
-
-/*
- * Look for any tasks *anywhere* that are running nice 0 or better. We do
- * this lockless for overhead reasons since the occasional wrong result
- * is harmless.
- */
-int above_background_load(void)
-{
-        struct task_struct *cpu_curr;
-        unsigned long cpu;
-
-        for_each_online_cpu(cpu) {
-                cpu_curr = cpu_rq(cpu)->curr;
-                if (unlikely(!cpu_curr))
-                        continue;
-                if (PRIO_TO_NICE(cpu_curr->static_prio) < 1)
-                        return 1;
-        }
-        return 0;
 }
 
 #ifndef __ARCH_WANT_UNLOCKED_CTXSW
@@ -2106,7 +2086,7 @@ task_hot(struct task_struct *p, u64 now, struct sched_domain *sd)
 	if (p->sched_class != &fair_sched_class)
 		return 0;
 
-	if (p->policy == SCHED_IDLE)
+	if (unlikely(p->policy == SCHED_IDLE))
 		return 0;
 
 	/*
@@ -2504,7 +2484,7 @@ out_running:
 	if (p->sched_class->task_woken)
 		p->sched_class->task_woken(rq, p);
 
-	if (rq->idle_stamp) {
+	if (unlikely(rq->idle_stamp)) {
 		u64 delta = rq->clock - rq->idle_stamp;
 		u64 max = 2*sysctl_sched_migration_cost;
 

@@ -47,10 +47,10 @@ enum soc_type {
 * to allow customization later
 */
 
-#if defined(CONFIG_MACH_P1_LTN)
+#if defined (CONFIG_MACH_P1_GSM)
 #include "samsung_p1.h"
-#elif defined(CONFIG_MACH_P1_GSM)
-#include "samsung_p1.h"
+#elif defined (CONFIG_MACH_P1_CDMA)
+#include "samsung_p1c.h"
 #else
 #include "samsung.h"
 #endif

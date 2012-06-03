@@ -29,7 +29,7 @@ struct s3c_dma_params {
 extern struct snd_soc_platform s3c24xx_soc_platform;
 extern struct snd_soc_platform s3c24xx_pcm_soc_platform;
 extern struct snd_ac97_bus_ops s3c24xx_ac97_ops;
-#if defined(CONFIG_MACH_P1_LTN) && defined(CONFIG_VIDEO_NM6XX)
+#if defined (CONFIG_SAMSUNG_P1L)
 extern struct snd_soc_platform s5pc110_soc_platform;
 #endif
 

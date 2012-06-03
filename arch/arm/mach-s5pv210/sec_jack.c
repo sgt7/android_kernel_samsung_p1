@@ -198,8 +198,9 @@ static void jack_detect_change(struct work_struct *ignored)
 			
 			disable_irq (send_end->eint);
 			disable_irq_wake(send_end->eint);
-
+  
 			send_end_irq_token--;
+
 			if(hi->send_end_key_pressed)
 			{
 				switch_set_state(&switch_sendend, 0);			
@@ -210,6 +211,7 @@ static void jack_detect_change(struct work_struct *ignored)
 				msleep(500);
 			}
 		}
+
 		current_jack_type_status = SEC_JACK_NO_DEVICE;
 		switch_set_state(&switch_jack_detection, current_jack_type_status);
 	}
@@ -398,18 +400,18 @@ static ssize_t select_jack_store(struct device *dev, struct device_attribute *at
 
 	if(state)
 	{
-		if(current_jack_type_status == SEC_UNKNOWN_DEVICE)
-    		{
+		if(current_jack_type_status != SEC_UNKNOWN_DEVICE)
+		{
 			printk(KERN_ERR "user can't select jack device if current_jack_status isn't unknown status");
 			return -1;
 		}
-		/*Added condition checking in Switch case */
-       		/*if(sizeof(buf)!=1 || sizeof(buf) != 0)
+		
+		if(sizeof(buf)!=1)
 		{
 			printk("input error\n");
 			printk("Must be stored ( 1,2,4)\n");
 			return -1;		
-		}*/
+		}
 
 		value = strtoi(buf);
 		SEC_JACKDEV_DBG("User  selection : 0X%x", value);
@@ -442,21 +444,7 @@ static ssize_t select_jack_store(struct device *dev, struct device_attribute *at
 				
 				switch_set_state(&switch_jack_detection, current_jack_type_status);
 				break;
-			}	
-			case SEC_JACK_NO_DEVICE:
-                        {
-                                printk("\n EAR Mic Bias OFf \n");
-				current_jack_type_status = SEC_JACK_NO_DEVICE;
-				gpio_set_value(GPIO_EAR_MICBIAS0_EN, 0);
-                                gpio_set_value(GPIO_EAR_MICBIAS_EN, 0);
-				switch_set_state(&switch_jack_detection, current_jack_type_status);
-                                break;
-                        }
-			default:
-			{
-				printk("Invalid Jack type \n");
-				break;
-			}
+			}			
 		}
 	}
 	else
@@ -472,7 +460,7 @@ static ssize_t select_jack_store(struct device *dev, struct device_attribute *at
 	return size;
 }
 
-static DEVICE_ATTR(select_jack, S_IRUGO | S_IWUSR | S_IWGRP, select_jack_show, select_jack_store);
+static DEVICE_ATTR(select_jack, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH, select_jack_show, select_jack_store);
 
 static int sec_jack_probe(struct platform_device *pdev)
 {

@@ -104,7 +104,7 @@ void enter_upload_mode(unsigned long val)
 	{
 		if (kernel_sec_viraddr_wdt_reset_reg)
 		{
-		//dump_debug_info_forced_ramd_dump();
+		dump_debug_info_forced_ramd_dump();
 #ifdef CONFIG_KERNEL_DEBUG_SEC
 #ifdef CONFIG_TARGET_LOCALE_KOR
 		local_irq_disable();
@@ -148,7 +148,7 @@ static ssize_t keyshort_test(struct device *dev, struct device_attribute *attr, 
 
 	return count;
 }
-static DEVICE_ATTR(key_pressed, S_IRUGO | S_IWUSR | S_IWGRP, keyshort_test, NULL);
+static DEVICE_ATTR(key_pressed, 0664, keyshort_test, NULL);
 #endif
 
 /**
@@ -467,9 +467,6 @@ static void gpio_keys_report_event(struct gpio_button_data *bdata)
     {
         /*workaround irq bug in p1*/
         if(!button->pressed)
-        {
-        }
-        else
         {
             input_event(input, type, button->code, 1);
             input_sync(input);

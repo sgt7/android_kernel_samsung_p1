@@ -625,14 +625,13 @@ int fimc_mmap_out_dst(struct file *filp, struct vm_area_struct *vma, u32 idx)
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 	vma->vm_flags |= VM_RESERVED;
 
-#if defined(CONFIG_MACH_P1_LTN)
-		pfn = __phys_to_pfn(ctrl->mem.base);
-#else
-
+#if defined (CONFIG_SAMSUNG_P1) || defined (CONFIG_SAMSUNG_P1C)
 	if (ctrl->out->ctx[ctx_id].dst[idx].base[0])
 		pfn = __phys_to_pfn(ctrl->out->ctx[ctx_id].dst[idx].base[0]);
 	else
 		pfn = __phys_to_pfn(ctrl->mem.curr);
+#elif defined (CONFIG_SAMSUNG_P1L) || defined (CONFIG_SAMSUNG_P1N)
+		pfn = __phys_to_pfn(ctrl->mem.base);
 #endif
 
 	ret = remap_pfn_range(vma, vma->vm_start, pfn, size, vma->vm_page_prot);
