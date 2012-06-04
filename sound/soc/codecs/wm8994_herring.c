@@ -2570,6 +2570,9 @@ static void wm8994_set_cdma_voicecall_common_setting(struct snd_soc_codec *codec
 	wm8994_write(codec, WM8994_AIF2_CONTROL_1, 0x4118);
 
 	wm8994_write(codec, WM8994_AIF2_BCLK, 0x70);
+#ifndef CONFIG_PHONE_ARIES_CDMA
+	wm8994_write(codec, WM8994_AIF2_CONTROL_2, 0x0000);
+#endif
 	wm8994_write(codec, WM8994_AIF2_MASTER_SLAVE, 0);
 
 	val = wm8994_read(codec, WM8994_POWER_MANAGEMENT_5);
@@ -2720,9 +2723,12 @@ static void wm8994_set_cdma_voicecall_receiver(struct snd_soc_codec *codec)
 	wm8994_write(codec, 0x0310, 0x4118);	/* AIF2 Control 1 */
 	/* AIF2 Control 2 pcm format is changed ulaw to linear */
 
-// boost the incoming voice volume a bit
+#ifdef CONFIG_PHONE_ARIES_CDMA
+	// CDMA: boost the incoming voice volume a bit
 	wm8994_write(codec, 0x0311, incall_boost_rcv);
-
+#else
+	wm8994_write(codec, 0x0311, 0x0000);
+#endif
 
 	wm8994_write(codec, 0x0520, 0x0000);	/* AIF2 DAC Filter 1 */
 	/* AIF2 Clocking 1. AIF2 Clock Enable */
@@ -2738,8 +2744,12 @@ static void wm8994_set_cdma_voicecall_receiver(struct snd_soc_codec *codec)
 	wm8994_write(codec, 0x0002, 0x6240);	/* Power Management 2 */
 	wm8994_write(codec, 0x0028, 0x0030);	/* Input Mixer 2 */
 
+#ifdef CONFIG_PHONE_ARIES_CDMA
 	/* mic gain setting */
 	wm8994_write(codec, 0x0018, WM8994_IN1L_VU | incall_mic_gain_rcv);
+#else
+	wm8994_write(codec, 0x0018, 0x010A);
+#endif
 
 	/* Output Mixer 5 */
 	val = wm8994_read(codec, 0x0031);
@@ -2753,6 +2763,7 @@ static void wm8994_set_cdma_voicecall_receiver(struct snd_soc_codec *codec)
 	val |= 0x0000 << 0x0009;
 	wm8994_write(codec, 0x0032, val);
 
+#ifdef CONFIG_PHONE_ARIES_CDMA
 	/* Volume Control - Output - just un-mute, let rom set the value */
 	val = wm8994_read(codec, WM8994_LEFT_OPGA_VOLUME);
 	val &= ~(WM8994_MIXOUTL_MUTE_N_MASK);
@@ -2763,6 +2774,20 @@ static void wm8994_set_cdma_voicecall_receiver(struct snd_soc_codec *codec)
 	val &= ~(WM8994_MIXOUTR_MUTE_N_MASK);
 	val |= (WM8994_MIXOUTR_MUTE_N);
 	wm8994_write(codec, WM8994_RIGHT_OPGA_VOLUME, val);
+#else
+	/* Left OPGA Volume */
+	val = wm8994_read(codec, 0x0020);
+	val &= ~(WM8994_MIXOUTL_MUTE_N_MASK | WM8994_MIXOUTL_VOL_MASK);
+	val |= (0x0100 | 0x0040 | 0x3D);
+	/* 05.24 Maximum ´ëºñ -6dB HAC ¿ë test -2 3B -> 39 */
+	wm8994_write(codec, 0x0020, 0x01F9);
+
+	/* Right OPGA Volume */
+	val = wm8994_read(codec, 0x0021);
+	val &= ~(WM8994_MIXOUTR_MUTE_N_MASK | WM8994_MIXOUTR_VOL_MASK);
+	val |= (0x0100 | 0x0040 | 0x3D);
+	wm8994_write(codec, 0x0021, 0x01F9);
+#endif
 
 	wm8994_write(codec, 0x0312, 0x0000);	/* Slave */
 	/* sub mic */
