@@ -80,6 +80,9 @@
 #ifdef CONFIG_VIDEO_NM6XX 
 #include <media/nm6xx_platform.h>
 #endif
+#ifdef CONFIG_FAST_CHARGE
+#include <linux/fast_charge.h>
+#endif
 
 #include <plat/regs-serial.h>
 #include <plat/s5pv210.h>
@@ -2583,7 +2586,18 @@ static void fsa9480_usb_cb(bool attached)
 		}
 	}
 
+#ifdef CONFIG_FAST_CHARGE
+    if ( enable_fast_charge == 1 ) {
+        set_cable_status = attached ? CABLE_TYPE_AC : CABLE_TYPE_NONE;
+    } else {
+        set_cable_status = attached ? CABLE_TYPE_USB : CABLE_TYPE_NONE;
+    }
+#else
+
 	set_cable_status = attached ? CABLE_TYPE_USB : CABLE_TYPE_NONE;
+
+#endif
+
 	if (callbacks && callbacks->set_cable)
 		callbacks->set_cable(callbacks, set_cable_status);
 

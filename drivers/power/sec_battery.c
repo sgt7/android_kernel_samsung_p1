@@ -47,6 +47,9 @@
 #include <linux/android_alarm.h>
 #include <mach/regs-clock.h>
 #include <asm/io.h>
+#ifdef CONFIG_FAST_CHARGE
+#include <linux/fast_charge.h>
+#endif
 
 #define TEMPERATURE_FROM_FUELGAUGE
 
@@ -728,7 +731,8 @@ static void sec_bat_discharge_reason(struct chg_data *chg)
 //		chg->bat_info.dis_reason |= DISCONNECT_OVER_TIME;  // for GED (crespo).
 		chg->bat_info.dis_reason |= DISCONNECT_BAT_FULL;
 		// set battery full (expiration of absolute timer)
-		sec_bat_set_status(&chg->callbacks, CHARGING_STATUS_FULL);
+		sec_bat_set_status
+(&chg->callbacks, CHARGING_STATUS_FULL);
 	}
 
 	pr_debug("%s : Current Voltage : %d\n			\
@@ -759,14 +763,40 @@ static bool check_samsung_charger(void)
 		pr_info("%s: vol_1 = %d, vol_2 = %d!!\n", __func__, vol_1, vol_2);
 
 		//3. Check range of the voltage
-		if( (vol_1 < 800) || (vol_1 > 1470) || (vol_2 < 800) || (vol_2 > 1470) )
-		{
-			pr_info("%s: Improper charger is connected!!!\n", __func__);
-			fsa9480_manual_switching(AUTO_SWITCH);
-			return false;
-		}	
-	}
-	
+#ifdef CONFIG_FAST_CHARGE
+        if ( enable_fast_charge == 1 ) {
+
+            //USB is connected as ADC
+            if( ( vol_1 == 0 ) && ( vol_2 == 0 ) ) {
+	            pr_info("%s: Samsung USB charger is connected!!!\n", __func__);
+	            fsa9480_manual_switching(AUTO_SWITCH);
+	            return true;
+            }
+
+            if( (vol_1 < 800) || (vol_1 > 1470) || (vol_2 < 800) || (vol_2 > 1470) ) {
+	            pr_info("%s: Improper charger is connected!!!\n", __func__);
+	            fsa9480_manual_switching(AUTO_SWITCH);
+	            return false;
+            }	
+
+        } else {
+
+		    if( (vol_1 < 800) || (vol_1 > 1470) || (vol_2 < 800) || (vol_2 > 1470) ) {
+			    pr_info("%s: Improper charger is connected!!!\n", __func__);
+			    fsa9480_manual_switching(AUTO_SWITCH);
+			    return false;
+		    }	
+
+        }
+#else
+	    if( (vol_1 < 800) || (vol_1 > 1470) || (vol_2 < 800) || (vol_2 > 1470) ) {
+		    pr_info("%s: Improper charger is connected!!!\n", __func__);
+		    fsa9480_manual_switching(AUTO_SWITCH);
+		    return false;
+	    }	
+#endif
+    } //for ( i=0; i<3; i++)
+
 	pr_info("%s: Samsung charger is connected!!!\n", __func__);
 	fsa9480_manual_switching(AUTO_SWITCH);
 	return true;
@@ -1123,7 +1153,8 @@ static ssize_t sec_bat_store_attrs(struct device *dev, struct device_attribute *
 
 	case BATT_FG_REG:
 		if (sscanf(buf, "%d\n", &x) == 1) {
-			if (x == 1) {
+			if (x == 1) 
+{
 				if(chg->pdata &&
 				    chg->pdata->fuelgauge_cb)
 					chg->pdata->fuelgauge_cb(REQ_TEST_MODE_INTERFACE,

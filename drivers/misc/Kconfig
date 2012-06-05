@@ -502,4 +502,11 @@ config LIVE_OC
        help
          Say Y here to enable Live OC
 
+config FAST_CHARGE
+	bool "Enable AC charge mode at will"
+	default y
+	help
+	  A simple sysfs interface to enable adapters that
+	  are detected as USB to charge as AC.
+
 endif # MISC_DEVICES
