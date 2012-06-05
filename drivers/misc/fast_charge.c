@@ -62,37 +62,37 @@ static struct attribute *fast_charge_attributes[] = {
     NULL,
 };
 
-static struct attribute_group fast_charger_group = {
+static struct attribute_group fast_charge_group = {
     .attrs = fast_charge_attributes,
 };
 
-static struct miscdevice fast_charger_device = {
+static struct miscdevice fast_charge_device = {
     .minor = MISC_DYNAMIC_MINOR,
-    .name = "fast_charger",
+    .name = "fast_charge",
 };
 
 int enable_fast_charge_init( void )
 {
     int ret;
 
-    pr_info( "%s misc_register(%s)\n", __FUNCTION__, fast_charger_device.name );
+    pr_info( "%s misc_register(%s)\n", __FUNCTION__, fast_charge_device.name );
 
-    ret = misc_register( &fast_charger_device );
+    ret = misc_register( &fast_charge_device );
 
     if (ret) {
 
 	    pr_err( "%s misc_register(%s) fail\n", __FUNCTION__, 
-            fast_charger_device.name );
+            fast_charge_device.name );
 
 	    return 1;
 	}
 
-    if ( sysfs_create_group( &fast_charger_device.this_device->kobj, 
-        &fast_charger_group ) < 0 ) {
+    if ( sysfs_create_group( &fast_charge_device.this_device->kobj, 
+        &fast_charge_group ) < 0 ) {
 
 	    pr_err( "%s sysfs_create_group fail\n", __FUNCTION__ );
 	    pr_err( "Failed to create sysfs group for device (%s)!\n", 
-            fast_charger_device.name );
+            fast_charge_device.name );
 	}
 
     return 0;
