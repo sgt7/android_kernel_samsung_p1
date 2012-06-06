@@ -102,8 +102,8 @@ static unsigned int g_dvfslockval[DVFS_LOCK_TOKEN_NUM];
 
 #endif
 
-const unsigned long arm_volt_max = 1500001;
-const unsigned long int_volt_max = 1250001;
+const unsigned long arm_volt_max = 1525000;
+const unsigned long int_volt_max = 1275000;
 
 static struct s5pv210_dvs_conf dvs_conf[] = {
 	[OC0] = { /* 1.4GHz */
