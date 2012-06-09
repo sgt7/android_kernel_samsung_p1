@@ -416,14 +416,6 @@ static int sec_bat_get_property(struct power_supply *bat_ps,
 		if(val->intval >= 100)
 			val->intval = 100;
 
-		// Update 100% only full charged with TA Charger.
-		if (chg->bat_info.batt_is_full &&
-		    (chg->cable_status == CABLE_TYPE_AC && !chg->bat_info.batt_improper_ta))
-			val->intval = 100;
-		else {
-			if(val->intval == 100)
-				val->intval = 99;
-		}
 
 #ifdef CONFIG_BATTERY_MAX17042
 		if(chg->low_batt_boot_flag)
