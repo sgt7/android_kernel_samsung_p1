@@ -68,8 +68,8 @@
 #define MAX17042_BATTERY_FULL	95
 
 // SDI Battery Data
-#define SDI_Capacity			0x1F40  // 4000mAh
-#define SDI_VFCapacity		0x29AC  // 5334mAh
+#define SDI_Capacity		0x1EC8 // 3940mAh
+#define SDI_VFCapacity		0x290A // 5253mAh
 
 // ATL Battery Data
 #define ATL_Capacity		0x1FBE  // 4063mAh
