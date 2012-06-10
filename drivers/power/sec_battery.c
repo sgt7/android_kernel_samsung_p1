@@ -416,6 +416,8 @@ static int sec_bat_get_property(struct power_supply *bat_ps,
 		if(val->intval >= 100)
 			val->intval = 100;
 
+		if (chg->bat_info.batt_is_full)
+			val->intval = 100;
 
 #ifdef CONFIG_BATTERY_MAX17042
 		if(chg->low_batt_boot_flag)
