@@ -52,7 +52,6 @@ static DEFINE_MUTEX(set_freq_lock);
 
 /* UV */
 extern int exp_UV_mV[7];
-extern int exp_int_UV_mV[7];
 
 unsigned int freq_uv_table[7][3] = {
     {1400000, 1500, 1500},
@@ -62,16 +61,6 @@ unsigned int freq_uv_table[7][3] = {
     {400000, 1050, 1050},
     {200000, 950, 950},
     {100000, 950, 950}
-};
-
-unsigned int freq_int_uv_table[7][3] = {
-    {1400000, 1250, 1250},
-    {1200000, 1200, 1200},
-    {1000000, 1100, 1100},
-    {800000, 1100, 1100},
-    {400000, 1100, 1100},
-    {200000, 1100, 1100},
-    {100000, 1000, 1000}
 };
 
 /* frequency */
@@ -549,13 +538,8 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 		goto out;
 
 	arm_volt = (dvs_conf[index].arm_volt - (exp_UV_mV[index]*1000));
-    freq_uv_table[index][2] =(int) arm_volt / 1000;
-	int_volt = (dvs_conf[index].int_volt - (exp_int_UV_mV[index]*1000));
-	freq_int_uv_table[index][2] = (int) int_volt / 1000;
+	int_volt = dvs_conf[index].int_volt;
 
-	
-	//printk("setting vdd %d for speed %d\n", arm_volt, arm_clk);
-	
 	/* New clock information update */
 	memcpy(&s3c_freqs.new, &clk_info[index],
 			sizeof(struct s3c_freq));
@@ -736,7 +720,6 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 	cpufreq_debug_printk(CPUFREQ_DEBUG_DRIVER, KERN_INFO,
 	    "cpufreq: Performance changed[L%d]\n", index);
 	previous_arm_volt = (dvs_conf[index].arm_volt - (exp_UV_mV[index] * 1000));
-	freq_uv_table[index][2] = (int) previous_arm_volt / 1000;
 
 	if (first_run)
 		first_run = false;
@@ -781,7 +764,6 @@ static int s5pv210_cpufreq_resume(struct cpufreq_policy *policy)
 			sizeof(struct s3c_freq));
 
 	previous_arm_volt = (dvs_conf[level].arm_volt - (exp_UV_mV[level]*1000));
-    freq_uv_table[level][2] = (int) previous_arm_volt / 1000;
 	
 	return ret;
 }
@@ -890,7 +872,7 @@ EXPORT_SYMBOL(liveoc_update);
 static int __init s5pv210_cpufreq_driver_init(struct cpufreq_policy *policy)
 {
 	u32 rate ;
-	int i, level = CPUFREQ_TABLE_END;
+	int i, level = CPUFREQ_TABLE_END, ret;
 	struct clk *mpll_clk;
 
 	pr_info("S5PV210 CPUFREQ Initialising...\n");
@@ -947,8 +929,7 @@ static int __init s5pv210_cpufreq_driver_init(struct cpufreq_policy *policy)
 	} while (freq_table[i].frequency != CPUFREQ_TABLE_END);
 	apll_freq_max /= 1000; /* in MHz */
 
-	memcpy(&s3c_freqs.old, &clk_info[level],
-			sizeof(struct s3c_freq));
+	memcpy(&s3c_freqs.old, &clk_info[level], sizeof(struct s3c_freq));
 	previous_arm_volt = (dvs_conf[level].arm_volt + (exp_UV_mV[level] * 1000));
 
 #ifdef CONFIG_LIVE_OC
@@ -960,11 +941,11 @@ static int __init s5pv210_cpufreq_driver_init(struct cpufreq_policy *policy)
 		g_dvfslockval[i] = MAX_PERF_LEVEL;
 #endif
 
-	cpufreq_frequency_table_cpuinfo(policy, freq_table);
-	/* set default min and max policies to safe speeds */
-	policy->max = 1000000;
-	policy->min = 100000;
-	return 0;
+	ret = cpufreq_frequency_table_cpuinfo(policy, freq_table);
+    if ( !ret )
+        policy->max = 1000000;
+
+	return ret;
 }
 
 static int s5pv210_cpufreq_notifier_event(struct notifier_block *this,
