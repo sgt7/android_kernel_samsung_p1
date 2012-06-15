@@ -495,6 +495,10 @@ static struct regulator_consumer_supply buck2_consumer[] = {
 	{	.supply	= "vddint", },
 };
 
+static struct regulator_consumer_supply buck3_consumer[] = {
+        {       .supply = "vcc_ram", },
+};
+
 static struct regulator_consumer_supply safeout1_consumer[] = {
 	{	.supply	= "vbus_ap", },
 };
@@ -737,11 +741,21 @@ static struct regulator_init_data crespo_buck2_data = {
 static struct regulator_init_data crespo_buck3_data = {
 	.constraints	= {
 		.name		= "VCC_1.8V",
-		.min_uV		= 1800000,
-		.max_uV		= 1800000,
+		.min_uV		= 1700000,
+		.max_uV		= 1700000,
 		.apply_uV	= 1,
+		.boot_on    = 1,
 		.always_on	= 1,
+		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE |
+		                  REGULATOR_CHANGE_STATUS,
+		.state_mem      = {
+            .uV     = 1700000,
+			.mode   = REGULATOR_MODE_NORMAL,
+			.disabled = 1,
+        },
 	},
+    .num_consumer_supplies  = ARRAY_SIZE(buck3_consumer),
+    .consumer_supplies      = buck3_consumer,
 };
 
 static struct regulator_init_data crespo_safeout1_data = {
