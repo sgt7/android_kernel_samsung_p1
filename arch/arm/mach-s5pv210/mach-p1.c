@@ -446,6 +446,10 @@ static struct regulator_consumer_supply ldo3_consumer[] = {
 	{	.supply	= "tv_pll", },
 };
 
+static struct regulator_consumer_supply ldo4_consumer[] = {
+                {       .supply = "v_adc", },
+};
+
 static struct regulator_consumer_supply ldo7_consumer[] = {
 	{	.supply	= "vcc_vtf", },
 };
@@ -530,15 +534,21 @@ static struct regulator_init_data crespo_ldo3_data = {
 static struct regulator_init_data crespo_ldo4_data = {
 	.constraints	= {
 		.name		= "VADC_3.3V",
-		.min_uV		= 3300000,
-		.max_uV		= 3300000,
+		.min_uV		= 3000000,
+		.max_uV		= 3000000,
 		.apply_uV	= 1,
+		.boot_on    = 1,
 		.always_on	= 1,
-		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
-		.state_mem	= {
+		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE |
+				  REGULATOR_CHANGE_STATUS,
+		.state_mem      = {
+			.uV     = 3000000,
+			.mode   = REGULATOR_MODE_NORMAL,
 			.disabled = 1,
 		},
 	},
+        .num_consumer_supplies  = ARRAY_SIZE(ldo4_consumer),
+        .consumer_supplies      = ldo4_consumer,
 };
 
 static struct regulator_init_data crespo_ldo7_data = {
