@@ -732,7 +732,7 @@ static struct regulator_init_data crespo_buck2_data = {
 		.valid_ops_mask	= REGULATOR_CHANGE_VOLTAGE |
 				  REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
-			.uV	= 1175000,
+			.uV	= 1150000,
 			.mode	= REGULATOR_MODE_NORMAL,
 			.disabled = 1,
 		},
