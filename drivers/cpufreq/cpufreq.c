@@ -683,7 +683,7 @@ static ssize_t show_frequency_voltage_table(struct cpufreq_policy *policy, char 
 		 freq_uv_table[4][0], freq_uv_table[4][1], freq_uv_table[4][2],
 		 freq_uv_table[5][0], freq_uv_table[5][1], freq_uv_table[5][2],
 		 freq_uv_table[6][0], freq_uv_table[6][1], freq_uv_table[6][2],
-		 freq_uv_table[6][0], freq_uv_table[6][1], freq_uv_table[7][2]);
+		 freq_uv_table[7][0], freq_uv_table[7][1], freq_uv_table[7][2]);
 }
 /**
  * show_scaling_driver - show the current cpufreq HW/BIOS limitation
