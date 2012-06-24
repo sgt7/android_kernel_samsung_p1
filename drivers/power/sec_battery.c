@@ -335,10 +335,7 @@ static bool check_UV_charging_case(struct chg_data *chg)
 
 	printk("%s: current(%dmA), vcell(%dmV), threshold(%dmV)\n", __func__, current_now, vcell, threshold);
 	
-	if(vcell <= threshold)
-		return true;
-	else
-		return false;
+	return ( vcell <= threshold ? 1 : 0 );
 }
 
 static void full_comp_work_handler(struct work_struct *work)
@@ -413,10 +410,7 @@ static int sec_bat_get_property(struct power_supply *bat_ps,
 			return -EINVAL;
 
 		// Capacity cannot exceed 100%.
-		if(val->intval >= 100)
-			val->intval = 100;
-
-		if (chg->bat_info.batt_is_full)
+		if ( val->intval >= 100 || chg->bat_info.batt_is_full )
 			val->intval = 100;
 
 #ifdef CONFIG_BATTERY_MAX17042
@@ -429,7 +423,7 @@ static int sec_bat_get_property(struct power_supply *bat_ps,
 		val->intval = POWER_SUPPLY_TECHNOLOGY_LION;
 		break;
 #ifdef BATTERY_CURRENT
-        case BATT_CURRENT:
+    case BATT_CURRENT:
 	  if (chg->pdata && chg->pdata->psy_fuelgauge &&
 	          chg->pdata->psy_fuelgauge->get_property &&
 	          chg->pdata->psy_fuelgauge->get_property(
@@ -773,28 +767,15 @@ static bool check_samsung_charger(void)
 		//3. Check range of the voltage
 #ifdef CONFIG_FAST_CHARGE
         if ( enable_fast_charge == 1 ) {
-
-            //USB is connected as ADC
-            if( ( vol_1 == 0 ) && ( vol_2 == 0 ) ) {
-	            pr_info("%s: Samsung USB charger is connected!!!\n", __func__);
-	            fsa9480_manual_switching(AUTO_SWITCH);
-	            return true;
-            }
-
-            if( (vol_1 < 800) || (vol_1 > 1470) || (vol_2 < 800) || (vol_2 > 1470) ) {
-	            pr_info("%s: Improper charger is connected!!!\n", __func__);
-	            fsa9480_manual_switching(AUTO_SWITCH);
-	            return false;
-            }	
-
+            pr_info("%s: Samsung USB charger is connected!!!\n", __func__);
+            fsa9480_manual_switching(AUTO_SWITCH);
+            return true;       
         } else {
-
-		    if( (vol_1 < 800) || (vol_1 > 1470) || (vol_2 < 800) || (vol_2 > 1470) ) {
-			    pr_info("%s: Improper charger is connected!!!\n", __func__);
-			    fsa9480_manual_switching(AUTO_SWITCH);
-			    return false;
-		    }	
-
+            if( (vol_1 < 800) || (vol_1 > 1470) || (vol_2 < 800) || (vol_2 > 1470) ) {
+                pr_info("%s: Improper charger is connected!!!\n", __func__);
+                fsa9480_manual_switching(AUTO_SWITCH);
+                return false;
+            }
         }
 #else
 	    if( (vol_1 < 800) || (vol_1 > 1470) || (vol_2 < 800) || (vol_2 > 1470) ) {
@@ -938,8 +919,16 @@ update:
 	if(chg->bat_info.charging_status == POWER_SUPPLY_STATUS_FULL ||
 	    chg->bat_info.charging_status == POWER_SUPPLY_STATUS_CHARGING) {
 		/* Update DISCHARGING status in case of USB cable or Improper charger */
-		if(chg->cable_status==CABLE_TYPE_USB || chg->bat_info.batt_improper_ta)
-			chg->bat_info.charging_status = POWER_SUPPLY_STATUS_DISCHARGING;
+		if(chg->cable_status==CABLE_TYPE_USB || chg->bat_info.batt_improper_ta) {
+#ifdef CONFIG_FAST_CHARGE
+            if ( enable_fast_charge == 1 )
+                chg->bat_info.charging_status = POWER_SUPPLY_STATUS_CHARGING;
+            else
+    			chg->bat_info.charging_status = POWER_SUPPLY_STATUS_DISCHARGING;
+#else
+    			chg->bat_info.charging_status = POWER_SUPPLY_STATUS_DISCHARGING;
+#endif            
+        }
 	}
 
 	if ((chg->cable_status != CABLE_TYPE_NONE) && vdc_status)
