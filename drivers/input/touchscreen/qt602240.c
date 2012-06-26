@@ -1019,7 +1019,7 @@ static ssize_t cpufreq_lock_write( struct device *dev,
  
     if ( sscanf( buf, "%du", &value ) == 1 ) {
     
-        if ( value >= 0 && value <= 2 ) {
+        if ( value >= 0 && value <= 4 ) {
 
             cpufreq_lock = value;
 
