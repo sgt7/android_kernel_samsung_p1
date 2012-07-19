@@ -175,15 +175,11 @@ static int crespo_notifier_call(struct notifier_block *this,
 	int mode = REBOOT_MODE_NONE;
 
 	if ((code == SYS_RESTART) && _cmd) {
-		if (!strcmp((char *)_cmd, "arm11_fota"))
-			mode = REBOOT_MODE_ARM11_FOTA;
-		else if (!strcmp((char *)_cmd, "arm9_fota"))
-			mode = REBOOT_MODE_ARM9_FOTA;
-		else if (!strcmp((char *)_cmd, "recovery"))
-			mode = REBOOT_MODE_RECOVERY;
+		if (!strcmp((char *)_cmd, "recovery"))
+			mode = 2; // It's not REBOOT_MODE_RECOVERY, blame Samsung
 		else if (!strcmp((char *)_cmd, "download")) 
 			mode = REBOOT_MODE_DOWNLOAD;
-		else if (!strcmp((char *)_cmd, "factory_reboot")) 
+		else
 			mode = REBOOT_MODE_NONE;
 	}
 	
