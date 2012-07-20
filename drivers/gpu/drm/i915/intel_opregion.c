@@ -26,22 +26,24 @@
  */
 
 #include <linux/acpi.h>
+#include <linux/acpi_io.h>
 #include <acpi/video.h>
 
 #include "drmP.h"
 #include "i915_drm.h"
 #include "i915_drv.h"
+#include "intel_drv.h"
 
 #define PCI_ASLE 0xe4
-#define PCI_LBPC 0xf4
 #define PCI_ASLS 0xfc
 
-#define OPREGION_SZ            (8*1024)
 #define OPREGION_HEADER_OFFSET 0
 #define OPREGION_ACPI_OFFSET   0x100
+#define   ACPI_CLID 0x01ac /* current lid state indicator */
+#define   ACPI_CDCK 0x01b0 /* current docking state indicator */
 #define OPREGION_SWSCI_OFFSET  0x200
 #define OPREGION_ASLE_OFFSET   0x300
-#define OPREGION_VBT_OFFSET    0x1000
+#define OPREGION_VBT_OFFSET    0x400
 
 #define OPREGION_SIGNATURE "IntelGraphicsMem"
 #define MBOX_ACPI      (1<<0)
@@ -114,10 +116,6 @@ struct opregion_asle {
 #define ASLE_REQ_MSK           0xf
 
 /* response bits of ASLE irq request */
-#define ASLE_ALS_ILLUM_FAIL    (2<<10)
-#define ASLE_BACKLIGHT_FAIL    (2<<12)
-#define ASLE_PFIT_FAIL         (2<<14)
-#define ASLE_PWM_FREQ_FAIL     (2<<16)
 #define ASLE_ALS_ILLUM_FAILED	(1<<10)
 #define ASLE_BACKLIGHT_FAILED	(1<<12)
 #define ASLE_PFIT_FAILED	(1<<14)
@@ -147,40 +145,22 @@ struct opregion_asle {
 #define ACPI_DIGITAL_OUTPUT (3<<8)
 #define ACPI_LVDS_OUTPUT (4<<8)
 
+#ifdef CONFIG_ACPI
 static u32 asle_set_backlight(struct drm_device *dev, u32 bclp)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct opregion_asle *asle = dev_priv->opregion.asle;
-	u32 blc_pwm_ctl, blc_pwm_ctl2;
-	u32 max_backlight, level, shift;
+	u32 max;
 
 	if (!(bclp & ASLE_BCLP_VALID))
-		return ASLE_BACKLIGHT_FAIL;
+		return ASLE_BACKLIGHT_FAILED;
 
 	bclp &= ASLE_BCLP_MSK;
-	if (bclp < 0 || bclp > 255)
-		return ASLE_BACKLIGHT_FAIL;
+	if (bclp > 255)
+		return ASLE_BACKLIGHT_FAILED;
 
-	blc_pwm_ctl = I915_READ(BLC_PWM_CTL);
-	blc_pwm_ctl2 = I915_READ(BLC_PWM_CTL2);
-
-	if (IS_I965G(dev) && (blc_pwm_ctl2 & BLM_COMBINATION_MODE))
-		pci_write_config_dword(dev->pdev, PCI_LBPC, bclp);
-	else {
-		if (IS_PINEVIEW(dev)) {
-			blc_pwm_ctl &= ~(BACKLIGHT_DUTY_CYCLE_MASK - 1);
-			max_backlight = (blc_pwm_ctl & BACKLIGHT_MODULATION_FREQ_MASK) >> 
-					BACKLIGHT_MODULATION_FREQ_SHIFT;
-			shift = BACKLIGHT_DUTY_CYCLE_SHIFT + 1;
-		} else {
-			blc_pwm_ctl &= ~BACKLIGHT_DUTY_CYCLE_MASK;
-			max_backlight = ((blc_pwm_ctl & BACKLIGHT_MODULATION_FREQ_MASK) >> 
-					BACKLIGHT_MODULATION_FREQ_SHIFT) * 2;
-			shift = BACKLIGHT_DUTY_CYCLE_SHIFT;
-		}
-		level = (bclp * max_backlight) / 255;
-		I915_WRITE(BLC_PWM_CTL, blc_pwm_ctl | (level << shift));
-	}
+	max = intel_panel_get_max_backlight(dev);
+	intel_panel_set_backlight(dev, bclp * max / 255);
 	asle->cblv = (bclp*0x64)/0xff | ASLE_CBLV_VALID;
 
 	return 0;
@@ -211,11 +191,11 @@ static u32 asle_set_pfit(struct drm_device *dev, u32 pfit)
 	/* Panel fitting is currently controlled by the X code, so this is a
 	   noop until modesetting support works fully */
 	if (!(pfit & ASLE_PFIT_VALID))
-		return ASLE_PFIT_FAIL;
+		return ASLE_PFIT_FAILED;
 	return 0;
 }
 
-void opregion_asle_intr(struct drm_device *dev)
+void intel_opregion_asle_intr(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct opregion_asle *asle = dev_priv->opregion.asle;
@@ -247,37 +227,8 @@ void opregion_asle_intr(struct drm_device *dev)
 	asle->aslc = asle_stat;
 }
 
-static u32 asle_set_backlight_ironlake(struct drm_device *dev, u32 bclp)
-{
-	struct drm_i915_private *dev_priv = dev->dev_private;
-	struct opregion_asle *asle = dev_priv->opregion.asle;
-	u32 cpu_pwm_ctl, pch_pwm_ctl2;
-	u32 max_backlight, level;
-
-	if (!(bclp & ASLE_BCLP_VALID))
-		return ASLE_BACKLIGHT_FAILED;
-
-	bclp &= ASLE_BCLP_MSK;
-	if (bclp < 0 || bclp > 255)
-		return ASLE_BACKLIGHT_FAILED;
-
-	cpu_pwm_ctl = I915_READ(BLC_PWM_CPU_CTL);
-	pch_pwm_ctl2 = I915_READ(BLC_PWM_PCH_CTL2);
-	/* get the max PWM frequency */
-	max_backlight = (pch_pwm_ctl2 >> 16) & BACKLIGHT_DUTY_CYCLE_MASK;
-	/* calculate the expected PMW frequency */
-	level = (bclp * max_backlight) / 255;
-	/* reserve the high 16 bits */
-	cpu_pwm_ctl &= ~(BACKLIGHT_DUTY_CYCLE_MASK);
-	/* write the updated PWM frequency */
-	I915_WRITE(BLC_PWM_CPU_CTL, cpu_pwm_ctl | level);
-
-	asle->cblv = (bclp*0x64)/0xff | ASLE_CBLV_VALID;
-
-	return 0;
-}
-
-void ironlake_opregion_gse_intr(struct drm_device *dev)
+/* Only present on Ironlake+ */
+void intel_opregion_gse_intr(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct opregion_asle *asle = dev_priv->opregion.asle;
@@ -300,7 +251,7 @@ void ironlake_opregion_gse_intr(struct drm_device *dev)
 	}
 
 	if (asle_req & ASLE_SET_BACKLIGHT)
-		asle_stat |= asle_set_backlight_ironlake(dev, asle->bclp);
+		asle_stat |= asle_set_backlight(dev, asle->bclp);
 
 	if (asle_req & ASLE_SET_PFIT) {
 		DRM_DEBUG_DRIVER("Pfit is not supported\n");
@@ -319,20 +270,14 @@ void ironlake_opregion_gse_intr(struct drm_device *dev)
 #define ASLE_PFIT_EN   (1<<2)
 #define ASLE_PFMB_EN   (1<<3)
 
-void opregion_enable_asle(struct drm_device *dev)
+void intel_opregion_enable_asle(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct opregion_asle *asle = dev_priv->opregion.asle;
 
 	if (asle) {
-		if (IS_MOBILE(dev)) {
-			unsigned long irqflags;
-
-			spin_lock_irqsave(&dev_priv->user_irq_lock, irqflags);
+		if (IS_MOBILE(dev))
 			intel_enable_asle(dev);
-			spin_unlock_irqrestore(&dev_priv->user_irq_lock,
-					       irqflags);
-		}
 
 		asle->tche = ASLE_ALS_EN | ASLE_BLC_EN | ASLE_PFIT_EN |
 			ASLE_PFMB_EN;
@@ -468,7 +413,58 @@ blind_set:
 	goto end;
 }
 
-int intel_opregion_init(struct drm_device *dev, int resume)
+void intel_opregion_init(struct drm_device *dev)
+{
+	struct drm_i915_private *dev_priv = dev->dev_private;
+	struct intel_opregion *opregion = &dev_priv->opregion;
+
+	if (!opregion->header)
+		return;
+
+	if (opregion->acpi) {
+		if (drm_core_check_feature(dev, DRIVER_MODESET))
+			intel_didl_outputs(dev);
+
+		/* Notify BIOS we are ready to handle ACPI video ext notifs.
+		 * Right now, all the events are handled by the ACPI video module.
+		 * We don't actually need to do anything with them. */
+		opregion->acpi->csts = 0;
+		opregion->acpi->drdy = 1;
+
+		system_opregion = opregion;
+		register_acpi_notifier(&intel_opregion_notifier);
+	}
+
+	if (opregion->asle)
+		intel_opregion_enable_asle(dev);
+}
+
+void intel_opregion_fini(struct drm_device *dev)
+{
+	struct drm_i915_private *dev_priv = dev->dev_private;
+	struct intel_opregion *opregion = &dev_priv->opregion;
+
+	if (!opregion->header)
+		return;
+
+	if (opregion->acpi) {
+		opregion->acpi->drdy = 0;
+
+		system_opregion = NULL;
+		unregister_acpi_notifier(&intel_opregion_notifier);
+	}
+
+	/* just clear all opregion memory pointers now */
+	iounmap(opregion->header);
+	opregion->header = NULL;
+	opregion->acpi = NULL;
+	opregion->swsci = NULL;
+	opregion->asle = NULL;
+	opregion->vbt = NULL;
+}
+#endif
+
+int intel_opregion_setup(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_opregion *opregion = &dev_priv->opregion;
@@ -483,29 +479,25 @@ int intel_opregion_init(struct drm_device *dev, int resume)
 		return -ENOTSUPP;
 	}
 
-	base = ioremap(asls, OPREGION_SZ);
+	base = acpi_os_ioremap(asls, OPREGION_SIZE);
 	if (!base)
 		return -ENOMEM;
 
-	opregion->header = base;
-	if (memcmp(opregion->header->signature, OPREGION_SIGNATURE, 16)) {
+	if (memcmp(base, OPREGION_SIGNATURE, 16)) {
 		DRM_DEBUG_DRIVER("opregion signature mismatch\n");
 		err = -EINVAL;
 		goto err_out;
 	}
+	opregion->header = base;
+	opregion->vbt = base + OPREGION_VBT_OFFSET;
+
+	opregion->lid_state = base + ACPI_CLID;
 
 	mboxes = opregion->header->mboxes;
 	if (mboxes & MBOX_ACPI) {
 		DRM_DEBUG_DRIVER("Public ACPI methods supported\n");
 		opregion->acpi = base + OPREGION_ACPI_OFFSET;
-		if (drm_core_check_feature(dev, DRIVER_MODESET))
-			intel_didl_outputs(dev);
-	} else {
-		DRM_DEBUG_DRIVER("Public ACPI methods not supported\n");
-		err = -ENOTSUPP;
-		goto err_out;
 	}
-	opregion->enabled = 1;
 
 	if (mboxes & MBOX_SWSCI) {
 		DRM_DEBUG_DRIVER("SWSCI supported\n");
@@ -514,52 +506,11 @@ int intel_opregion_init(struct drm_device *dev, int resume)
 	if (mboxes & MBOX_ASLE) {
 		DRM_DEBUG_DRIVER("ASLE supported\n");
 		opregion->asle = base + OPREGION_ASLE_OFFSET;
-		opregion_enable_asle(dev);
 	}
-
-	if (!resume)
-		acpi_video_register();
-
-
-	/* Notify BIOS we are ready to handle ACPI video ext notifs.
-	 * Right now, all the events are handled by the ACPI video module.
-	 * We don't actually need to do anything with them. */
-	opregion->acpi->csts = 0;
-	opregion->acpi->drdy = 1;
-
-	system_opregion = opregion;
-	register_acpi_notifier(&intel_opregion_notifier);
 
 	return 0;
 
 err_out:
-	iounmap(opregion->header);
-	opregion->header = NULL;
+	iounmap(base);
 	return err;
-}
-
-void intel_opregion_free(struct drm_device *dev, int suspend)
-{
-	struct drm_i915_private *dev_priv = dev->dev_private;
-	struct intel_opregion *opregion = &dev_priv->opregion;
-
-	if (!opregion->enabled)
-		return;
-
-	if (!suspend)
-		acpi_video_unregister();
-
-	opregion->acpi->drdy = 0;
-
-	system_opregion = NULL;
-	unregister_acpi_notifier(&intel_opregion_notifier);
-
-	/* just clear all opregion memory pointers now */
-	iounmap(opregion->header);
-	opregion->header = NULL;
-	opregion->acpi = NULL;
-	opregion->swsci = NULL;
-	opregion->asle = NULL;
-
-	opregion->enabled = 0;
 }
