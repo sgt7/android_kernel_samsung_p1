@@ -42,6 +42,7 @@ static int set_mode_for_amoled = 0;		//0: TFt-LCD, 1: AMOLED
 static int gFirmware_Update_State = FW_UPDATE_READY;
 
 static bool buttons_enabled = true;
+static int cpufreq_lock = 1;
 
 static bool leds_on = true;
 static int leds_timeout = 1600;
@@ -1010,6 +1011,48 @@ static ssize_t buttons_enabled_status_read(struct device *dev,
 	return sprintf(buf, "%u\n", (buttons_enabled ? 1 : 0));
 }
 
+static ssize_t cpufreq_lock_write( struct device *dev,
+	struct device_attribute *attr, const char *buf, size_t size )
+{
+	unsigned int value;
+	int cpufreq_label;
+
+	if ( sscanf( buf, "%du", &value ) == 1 ) {
+
+		if ( value >= 0 && value <= 2 ) {
+
+			cpufreq_lock = value;
+
+			switch( cpufreq_lock ) {
+				case 0:
+					cpufreq_label = 400;
+					break;
+				case 1:
+					cpufreq_label = 800;
+					break;
+				case 2:
+					cpufreq_label = 1000;
+					break;
+				default:
+					cpufreq_label = 800;
+					break;
+			}
+			pr_info( "[Touch CPUFreq] - value: %dMHz\n", cpufreq_label );
+		} else {
+			pr_info( "%s: invalid input range %u\n", __FUNCTION__, value );
+		}
+	} else {
+		pr_info( "%s: invalid input: \n", __FUNCTION__ );
+	}
+	return size;
+}
+
+static ssize_t cpufreq_lock_read( struct device *dev,
+	struct device_attribute *attr, char *buf )
+{
+	return sprintf( buf, "%d\n", cpufreq_lock );
+}
+
 static void qt602240_input_read(struct qt602240_data *data)
 {
 	struct qt602240_message *message = data->object_message;
@@ -1058,7 +1101,20 @@ static void qt602240_input_read(struct qt602240_data *data)
 			bChangeUpDn= 1;
 		} else if ((touch_status & 0xf0 ) == 0xc0) {                                  // Detect & Press  : 0x80 | 0x40
 			touch_message_flag = true;
-			s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_7, L1); // 800MHz
+			switch( cpufreq_lock ) {
+				case 0:
+					s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_7, L2); // 400MHz
+					break;
+				case 1:
+					s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_7, L1); // 800MHz
+					break;
+				case 2:
+					s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_7, L0); // 1000MHz
+					break;
+				default:
+					s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_7, L1); // 800MHz
+					break;
+			}
 			fingerInfo[id].pressure= 40;
 			fingerInfo[id].x= (int16_t)x;
 			fingerInfo[id].y= (int16_t)y;
@@ -1722,6 +1778,7 @@ static ssize_t leds_timeout_write(struct device *dev, struct device_attribute *a
 }
 
 static DEVICE_ATTR(buttons_enabled, S_IRUGO | S_IWUGO , buttons_enabled_status_read, buttons_enabled_status_write);
+static DEVICE_ATTR(cpufreq_lock, S_IRUGO | S_IWUGO , cpufreq_lock_read, cpufreq_lock_write);
 static DEVICE_ATTR(info, 0444, qt602240_info_show, NULL);
 static DEVICE_ATTR(object_table, 0444, qt602240_object_table_show, NULL);
 static DEVICE_ATTR(object, 0664, qt602240_object_show, qt602240_object_store);
@@ -1731,6 +1788,7 @@ static DEVICE_ATTR(leds_timeout, S_IRUGO | S_IWUGO, leds_timeout_read, leds_time
 
 static struct attribute *qt602240_attrs[] = {
 	&dev_attr_buttons_enabled.attr,
+	&dev_attr_cpufreq_lock.attr,
 	&dev_attr_info.attr,
 	&dev_attr_object_table.attr,
 	&dev_attr_object.attr,
