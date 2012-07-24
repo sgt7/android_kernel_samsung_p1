@@ -313,29 +313,6 @@ struct platform_device s3c_device_rndis = {
 		.platform_data = &rndis_pdata,
 	},
 };
-#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
-void __init s3c_usb_set_serial(void)
-{
-# ifdef CONFIG_USB_ANDROID_RNDIS
-	int i;
-	char *src;
-# endif
-
-	sprintf(device_serial, "%08X%08X", system_serial_high,
-			system_serial_low);
-# ifdef CONFIG_USB_ANDROID_RNDIS
-	/* create a fake MAC address from our serial number.
-	 * first byte is 0x02 to signify locally administered.
-	 */
-	src = device_serial;
-	rndis_pdata.ethaddr[0] = 0x02;
-	for (i = 0; *src; i++) {
-		/* XOR the USB serial across the remaining bytes */
-		rndis_pdata.ethaddr[i % (ETH_ALEN - 1) + 1] ^= *src++;
-	}
-# endif
-}
-#endif /* CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE */
 
 struct platform_device s3c_device_android_usb = {
 	.name	= "android_usb",
