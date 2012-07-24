@@ -439,6 +439,10 @@ static struct regulator_consumer_supply ldo3_consumer[] = {
 	{	.supply	= "tv_pll", },
 };
 
+static struct regulator_consumer_supply ldo4_consumer[] = {
+                {       .supply = "v_adc", },
+};
+
 static struct regulator_consumer_supply ldo7_consumer[] = {
 	{	.supply	= "vcc_vtf", },
 };
@@ -484,6 +488,10 @@ static struct regulator_consumer_supply buck2_consumer[] = {
 	{	.supply	= "vddint", },
 };
 
+static struct regulator_consumer_supply buck3_consumer[] = {
+        {       .supply = "vcc_ram", },
+};
+
 static struct regulator_consumer_supply safeout1_consumer[] = {
 	{	.supply	= "vbus_ap", },
 };
@@ -526,12 +534,18 @@ static struct regulator_init_data crespo_ldo4_data = {
 		.min_uV		= 3300000,
 		.max_uV		= 3300000,
 		.apply_uV	= 1,
+		.boot_on    = 1,
 		.always_on	= 1,
-		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
-		.state_mem	= {
+		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE |
+				  REGULATOR_CHANGE_STATUS,
+		.state_mem      = {
+			.uV     = 3300000,
+			.mode   = REGULATOR_MODE_NORMAL,
 			.disabled = 1,
 		},
 	},
+        .num_consumer_supplies  = ARRAY_SIZE(ldo4_consumer),
+        .consumer_supplies      = ldo4_consumer,
 };
 
 static struct regulator_init_data crespo_ldo7_data = {
@@ -671,9 +685,12 @@ static struct regulator_init_data crespo_ldo17_data = {
 		.max_uV		= 3300000,
 		.apply_uV	= 1,
 		.boot_on	= 1,
-		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
+		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE |
+				  REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
-			.disabled = 1,
+            .uV     = 3300000,
+            .mode   = REGULATOR_MODE_NORMAL,
+            .disabled = 1,
 		},
 	},
 	.num_consumer_supplies	= ARRAY_SIZE(ldo17_consumer),
@@ -723,8 +740,18 @@ static struct regulator_init_data crespo_buck3_data = {
 		.min_uV		= 1800000,
 		.max_uV		= 1800000,
 		.apply_uV	= 1,
+		.boot_on    = 1,
 		.always_on	= 1,
+		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE |
+		                  REGULATOR_CHANGE_STATUS,
+		.state_mem      = {
+            .uV     = 1800000,
+			.mode   = REGULATOR_MODE_NORMAL,
+			.disabled = 1,
+        },
 	},
+    .num_consumer_supplies  = ARRAY_SIZE(buck3_consumer),
+    .consumer_supplies      = buck3_consumer,
 };
 
 static struct regulator_init_data crespo_safeout1_data = {
@@ -1420,9 +1447,9 @@ static struct platform_device p1_input_device = {
 #ifdef CONFIG_S5P_ADC
 static struct s3c_adc_mach_info s3c_adc_platform __initdata = {
 	/* s5pc110 support 12-bit resolution */
-	.delay  = 10000,
-	.presc  = 65,
-	.resolution = 12,
+	.delay		= 10000,
+	.presc		= 65,
+	.resolution	= 12,
 };
 #endif
 
