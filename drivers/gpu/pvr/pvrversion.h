@@ -44,8 +44,8 @@
 
 #define COPYRIGHT_TXT               "Copyright (c) Imagination Technologies Ltd. All Rights Reserved."
 
-#define PVRVERSION_BUILD_HI          94
-#define PVRVERSION_BUILD_LO          5322
+#define PVRVERSION_BUILD_HI          211
+#define PVRVERSION_BUILD_LO          2805
 #define PVRVERSION_STRING_NUMERIC    PVR_STR2(PVRVERSION_MAJ) "." PVR_STR2(PVRVERSION_MIN) "." PVR_STR2(PVRVERSION_BUILD_HI) "." PVR_STR2(PVRVERSION_BUILD_LO)
 
 #endif /* _PVRVERSION_H_ */
