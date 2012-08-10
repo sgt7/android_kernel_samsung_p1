@@ -64,16 +64,6 @@ unsigned int freq_uv_table[7][3] = {
 	{100000, 950, 950}
 };
 
-unsigned int freq_int_uv_table[7][3] = {
-	{1400000, 1250, 1250},
-	{1200000, 1200, 1200},
-	{1000000, 1100, 1100},
-	{800000, 1100, 1100},
-	{400000, 1100, 1100},
-	{200000, 1100, 1100},
-	{100000, 1000, 1000}
-};
-
 /* frequency */
 static struct cpufreq_frequency_table freq_table[] = {
 	{OC0, 1400*1000},
@@ -528,10 +518,8 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 		goto out;
 
 	arm_volt = (dvs_conf[index].arm_volt - (exp_UV_mV[index]*1000));
-    freq_uv_table[index][2] =(int) arm_volt / 1000;
-	int_volt = (dvs_conf[index].int_volt - (exp_int_UV_mV[index]*1000));
-	freq_int_uv_table[index][2] = (int) int_volt / 1000;
-
+	freq_uv_table[index][2] =(int) arm_volt / 1000;
+	int_volt = dvs_conf[index].int_volt;
 	
 	//printk("setting vdd %d for speed %d\n", arm_volt, arm_clk);
 	
