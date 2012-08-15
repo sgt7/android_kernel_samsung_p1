@@ -146,6 +146,8 @@ struct chg_data {
 #endif	
 };
 
+static bool disable_charger;
+
 static char *supply_list[] = {
 	"battery",
 };
@@ -183,6 +185,7 @@ static struct device_attribute sec_battery_attrs[] = {
 	SEC_BATTERY_ATTR(batt_temp),
 	SEC_BATTERY_ATTR(charging_source),
 	SEC_BATTERY_ATTR(fg_soc),
+    SEC_BATTERY_ATTR(disable_charger),
 #ifdef CONFIG_BATTERY_MAX17042
 	SEC_BATTERY_ATTR(fg_check),
 	SEC_BATTERY_ATTR(reset_soc),
@@ -731,7 +734,8 @@ static void sec_bat_discharge_reason(struct chg_data *chg)
 //		chg->bat_info.dis_reason |= DISCONNECT_OVER_TIME;  // for GED (crespo).
 		chg->bat_info.dis_reason |= DISCONNECT_BAT_FULL;
 		// set battery full (expiration of absolute timer)
-		sec_bat_set_status(&chg->callbacks, CHARGING_STATUS_FULL);
+		sec_bat_set_status
+(&chg->callbacks, CHARGING_STATUS_FULL);
 	}
 
 	pr_debug("%s : Current Voltage : %d\n			\
@@ -855,7 +859,7 @@ static int sec_cable_status_update(struct chg_data *chg)
 	    chg->pdata->pmic_charger->get_connection_status())
 	{
 		vdc_status = true;
-		if (chg->bat_info.dis_reason) {
+		if (chg->bat_info.dis_reason || disable_charger) {
 			pr_info("%s : battery status discharging : %d\n",
 				__func__, chg->bat_info.dis_reason);
 			/* have vdcin, but cannot charge */
@@ -1038,6 +1042,10 @@ static ssize_t sec_bat_show_attrs(struct device *dev,
 		i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", chg->bat_info.batt_soc);
 		break;
 
+    case DISABLE_CHARGER:
+        i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", disable_charger);
+        break;
+
 #ifdef CONFIG_BATTERY_MAX17042
 	case BATT_FG_CHECK:
 		if(chg->pdata &&
@@ -1147,7 +1155,8 @@ static ssize_t sec_bat_store_attrs(struct device *dev, struct device_attribute *
 
 	case BATT_FG_REG:
 		if (sscanf(buf, "%d\n", &x) == 1) {
-			if (x == 1) {
+			if (x == 1) 
+{
 				if(chg->pdata &&
 				    chg->pdata->fuelgauge_cb)
 					chg->pdata->fuelgauge_cb(REQ_TEST_MODE_INTERFACE,
@@ -1167,6 +1176,13 @@ static ssize_t sec_bat_store_attrs(struct device *dev, struct device_attribute *
 		}
 		break;
 #endif
+
+    case DISABLE_CHARGER:
+        if (sscanf(buf, "%d\n", &x) == 1) {
+            disable_charger = x;
+            ret = count;
+        }
+        break;
 
 	default:
 		ret = -EINVAL;
@@ -1325,6 +1341,8 @@ static __devinit int sec_battery_probe(struct platform_device *pdev)
 	queue_work(chg->monitor_wqueue, &chg->bat_work);
 
 	p1_lpm_mode_check(chg);
+
+    disable_charger = 0;
 
 	return 0;
 
