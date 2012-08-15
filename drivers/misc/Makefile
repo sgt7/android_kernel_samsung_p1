@@ -44,6 +44,3 @@ obj-$(CONFIG_LEVEL)			+= level/
 obj-$(CONFIG_30PIN_CONN)	+= 30pin_con.o
 obj-$(CONFIG_MHL_SII9234)	+= sii9234.o
 obj-$(CONFIG_SAMSUNG_PARAM)  += param/
-obj-$(CONFIG_LIVE_OC) += live_oc.o
-obj-$(CONFIG_FAST_CHARGE)	+= fast_charge.o
-obj-$(CONFIG_BLX)    += blx.o

@@ -80,9 +80,6 @@
 #ifdef CONFIG_VIDEO_NM6XX 
 #include <media/nm6xx_platform.h>
 #endif
-#ifdef CONFIG_FAST_CHARGE
-#include <linux/fast_charge.h>
-#endif
 
 #include <plat/regs-serial.h>
 #include <plat/s5pv210.h>
@@ -178,15 +175,11 @@ static int crespo_notifier_call(struct notifier_block *this,
 	int mode = REBOOT_MODE_NONE;
 
 	if ((code == SYS_RESTART) && _cmd) {
-		if (!strcmp((char *)_cmd, "arm11_fota"))
-			mode = REBOOT_MODE_ARM11_FOTA;
-		else if (!strcmp((char *)_cmd, "arm9_fota"))
-			mode = REBOOT_MODE_ARM9_FOTA;
-		else if (!strcmp((char *)_cmd, "recovery"))
-			mode = REBOOT_MODE_RECOVERY;
+		if (!strcmp((char *)_cmd, "recovery"))
+			mode = 2; // It's not REBOOT_MODE_RECOVERY, blame Samsung
 		else if (!strcmp((char *)_cmd, "download")) 
 			mode = REBOOT_MODE_DOWNLOAD;
-		else if (!strcmp((char *)_cmd, "factory_reboot")) 
+		else
 			mode = REBOOT_MODE_NONE;
 	}
 	
@@ -365,7 +358,7 @@ static struct s3cfb_lcd lvds = {
 							(CONFIG_FB_S3C_NR_BUFFERS + \
 							(CONFIG_FB_S3C_NUM_OVLY_WIN * \
 							CONFIG_FB_S3C_NUM_BUF_OVLY_WIN)))
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_JPEG 		(8192 * SZ_1K)
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_JPEG 		(4096 * SZ_1K)
 #ifdef CONFIG_ANDROID_PMEM
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_PMEM         (8192 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_PMEM_GPU1    (4200 * SZ_1K)
@@ -1454,9 +1447,9 @@ static struct platform_device p1_input_device = {
 #ifdef CONFIG_S5P_ADC
 static struct s3c_adc_mach_info s3c_adc_platform __initdata = {
 	/* s5pc110 support 12-bit resolution */
-	.delay  = 10000,
-	.presc  = 65,
-	.resolution = 12,
+	.delay		= 10000,
+	.presc		= 65,
+	.resolution	= 12,
 };
 #endif
 
@@ -1605,7 +1598,7 @@ static int isx005_power_on(void)
 	/* LDO on */
 	int err;
 
-	s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_2, L4); //200MHz
+	s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_2, L3); //200MHz
 	
 	/* can't do this earlier because regulators aren't available in
 	 * early boot
@@ -1994,7 +1987,7 @@ static int s5k6aafx_power_on(void)
 	/* LDO on */
 	int err = 0;
 
-	s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_2, L4);  //200MHz
+	s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_2, L3);  //200MHz
 	
 	/* can't do this earlier because regulators aren't available in
 	 * early boot
@@ -2303,7 +2296,7 @@ static int s5k5ccgx_power_on(void)
 	/* LDO on */
 	int err;
 
-	s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_2, L4);  //200MHz
+	s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_2, L3);  //200MHz
 	
 	/* can't do this earlier because regulators aren't available in
 	 * early boot
@@ -2613,18 +2606,7 @@ static void fsa9480_usb_cb(bool attached)
 		}
 	}
 
-#ifdef CONFIG_FAST_CHARGE
-    if ( enable_fast_charge == 1 ) {
-        set_cable_status = attached ? CABLE_TYPE_AC : CABLE_TYPE_NONE;
-    } else {
-        set_cable_status = attached ? CABLE_TYPE_USB : CABLE_TYPE_NONE;
-    }
-#else
-
 	set_cable_status = attached ? CABLE_TYPE_USB : CABLE_TYPE_NONE;
-
-#endif
-
 	if (callbacks && callbacks->set_cable)
 		callbacks->set_cable(callbacks, set_cable_status);
 
@@ -7418,10 +7400,32 @@ static unsigned int p1_get_hwrev(void)
 	return hw_rev;
 }
 
+// Ugly hack to inject parameters (e.g. device serial, bootmode) into /proc/cmdline
+static void __init p1_inject_cmdline(void) {
+	char *new_command_line;
+	int bootmode = __raw_readl(S5P_INFORM6);
+	int size;
+
+	size = strlen(boot_command_line);
+	new_command_line = kmalloc(size + 40 + 11, GFP_KERNEL);
+	strcpy(new_command_line, saved_command_line);
+	size += sprintf(new_command_line + size, " androidboot.serialno=%08X%08X",
+				system_serial_high, system_serial_low);
+
+	// Only write bootmode when less than 10 to prevent confusion with watchdog
+	// reboot (0xee = 238)
+	if (bootmode < 10) {
+		size += sprintf(new_command_line + size, " bootmode=%d", bootmode);
+	}
+
+	saved_command_line = new_command_line;
+}
+
+
 static void __init p1_machine_init(void)
 {
 	setup_ram_console_mem();
-	s3c_usb_set_serial();
+	p1_inject_cmdline();
 	platform_add_devices(crespo_devices, ARRAY_SIZE(crespo_devices));
 
 	/* Find out S5PC110 chip version */

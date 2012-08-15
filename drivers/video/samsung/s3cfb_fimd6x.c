@@ -163,6 +163,19 @@ int s3cfb_frame_off(struct s3cfb_global *ctrl)
 	return 0;
 }
 
+void s3cfb_readjust_pixclock(struct s3cfb_global *ctrl, u32 src_clk, u32 div)
+{
+	struct s3c_platform_fb *pdata = to_fb_plat(ctrl->dev);
+	int i;
+	u32 pixclock;
+
+	pixclock = KHZ2PICOS(src_clk / 1000) * div;
+	dev_info(ctrl->dev, "pixclock adjusted from %d to %d\n",
+		 ctrl->fb[0]->var.pixclock, pixclock);
+	for (i = 0; i < pdata->nr_wins; i++)
+		ctrl->fb[i]->var.pixclock = pixclock;
+}
+
 int s3cfb_set_clock(struct s3cfb_global *ctrl)
 {
 	struct s3c_platform_fb *pdata = to_fb_plat(ctrl->dev);
@@ -228,6 +241,7 @@ int s3cfb_set_clock(struct s3cfb_global *ctrl)
 	dev_dbg(ctrl->dev, "parent clock: %d, vclk: %d, vclk div: %d\n",
 			src_clk, vclk, div);
 
+	s3cfb_readjust_pixclock(ctrl, src_clk, div);
 	return 0;
 }
 
@@ -322,14 +336,15 @@ int s3cfb_set_vsync_interrupt(struct s3cfb_global *ctrl, int enable)
 	u32 cfg = 0;
 
 	cfg = readl(ctrl->regs + S3C_VIDINTCON0);
-	cfg &= ~S3C_VIDINTCON0_FRAMESEL0_MASK;
 
 	if (enable) {
 		dev_dbg(ctrl->dev, "vsync interrupt is on\n");
-		cfg |= S3C_VIDINTCON0_FRAMESEL0_VSYNC;
+		cfg &= ~S3C_VIDINTCON0_FRAMESEL0_MASK;
+		cfg |= S3C_VIDINTCON0_INTFRMEN_ENABLE |
+				S3C_VIDINTCON0_FRAMESEL0_VSYNC;
 	} else {
 		dev_dbg(ctrl->dev, "vsync interrupt is off\n");
-		cfg &= ~S3C_VIDINTCON0_FRAMESEL0_VSYNC;
+		cfg &= ~S3C_VIDINTCON0_INTFRMEN_ENABLE;
 	}
 
 	writel(cfg, ctrl->regs + S3C_VIDINTCON0);
@@ -342,9 +357,9 @@ int s3cfb_get_vsync_interrupt(struct s3cfb_global *ctrl)
 	u32 cfg = 0;
 
 	cfg = readl(ctrl->regs + S3C_VIDINTCON0);
-	cfg &= S3C_VIDINTCON0_FRAMESEL0_VSYNC;
+	cfg &= S3C_VIDINTCON0_INTFRMEN_ENABLE;
 
-	if (cfg & S3C_VIDINTCON0_FRAMESEL0_VSYNC) {
+	if (cfg & S3C_VIDINTCON0_INTFRMEN_ENABLE) {
 		dev_dbg(ctrl->dev, "vsync interrupt is on\n");
 		return 1;
 	} else {

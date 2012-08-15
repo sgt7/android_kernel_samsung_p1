@@ -211,7 +211,7 @@ extern unsigned int HWREV;
 static DEFINE_MUTEX(pdp_mutex);
 static struct net_device *pdp_devs[PDP_MAX];
 static int pdp_cnt;
-unsigned long pdp_bitmap[PDP_MAX/BITS_PER_LONG];
+unsigned long pdp_bitmap[DIV_ROUND_UP(PDP_MAX, BITS_PER_LONG)];
 
 static void clear_pdp_wq(struct work_struct *work);
 static DECLARE_WORK(pdp_work, clear_pdp_wq);

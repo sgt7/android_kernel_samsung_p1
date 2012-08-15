@@ -76,8 +76,8 @@ struct scan_control {
 	int order;
 
 	/*
-	 * Intend to reclaim enough contenious memory rather than to reclaim
-	 * enough amount memory. I.e, it's the mode for high order allocation.
+	 * Intend to reclaim enough continuous memory rather than reclaim
+	 * enough amount of memory. i.e, mode for high order allocation.
 	 */
 	bool lumpy_reclaim_mode;
 
@@ -178,6 +178,14 @@ void unregister_shrinker(struct shrinker *shrinker)
 }
 EXPORT_SYMBOL(unregister_shrinker);
 
+static inline int do_shrinker_shrink(struct shrinker *shrinker,
+			struct shrink_control *sc,
+			unsigned long nr_to_scan)
+{
+	sc->nr_to_scan = nr_to_scan;
+	return (*shrinker->shrink)(shrinker, sc);
+}
+
 #define SHRINK_BATCH 128
 /*
  * Call the shrink functions to age shrinkable caches
@@ -198,67 +206,110 @@ EXPORT_SYMBOL(unregister_shrinker);
  *
  * Returns the number of slab objects which we shrunk.
  */
-unsigned long shrink_slab(unsigned long scanned, gfp_t gfp_mask,
-			unsigned long lru_pages)
+unsigned long shrink_slab(struct shrink_control *shrink,
+			  unsigned long nr_pages_scanned,
+			  unsigned long lru_pages)
 {
 	struct shrinker *shrinker;
 	unsigned long ret = 0;
 
-	if (scanned == 0)
-		scanned = SWAP_CLUSTER_MAX;
+	if (nr_pages_scanned == 0)
+		nr_pages_scanned = SWAP_CLUSTER_MAX;
 
-	if (!down_read_trylock(&shrinker_rwsem))
-		return 1;	/* Assume we'll be able to shrink next time */
+	if (!down_read_trylock(&shrinker_rwsem)) {
+		/* Assume we'll be able to shrink next time */
+		ret = 1;
+		goto out;
+	}
 
 	list_for_each_entry(shrinker, &shrinker_list, list) {
 		unsigned long long delta;
-		unsigned long total_scan;
-		unsigned long max_pass;
+		long total_scan;
+		long max_pass;
+		int shrink_ret = 0;
+		long nr;
+		long new_nr;
 
-		max_pass = (*shrinker->shrink)(shrinker, 0, gfp_mask);
-		delta = (4 * scanned) / shrinker->seeks;
+		max_pass = do_shrinker_shrink(shrinker, shrink, 0);
+		if (max_pass <= 0)
+			continue;
+
+		/*
+		 * copy the current shrinker scan count into a local variable
+		 * and zero it so that other concurrent shrinker invocations
+		 * don't also do this scanning work.
+		 */
+		do {
+			nr = shrinker->nr;
+		} while (cmpxchg(&shrinker->nr, nr, 0) != nr);
+
+		total_scan = nr;
+		delta = (4 * nr_pages_scanned) / shrinker->seeks;
 		delta *= max_pass;
 		do_div(delta, lru_pages + 1);
-		shrinker->nr += delta;
-		if (shrinker->nr < 0) {
+		total_scan += delta;
+		if (total_scan < 0) {
 			printk(KERN_ERR "shrink_slab: %pF negative objects to "
 			       "delete nr=%ld\n",
-			       shrinker->shrink, shrinker->nr);
-			shrinker->nr = max_pass;
+			       shrinker->shrink, total_scan);
+			total_scan = max_pass;
 		}
+
+		/*
+		 * We need to avoid excessive windup on filesystem shrinkers
+		 * due to large numbers of GFP_NOFS allocations causing the
+		 * shrinkers to return -1 all the time. This results in a large
+		 * nr being built up so when a shrink that can do some work
+		 * comes along it empties the entire cache due to nr >>>
+		 * max_pass.  This is bad for sustaining a working set in
+		 * memory.
+		 *
+		 * Hence only allow the shrinker to scan the entire cache when
+		 * a large delta change is calculated directly.
+		 */
+		if (delta < max_pass / 4)
+			total_scan = min(total_scan, max_pass / 2);
 
 		/*
 		 * Avoid risking looping forever due to too large nr value:
 		 * never try to free more than twice the estimate number of
 		 * freeable entries.
 		 */
-		if (shrinker->nr > max_pass * 2)
-			shrinker->nr = max_pass * 2;
-
-		total_scan = shrinker->nr;
-		shrinker->nr = 0;
+		if (total_scan > max_pass * 2)
+			total_scan = max_pass * 2;
 
 		while (total_scan >= SHRINK_BATCH) {
-			long this_scan = SHRINK_BATCH;
-			int shrink_ret;
 			int nr_before;
 
-			nr_before = (*shrinker->shrink)(shrinker, 0, gfp_mask);
-			shrink_ret = (*shrinker->shrink)(shrinker, this_scan,
-								gfp_mask);
+			nr_before = do_shrinker_shrink(shrinker, shrink, 0);
+			shrink_ret = do_shrinker_shrink(shrinker, shrink,
+							SHRINK_BATCH);
 			if (shrink_ret == -1)
 				break;
 			if (shrink_ret < nr_before)
 				ret += nr_before - shrink_ret;
-			count_vm_events(SLABS_SCANNED, this_scan);
-			total_scan -= this_scan;
+			count_vm_events(SLABS_SCANNED, SHRINK_BATCH);
+			total_scan -= SHRINK_BATCH;
 
 			cond_resched();
 		}
 
-		shrinker->nr += total_scan;
+		/*
+		 * move the unused scan count back into the shrinker in a
+		 * manner that handles concurrent updates. If we exhausted the
+		 * scan, there is no need to do an update.
+		 */
+		do {
+			nr = shrinker->nr;
+			new_nr = total_scan + nr;
+			if (total_scan <= 0)
+				break;
+		} while (cmpxchg(&shrinker->nr, nr, new_nr) != nr);
+
 	}
 	up_read(&shrinker_rwsem);
+out:
+	cond_resched();
 	return ret;
 }
 
@@ -1810,7 +1861,8 @@ static bool all_unreclaimable(struct zonelist *zonelist,
  * 		else, the number of pages reclaimed
  */
 static unsigned long do_try_to_free_pages(struct zonelist *zonelist,
-					struct scan_control *sc)
+					struct scan_control *sc,
+					struct shrink_control *shrink)
 {
 	int priority;
 	unsigned long total_scanned = 0;
@@ -1849,7 +1901,7 @@ static unsigned long do_try_to_free_pages(struct zonelist *zonelist,
 		 * over limit cgroups
 		 */
 		if (scanning_global_lru(sc)) {
-			shrink_slab(sc->nr_scanned, sc->gfp_mask, lru_pages);
+			shrink_slab(shrink, sc->nr_scanned, lru_pages);
 			if (reclaim_state) {
 				sc->nr_reclaimed += reclaim_state->reclaimed_slab;
 				reclaim_state->reclaimed_slab = 0;
@@ -1927,8 +1979,10 @@ unsigned long try_to_free_pages(struct zonelist *zonelist, int order,
 		.mem_cgroup = NULL,
 		.nodemask = nodemask,
 	};
-
-	return do_try_to_free_pages(zonelist, &sc);
+	struct shrink_control shrink = {
+		.gfp_mask = sc.gfp_mask,
+	};
+	return do_try_to_free_pages(zonelist, &sc, &shrink);
 }
 
 #ifdef CONFIG_CGROUP_MEM_RES_CTLR
@@ -1979,12 +2033,15 @@ unsigned long try_to_free_mem_cgroup_pages(struct mem_cgroup *mem_cont,
 		.order = 0,
 		.mem_cgroup = mem_cont,
 		.nodemask = NULL, /* we don't care the placement */
+		.gfp_mask = (gfp_mask & GFP_RECLAIM_MASK) |
+			(GFP_HIGHUSER_MOVABLE & ~GFP_RECLAIM_MASK),
+	};
+	struct shrink_control shrink = {
+			.gfp_mask = sc.gfp_mask,
 	};
 
-	sc.gfp_mask = (gfp_mask & GFP_RECLAIM_MASK) |
-			(GFP_HIGHUSER_MOVABLE & ~GFP_RECLAIM_MASK);
 	zonelist = NODE_DATA(numa_node_id())->node_zonelists;
-	return do_try_to_free_pages(zonelist, &sc);
+	return do_try_to_free_pages(zonelist, &sc, &shrink);
 }
 #endif
 
@@ -2055,6 +2112,9 @@ static unsigned long balance_pgdat(pg_data_t *pgdat, int order)
 		.swappiness = vm_swappiness,
 		.order = order,
 		.mem_cgroup = NULL,
+	};
+	struct shrink_control shrink = {
+		.gfp_mask = sc.gfp_mask,
 	};
 	/*
 	 * temp_priority is used to remember the scanning priority at which
@@ -2159,8 +2219,7 @@ loop_again:
 					8*high_wmark_pages(zone), end_zone, 0))
 				shrink_zone(priority, zone, &sc);
 			reclaim_state->reclaimed_slab = 0;
-			nr_slab = shrink_slab(sc.nr_scanned, GFP_KERNEL,
-						lru_pages);
+			nr_slab = shrink_slab(&shrink, sc.nr_scanned, lru_pages);
 			sc.nr_reclaimed += reclaim_state->reclaimed_slab;
 			total_scanned += sc.nr_scanned;
 			if (zone->all_unreclaimable)
@@ -2436,7 +2495,10 @@ unsigned long shrink_all_memory(unsigned long nr_to_reclaim)
 		.swappiness = vm_swappiness,
 		.order = 0,
 	};
-	struct zonelist * zonelist = node_zonelist(numa_node_id(), sc.gfp_mask);
+	struct shrink_control shrink = {
+			.gfp_mask = sc.gfp_mask,
+	};
+	struct zonelist *zonelist = node_zonelist(numa_node_id(), sc.gfp_mask);
 	struct task_struct *p = current;
 	unsigned long nr_reclaimed;
 
@@ -2445,7 +2507,7 @@ unsigned long shrink_all_memory(unsigned long nr_to_reclaim)
 	reclaim_state.reclaimed_slab = 0;
 	p->reclaim_state = &reclaim_state;
 
-	nr_reclaimed = do_try_to_free_pages(zonelist, &sc);
+	nr_reclaimed = do_try_to_free_pages(zonelist, &sc, &shrink);
 
 	p->reclaim_state = NULL;
 	lockdep_clear_current_reclaim_state();
@@ -2620,6 +2682,9 @@ static int __zone_reclaim(struct zone *zone, gfp_t gfp_mask, unsigned int order)
 		.swappiness = vm_swappiness,
 		.order = order,
 	};
+	struct shrink_control shrink = {
+		.gfp_mask = sc.gfp_mask,
+	};
 	unsigned long slab_reclaimable;
 
 	disable_swap_token();
@@ -2659,7 +2724,7 @@ static int __zone_reclaim(struct zone *zone, gfp_t gfp_mask, unsigned int order)
 		 * Note that shrink_slab will free memory on all zones and may
 		 * take a long time.
 		 */
-		while (shrink_slab(sc.nr_scanned, gfp_mask, order) &&
+		while (shrink_slab(&shrink, sc.nr_scanned, order) &&
 			zone_page_state(zone, NR_SLAB_RECLAIMABLE) >
 				slab_reclaimable - nr_pages)
 			;

@@ -496,23 +496,4 @@ config SAMSUNG_PARAM
 	help
 	  Driver for communication with Samsung's secondary bootloader
 
-config LIVE_OC
-       bool "Support for Live OC"
-       default y
-       help
-         Say Y here to enable Live OC
-
-config FAST_CHARGE
-	bool "Enable AC charge mode at will"
-	default y
-	help
-	  A simple sysfs interface to enable adapters that
-	  are detected as USB to charge as AC.
-
-config BLX
-       bool "Support for Battery Life eXtender"
-       default y
-       help
-         Say Y here to enable Battery Life eXtender
-
 endif # MISC_DEVICES

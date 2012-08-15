@@ -59,7 +59,7 @@
 
 static int fb_idx = 0;
 
-#define S3C_MAX_BACKBUFFERS 	5
+#define S3C_MAX_BACKBUFFERS 	2
 #define S3C_MAX_BUFFERS (S3C_MAX_BACKBUFFERS+1)
 
 #define S3C_DISPLAY_FORMAT_NUM 1

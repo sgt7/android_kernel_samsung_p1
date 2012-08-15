@@ -10,7 +10,6 @@ ccflags-y := \
 	-Wstrict-prototypes\
 	-Wno-unused-parameter\
 	-Wno-sign-compare\
-	-Werror\
 	-fno-strict-aliasing\
 	-Wno-pointer-arith\
 	-Os
@@ -36,6 +35,8 @@ ccflags-y += \
 	-DPVRSRV_MODNAME="\"pvrsrvkm\"" \
 	-Idrivers/gpu/pvr/sgx \
 	-DSUPPORT_GET_DC_BUFFERS_SYS_PHYADDRS \
+	-DPVRSRV_MMU_MAKE_READWRITE_ON_DEMAND \
+	-DPVRSRV_AVOID_RANGED_INVALIDATE \
 	-DPVR_LDM_DRIVER_REGISTRATION_NAME="\"pvrsrvkm\""
 
 ccflags-$(CONFIG_PVR_BUILD_RELEASE) += \
@@ -64,6 +65,10 @@ ccflags-$(CONFIG_PVR_DUMP_MK_TRACE) += -DPVRSRV_DUMP_MK_TRACE
 
 ccflags-$(CONFIG_PVR_PDUMP) += \
 	-DPDUMP -DSUPPORT_PDUMP_MULTI_PROCESS
+
+ccflags-$(CONFIG_PVR_LINUX_MEM_AREA_POOL) += \
+	-DPVR_LINUX_MEM_AREA_POOL_MAX_PAGES=CONFIG_PVR_LINUX_MEM_AREA_POOL_MAX_PAGES \
+	-DPVR_LINUX_MEM_AREA_USE_VMAP -DPVR_LINUX_MEM_AREA_POOL_ALLOW_SHRINK
 
 pvrsrvkm-y := \
 	osfunc.o \
@@ -104,8 +109,7 @@ pvrsrvkm-y := \
 	sgx/sgxkick.o \
 	sgx/sgxtransfer.o \
 	sgx/mmu.o \
-	sgx/pb.o \
-	pvr_oc.o
+	sgx/pb.o
 
 ccflags-$(CONFIG_ARCH_S5PV210) += \
 	-DPVR_BUILD_DIR="\"smdkc110_android\"" \
