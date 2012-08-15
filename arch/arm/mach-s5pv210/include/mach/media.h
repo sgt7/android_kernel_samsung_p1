@@ -27,5 +27,6 @@
 #define S5P_MDEV_PMEM_GPU1  8
 #endif
 
+#define S5P_RANGE_MFC	    SZ_256M
 #endif
 

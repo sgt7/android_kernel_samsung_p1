@@ -39,8 +39,7 @@
 #include <plat/media.h>
 #include <plat/jpeg.h>
 #include <mach/media.h>
-
-#include <../../../drivers/video/samsung/s3cfb.h>
+#include <s3cfb.h>
 
 /* Android Gadget */
 #include <linux/usb/android_composite.h>

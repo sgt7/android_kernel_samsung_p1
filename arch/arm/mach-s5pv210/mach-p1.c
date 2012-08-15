@@ -7262,7 +7262,7 @@ static void __init p1_map_io(void)
 	s3c24xx_init_clocks(24000000);
 	s5pv210_gpiolib_init();
 	s3c24xx_init_uarts(crespo_uartcfgs, ARRAY_SIZE(crespo_uartcfgs));
-	s5p_reserve_bootmem(crespo_media_devs, ARRAY_SIZE(crespo_media_devs));
+	s5p_reserve_bootmem(crespo_media_devs, ARRAY_SIZE(crespo_media_devs), S5P_RANGE_MFC);
 #ifdef CONFIG_MTD_ONENAND
 	s5pc110_device_onenand.name = "s5pc110-onenand";
 #endif

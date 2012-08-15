@@ -90,10 +90,12 @@ dma_addr_t s5p_get_media_membase_bank(int bank)
 }
 EXPORT_SYMBOL(s5p_get_media_membase_bank);
 
-void s5p_reserve_bootmem(struct s5p_media_device *mdevs,int nr_mdevs)
+void s5p_reserve_bootmem(struct s5p_media_device *mdevs,
+			 int nr_mdevs, size_t boundary)
 {
 	struct s5p_media_device *mdev;
-	int i;
+	u64 start, end;
+	int i, ret;
 
 	media_devs = mdevs;
 	nr_media_devs = nr_mdevs;
@@ -106,23 +108,32 @@ void s5p_reserve_bootmem(struct s5p_media_device *mdevs,int nr_mdevs)
 		if (mdev->memsize <= 0)
 			continue;
 
-		if (mdev->paddr)
+		if (!mdev->paddr) {
+			start = meminfo.bank[mdev->bank].start;
+			end = start + meminfo.bank[mdev->bank].size;
+
+			if (boundary && (boundary < end - start))
+				start = end - boundary;
+
+			mdev->paddr = virt_to_phys(__alloc_bootmem(
+				mdev->memsize,
+				PAGE_SIZE,
+				start));
+		} else {
+
 			mdev->paddr = virt_to_phys(__alloc_bootmem(
 				mdev->memsize,
 				PAGE_SIZE,
 				mdev->paddr));
-		else
-			mdev->paddr = virt_to_phys(__alloc_bootmem(
-				mdev->memsize,
-				PAGE_SIZE,
-				meminfo.bank[mdev->bank].start));
+		}
 
 		if (media_base[mdev->bank] > mdev->paddr)
 			media_base[mdev->bank] = mdev->paddr;
 
-		printk(KERN_INFO "s5pv210: %lu bytes system memory reserved "
-			"for %s at 0x%08x\n", (unsigned long) mdev->memsize,
-			mdev->name, mdev->paddr);
+		printk(KERN_INFO "s5p: %lu bytes system memory reserved "
+			"for %s at 0x%08x, %d-bank base(0x%08x)\n",
+			(unsigned long) mdev->memsize, mdev->name, mdev->paddr,
+			mdev->bank, media_base[mdev->bank]);
 	}
 }
 
