@@ -42,10 +42,10 @@ static int set_mode_for_amoled = 0;		//0: TFt-LCD, 1: AMOLED
 static int gFirmware_Update_State = FW_UPDATE_READY;
 
 static bool buttons_enabled = true;
-static int cpufreq_lock = 1;
+static int cpufreq_lock = 2;
 
 static bool leds_on = true;
-static int leds_timeout = 1600;
+static int leds_timeout = 2000;
 static struct timer_list leds_timer;
 static void leds_timer_callback(unsigned long data);
 
@@ -1019,7 +1019,7 @@ static ssize_t cpufreq_lock_write( struct device *dev,
 
 	if ( sscanf( buf, "%du", &value ) == 1 ) {
 
-		if ( value >= 0 && value <= 2 ) {
+		if ( value >= 0 && value <= 3 ) {
 
 			cpufreq_lock = value;
 
@@ -1032,6 +1032,9 @@ static ssize_t cpufreq_lock_write( struct device *dev,
 					break;
 				case 2:
 					cpufreq_label = 1000;
+					break;
+				case 3:
+					cpufreq_label = 1200;
 					break;
 				default:
 					cpufreq_label = 800;
@@ -1110,6 +1113,9 @@ static void qt602240_input_read(struct qt602240_data *data)
 					break;
 				case 2:
 					s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_7, L0); // 1000MHz
+					break;
+				case 3:
+					s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_7, OC1); // 1200MHz
 					break;
 				default:
 					s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_7, L1); // 800MHz
