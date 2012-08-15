@@ -496,4 +496,11 @@ config SAMSUNG_PARAM
 	help
 	  Driver for communication with Samsung's secondary bootloader
 
+config FAST_CHARGE
+	bool "Enable AC charge mode at will"
+	default y
+	help
+	  A simple sysfs interface to enable adapters that
+	  are detected as USB to charge as AC.
+
 endif # MISC_DEVICES

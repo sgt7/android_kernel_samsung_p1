@@ -47,6 +47,9 @@
 #include <linux/android_alarm.h>
 #include <mach/regs-clock.h>
 #include <asm/io.h>
+#ifdef CONFIG_FAST_CHARGE
+#include <linux/fast_charge.h>
+#endif
 
 #define TEMPERATURE_FROM_FUELGAUGE
 
@@ -759,14 +762,27 @@ static bool check_samsung_charger(void)
 		pr_info("%s: vol_1 = %d, vol_2 = %d!!\n", __func__, vol_1, vol_2);
 
 		//3. Check range of the voltage
-		if( (vol_1 < 800) || (vol_1 > 1470) || (vol_2 < 800) || (vol_2 > 1470) )
-		{
-			pr_info("%s: Improper charger is connected!!!\n", __func__);
-			fsa9480_manual_switching(AUTO_SWITCH);
-			return false;
-		}	
-	}
-	
+#ifdef CONFIG_FAST_CHARGE
+        if ( enable_fast_charge == 1 ) {
+            pr_info("%s: Samsung USB charger is connected!!!\n", __func__);
+            fsa9480_manual_switching(AUTO_SWITCH);
+            return true;       
+        } else {
+            if( (vol_1 < 800) || (vol_1 > 1470) || (vol_2 < 800) || (vol_2 > 1470) ) {
+                pr_info("%s: Improper charger is connected!!!\n", __func__);
+                fsa9480_manual_switching(AUTO_SWITCH);
+                return false;
+            }
+        }
+#else
+	    if( (vol_1 < 800) || (vol_1 > 1470) || (vol_2 < 800) || (vol_2 > 1470) ) {
+		    pr_info("%s: Improper charger is connected!!!\n", __func__);
+		    fsa9480_manual_switching(AUTO_SWITCH);
+		    return false;
+	    }	
+#endif
+    } //for ( i=0; i<3; i++)
+
 	pr_info("%s: Samsung charger is connected!!!\n", __func__);
 	fsa9480_manual_switching(AUTO_SWITCH);
 	return true;
@@ -900,8 +916,16 @@ update:
 	if(chg->bat_info.charging_status == POWER_SUPPLY_STATUS_FULL ||
 	    chg->bat_info.charging_status == POWER_SUPPLY_STATUS_CHARGING) {
 		/* Update DISCHARGING status in case of USB cable or Improper charger */
-		if(chg->cable_status==CABLE_TYPE_USB || chg->bat_info.batt_improper_ta)
-			chg->bat_info.charging_status = POWER_SUPPLY_STATUS_DISCHARGING;
+		if(chg->cable_status==CABLE_TYPE_USB || chg->bat_info.batt_improper_ta) {
+#ifdef CONFIG_FAST_CHARGE
+            if ( enable_fast_charge == 1 )
+                chg->bat_info.charging_status = POWER_SUPPLY_STATUS_CHARGING;
+            else
+    			chg->bat_info.charging_status = POWER_SUPPLY_STATUS_DISCHARGING;
+#else
+    			chg->bat_info.charging_status = POWER_SUPPLY_STATUS_DISCHARGING;
+#endif            
+        }
 	}
 
 	if ((chg->cable_status != CABLE_TYPE_NONE) && vdc_status)
