@@ -53,6 +53,8 @@
 #include "srvkm.h"
 #include "ttrace.h"
 
+#include <linux/pvr_oc.h>
+
 #if defined(PVRSRV_USSE_EDM_STATUS_DEBUG)
 
 static const IMG_CHAR *SGXUKernelStatusString(IMG_UINT32 code)
@@ -1363,14 +1365,14 @@ IMG_VOID SGXOSTimer(IMG_VOID *pvData)
 					ui32BIFCtrl = OSReadHWReg(psDevInfo->pvRegsBaseKM, EUR_CR_BIF_CTRL);
 					OSWriteHWReg(psDevInfo->pvRegsBaseKM, EUR_CR_BIF_CTRL, ui32BIFCtrl | EUR_CR_BIF_CTRL_PAUSE_MASK);
 					
-					SGXWaitClocks(psDevInfo, 200);
+					OSWaitus(1);
 		#endif
 					
 					bBRN31093Inval = IMG_TRUE;
 					
 					OSWriteHWReg(psDevInfo->pvRegsBaseKM, EUR_CR_BIF_CTRL_INVAL, EUR_CR_BIF_CTRL_INVAL_PTE_MASK);
 					
-					SGXWaitClocks(psDevInfo, 200);
+					OSWaitus(1);
 						
 		#if defined(FIX_HW_BRN_29997)	
 						
@@ -2565,7 +2567,7 @@ PVRSRV_ERROR SGXGetMiscInfoKM(PVRSRV_SGXDEV_INFO	*psDevInfo,
 
 		case SGX_MISC_INFO_REQUEST_CLOCKSPEED:
 		{
-			psMiscInfo->uData.ui32SGXClockSpeed = psDevInfo->ui32CoreClockSpeed;
+			psMiscInfo->uData.ui32SGXClockSpeed = pvr_clk_val;
 			return PVRSRV_OK;
 		}
 
@@ -2864,7 +2866,7 @@ PVRSRV_ERROR SGXReadHWPerfCBKM(IMG_HANDLE					hDevHandle,
 	}
 
 	*pui32DataCount = i;
-	*pui32ClockSpeed = psDevInfo->ui32CoreClockSpeed;
+	*pui32ClockSpeed = pvr_clk_val;
 	*pui32HostTimeStamp = OSClockus();
 
 	return eError;
