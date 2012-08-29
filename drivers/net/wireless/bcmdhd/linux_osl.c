@@ -227,15 +227,17 @@ osl_attach(void *pdev, uint bustype, bool pkttag)
 
 	if (!bcm_static_skb) {
 		int i;
-		void *skb_buff_ptr = 0;
-		bcm_static_skb = (bcm_static_pkt_t *)((char *)bcm_static_buf + 2048);
-		skb_buff_ptr = dhd_os_prealloc(osh, 4, 0);
+		void *skb_buff_ptr = dhd_os_prealloc(osh, 4, 0);
 
-		bcopy(skb_buff_ptr, bcm_static_skb, sizeof(struct sk_buff *) * 16);
-		for (i = 0; i < STATIC_PKT_MAX_NUM * 2; i++)
-			bcm_static_skb->pkt_use[i] = 0;
-
-		sema_init(&bcm_static_skb->osl_pkt_sem, 1);
+		if (skb_buff_ptr) {
+			bcm_static_skb = (bcm_static_pkt_t *)((char *)bcm_static_buf + 2048);
+			bcopy(skb_buff_ptr, bcm_static_skb, sizeof(struct sk_buff *) * 16);
+			for (i = 0; i < STATIC_PKT_MAX_NUM * 2; i++)
+				bcm_static_skb->pkt_use[i] = 0;
+			sema_init(&bcm_static_skb->osl_pkt_sem, 1);
+		} else {
+			printk("can not alloc static skb buffers\n");
+		}
 	}
 #endif
 
