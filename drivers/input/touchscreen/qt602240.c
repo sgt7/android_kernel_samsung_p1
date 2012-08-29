@@ -45,13 +45,16 @@ static bool buttons_enabled = true;
 static int cpufreq_lock = 2;
 
 static bool leds_on = true;
-static int leds_timeout = 2000;
+static int leds_timeout = 1600;
 static struct timer_list leds_timer;
 static void leds_timer_callback(unsigned long data);
 
 extern struct class *sec_class;
 
 //unsigned char maxim_chg_status(void);	// 1: TA or UST, 0: normal
+
+unsigned int touch_state_val = 0;
+EXPORT_SYMBOL(touch_state_val);
 
 struct qt602240_data * p_qt602240_data;
 #ifdef CONFIG_HAS_EARLYSUSPEND
@@ -202,7 +205,7 @@ static ssize_t key_led_store(struct device *dev, struct device_attribute *attr,
     }
 
     if(i > 0)
-        touch_led_on(1);
+        touch_led_on(255);
     else
         touch_led_on(0);
 
@@ -993,7 +996,7 @@ static ssize_t buttons_enabled_status_write(struct device *dev,
 			if(data == 0) {
 				pr_info("%s: key function disabled\n", __FUNCTION__);
 				buttons_enabled = false;
-				touch_led_on(false);
+				touch_led_on(0);
 			}
 		} else {
 			pr_info("%s: invalid input range %u\n", __FUNCTION__, data);
@@ -1249,9 +1252,11 @@ static irqreturn_t qt602240_interrupt(int irq, void *dev_id)
 
     if(!leds_on) {
         leds_on = true;
-        touch_led_on(1);
+        touch_led_on(255);
+		touch_state_val = 1;
     } else {
         mod_timer(&leds_timer, jiffies + msecs_to_jiffies(leds_timeout));
+		touch_state_val = 0;
     }
 
     qt602240_input_read(data);
@@ -2297,6 +2302,7 @@ static int __devexit qt602240_remove(struct i2c_client *client)
 
 	sysfs_remove_group(&client->dev.kobj, &qt602240_attr_group);
 	i2c_set_clientdata(client, NULL);
+	touch_state_val = 0;
 
 	return 0;
 }
@@ -2311,6 +2317,7 @@ static int qt602240_suspend(struct i2c_client *client, pm_message_t mesg)
 {
     struct qt602240_data *data = i2c_get_clientdata(client);
 #endif
+	touch_state_val = 0;
     disable_irq_nosync(data->irq);
 
     /* touch disable */
@@ -2328,7 +2335,7 @@ static int qt602240_suspend(struct i2c_client *client, pm_message_t mesg)
     release_all_keys(data->input_dev);
 
 #if defined (KEY_LED_CONTROL)
-    touch_led_on(false);
+    touch_led_on(0);
 #endif      //KEY_LED_CONTROL
 
     qt_timer_state = 0;
