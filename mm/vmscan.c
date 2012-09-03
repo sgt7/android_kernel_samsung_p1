@@ -198,13 +198,11 @@ EXPORT_SYMBOL(unregister_shrinker);
  *
  * Returns the number of slab objects which we shrunk.
  */
-unsigned long shrink_slab(struct shrink_control *shrink,
+unsigned long shrink_slab(unsigned long scanned, gfp_t gfp_mask,
 			unsigned long lru_pages)
 {
 	struct shrinker *shrinker;
 	unsigned long ret = 0;
-	unsigned long scanned = shrink->nr_scanned;
-	gfp_t gfp_mask = shrink->gfp_mask;
 
 	if (scanned == 0)
 		scanned = SWAP_CLUSTER_MAX;
@@ -1812,8 +1810,7 @@ static bool all_unreclaimable(struct zonelist *zonelist,
  * 		else, the number of pages reclaimed
  */
 static unsigned long do_try_to_free_pages(struct zonelist *zonelist,
-					struct scan_control *sc,
-					struct shrink_control *shrink)
+					struct scan_control *sc)
 {
 	int priority;
 	unsigned long total_scanned = 0;
@@ -1852,8 +1849,7 @@ static unsigned long do_try_to_free_pages(struct zonelist *zonelist,
 		 * over limit cgroups
 		 */
 		if (scanning_global_lru(sc)) {
-			shrink->nr_scanned = sc->nr_scanned;
-			shrink_slab(shrink, lru_pages);
+			shrink_slab(sc->nr_scanned, sc->gfp_mask, lru_pages);
 			if (reclaim_state) {
 				sc->nr_reclaimed += reclaim_state->reclaimed_slab;
 				reclaim_state->reclaimed_slab = 0;
@@ -1931,10 +1927,8 @@ unsigned long try_to_free_pages(struct zonelist *zonelist, int order,
 		.mem_cgroup = NULL,
 		.nodemask = nodemask,
 	};
-	struct shrink_control shrink = {
-		.gfp_mask = sc.gfp_mask,
-	};
-	return do_try_to_free_pages(zonelist, &sc, &shrink);
+
+	return do_try_to_free_pages(zonelist, &sc);
 }
 
 #ifdef CONFIG_CGROUP_MEM_RES_CTLR
@@ -1985,15 +1979,12 @@ unsigned long try_to_free_mem_cgroup_pages(struct mem_cgroup *mem_cont,
 		.order = 0,
 		.mem_cgroup = mem_cont,
 		.nodemask = NULL, /* we don't care the placement */
-		.gfp_mask = (gfp_mask & GFP_RECLAIM_MASK) |
-			(GFP_HIGHUSER_MOVABLE & ~GFP_RECLAIM_MASK),
-	};
-	struct shrink_control shrink = {
-			.gfp_mask = sc.gfp_mask,
 	};
 
+	sc.gfp_mask = (gfp_mask & GFP_RECLAIM_MASK) |
+			(GFP_HIGHUSER_MOVABLE & ~GFP_RECLAIM_MASK);
 	zonelist = NODE_DATA(numa_node_id())->node_zonelists;
-	return do_try_to_free_pages(zonelist, &sc, &shrink);
+	return do_try_to_free_pages(zonelist, &sc);
 }
 #endif
 
@@ -2064,9 +2055,6 @@ static unsigned long balance_pgdat(pg_data_t *pgdat, int order)
 		.swappiness = vm_swappiness,
 		.order = order,
 		.mem_cgroup = NULL,
-	};
-	struct shrink_control shrink = {
-		.gfp_mask = sc.gfp_mask,
 	};
 	/*
 	 * temp_priority is used to remember the scanning priority at which
@@ -2171,8 +2159,8 @@ loop_again:
 					8*high_wmark_pages(zone), end_zone, 0))
 				shrink_zone(priority, zone, &sc);
 			reclaim_state->reclaimed_slab = 0;
-			shrink.nr_scanned = sc.nr_scanned;
-			nr_slab = shrink_slab(&shrink, lru_pages);
+			nr_slab = shrink_slab(sc.nr_scanned, GFP_KERNEL,
+						lru_pages);
 			sc.nr_reclaimed += reclaim_state->reclaimed_slab;
 			total_scanned += sc.nr_scanned;
 			if (zone->all_unreclaimable)
@@ -2448,10 +2436,7 @@ unsigned long shrink_all_memory(unsigned long nr_to_reclaim)
 		.swappiness = vm_swappiness,
 		.order = 0,
 	};
-	struct shrink_control shrink = {
-			.gfp_mask = sc.gfp_mask,
-	};
-	struct zonelist *zonelist = node_zonelist(numa_node_id(), sc.gfp_mask);
+	struct zonelist * zonelist = node_zonelist(numa_node_id(), sc.gfp_mask);
 	struct task_struct *p = current;
 	unsigned long nr_reclaimed;
 
@@ -2460,7 +2445,7 @@ unsigned long shrink_all_memory(unsigned long nr_to_reclaim)
 	reclaim_state.reclaimed_slab = 0;
 	p->reclaim_state = &reclaim_state;
 
-	nr_reclaimed = do_try_to_free_pages(zonelist, &sc, &shrink);
+	nr_reclaimed = do_try_to_free_pages(zonelist, &sc);
 
 	p->reclaim_state = NULL;
 	lockdep_clear_current_reclaim_state();
@@ -2635,9 +2620,6 @@ static int __zone_reclaim(struct zone *zone, gfp_t gfp_mask, unsigned int order)
 		.swappiness = vm_swappiness,
 		.order = order,
 	};
-	struct shrink_control shrink = {
-		.gfp_mask = sc.gfp_mask,
-	};
 	unsigned long slab_reclaimable;
 
 	disable_swap_token();
@@ -2666,7 +2648,6 @@ static int __zone_reclaim(struct zone *zone, gfp_t gfp_mask, unsigned int order)
 	}
 
 	slab_reclaimable = zone_page_state(zone, NR_SLAB_RECLAIMABLE);
-	shrink.nr_scanned = sc.nr_scanned;
 	if (slab_reclaimable > zone->min_slab_pages) {
 		/*
 		 * shrink_slab() does not currently allow us to determine how
@@ -2678,7 +2659,7 @@ static int __zone_reclaim(struct zone *zone, gfp_t gfp_mask, unsigned int order)
 		 * Note that shrink_slab will free memory on all zones and may
 		 * take a long time.
 		 */
-		while (shrink_slab(&shrink, order) &&
+		while (shrink_slab(sc.nr_scanned, gfp_mask, order) &&
 			zone_page_state(zone, NR_SLAB_RECLAIMABLE) >
 				slab_reclaimable - nr_pages)
 			;
