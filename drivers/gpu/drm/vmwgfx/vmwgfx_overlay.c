@@ -585,7 +585,7 @@ int vmw_overlay_init(struct vmw_private *dev_priv)
 		return -ENOSYS;
 	}
 
-	overlay = kmalloc(sizeof(*overlay), GFP_KERNEL);
+	overlay = kmalloc(GFP_KERNEL, sizeof(*overlay));
 	if (!overlay)
 		return -ENOMEM;
 

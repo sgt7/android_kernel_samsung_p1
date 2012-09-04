@@ -673,10 +673,8 @@ static int parser_auth(struct table *t, const char *filename)
 	last_reg = strtol(last_reg_s, NULL, 16);
 
 	do {
-		if (fgets(buf, 1024, file) == NULL) {
-			fclose(file);
+		if (fgets(buf, 1024, file) == NULL)
 			return -1;
-		}
 		len = strlen(buf);
 		if (ftell(file) == end)
 			done = 1;
@@ -687,7 +685,6 @@ static int parser_auth(struct table *t, const char *filename)
 				fprintf(stderr,
 					"Error matching regular expression %d in %s\n",
 					r, filename);
-				fclose(file);
 				return -1;
 			} else {
 				buf[match[0].rm_eo] = 0;

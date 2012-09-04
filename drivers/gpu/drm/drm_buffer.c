@@ -98,8 +98,8 @@ EXPORT_SYMBOL(drm_buffer_alloc);
  *   user_data: A pointer the data that is copied to the buffer.
  *   size: The Number of bytes to copy.
  */
-int drm_buffer_copy_from_user(struct drm_buffer *buf,
-			      void __user *user_data, int size)
+extern int drm_buffer_copy_from_user(struct drm_buffer *buf,
+		void __user *user_data, int size)
 {
 	int nr_pages = size / PAGE_SIZE + 1;
 	int idx;
@@ -163,7 +163,7 @@ void *drm_buffer_read_object(struct drm_buffer *buf,
 {
 	int idx = drm_buffer_index(buf);
 	int page = drm_buffer_page(buf);
-	void *obj = NULL;
+	void *obj = 0;
 
 	if (idx + objsize <= PAGE_SIZE) {
 		obj = &buf->data[page][idx];

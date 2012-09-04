@@ -156,13 +156,7 @@ int radeon_agp_init(struct radeon_device *rdev)
 	}
 
 	mode.mode = info.mode;
-	/* chips with the agp to pcie bridge don't have the AGP_STATUS register
-	 * Just use the whatever mode the host sets up.
-	 */
-	if (rdev->family <= CHIP_RV350)
-		agp_status = (RREG32(RADEON_AGP_STATUS) | RADEON_AGPv3_MODE) & mode.mode;
-	else
-		agp_status = mode.mode;
+	agp_status = (RREG32(RADEON_AGP_STATUS) | RADEON_AGPv3_MODE) & mode.mode;
 	is_v3 = !!(agp_status & RADEON_AGPv3_MODE);
 
 	if (is_v3) {
