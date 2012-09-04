@@ -200,7 +200,7 @@ int r600_page_table_init(struct drm_device *dev)
 						 entry->pagelist[i], 0,
 						 PAGE_SIZE,
 						 PCI_DMA_BIDIRECTIONAL);
-		if (pci_dma_mapping_error(dev->pdev, entry->busaddr[i])) {
+		if (entry->busaddr[i] == 0) {
 			DRM_ERROR("unable to map PCIGART pages!\n");
 			r600_page_table_cleanup(dev, gart_info);
 			goto done;
@@ -396,9 +396,6 @@ static void r600_cp_load_microcode(drm_radeon_private_t *dev_priv)
 	r600_do_cp_stop(dev_priv);
 
 	RADEON_WRITE(R600_CP_RB_CNTL,
-#ifdef __BIG_ENDIAN
-		     R600_BUF_SWAP_32BIT |
-#endif
 		     R600_RB_NO_UPDATE |
 		     R600_RB_BLKSZ(15) |
 		     R600_RB_BUFSZ(3));
@@ -489,12 +486,9 @@ static void r700_cp_load_microcode(drm_radeon_private_t *dev_priv)
 	r600_do_cp_stop(dev_priv);
 
 	RADEON_WRITE(R600_CP_RB_CNTL,
-#ifdef __BIG_ENDIAN
-		     R600_BUF_SWAP_32BIT |
-#endif
 		     R600_RB_NO_UPDATE |
-		     R600_RB_BLKSZ(15) |
-		     R600_RB_BUFSZ(3));
+		     (15 << 8) |
+		     (3 << 0));
 
 	RADEON_WRITE(R600_GRBM_SOFT_RESET, R600_SOFT_RESET_CP);
 	RADEON_READ(R600_GRBM_SOFT_RESET);
@@ -556,12 +550,8 @@ static void r600_test_writeback(drm_radeon_private_t *dev_priv)
 
 	if (!dev_priv->writeback_works) {
 		/* Disable writeback to avoid unnecessary bus master transfer */
-		RADEON_WRITE(R600_CP_RB_CNTL,
-#ifdef __BIG_ENDIAN
-			     R600_BUF_SWAP_32BIT |
-#endif
-			     RADEON_READ(R600_CP_RB_CNTL) |
-			     R600_RB_NO_UPDATE);
+		RADEON_WRITE(R600_CP_RB_CNTL, RADEON_READ(R600_CP_RB_CNTL) |
+			     RADEON_RB_NO_UPDATE);
 		RADEON_WRITE(R600_SCRATCH_UMSK, 0);
 	}
 }
@@ -585,11 +575,7 @@ int r600_do_engine_reset(struct drm_device *dev)
 
 	RADEON_WRITE(R600_CP_RB_WPTR_DELAY, 0);
 	cp_rb_cntl = RADEON_READ(R600_CP_RB_CNTL);
-	RADEON_WRITE(R600_CP_RB_CNTL,
-#ifdef __BIG_ENDIAN
-		     R600_BUF_SWAP_32BIT |
-#endif
-		     R600_RB_RPTR_WR_ENA);
+	RADEON_WRITE(R600_CP_RB_CNTL, R600_RB_RPTR_WR_ENA);
 
 	RADEON_WRITE(R600_CP_RB_RPTR_WR, cp_ptr);
 	RADEON_WRITE(R600_CP_RB_WPTR, cp_ptr);
@@ -1852,10 +1838,7 @@ static void r600_cp_init_ring_buffer(struct drm_device *dev,
 			+ dev_priv->gart_vm_start;
 	}
 	RADEON_WRITE(R600_CP_RB_RPTR_ADDR,
-#ifdef __BIG_ENDIAN
-		     (2 << 0) |
-#endif
-		     (rptr_addr & 0xfffffffc));
+		     rptr_addr & 0xffffffff);
 	RADEON_WRITE(R600_CP_RB_RPTR_ADDR_HI,
 		     upper_32_bits(rptr_addr));
 
@@ -1906,7 +1889,7 @@ static void r600_cp_init_ring_buffer(struct drm_device *dev,
 	{
 		u64 scratch_addr;
 
-		scratch_addr = RADEON_READ(R600_CP_RB_RPTR_ADDR) & 0xFFFFFFFC;
+		scratch_addr = RADEON_READ(R600_CP_RB_RPTR_ADDR);
 		scratch_addr |= ((u64)RADEON_READ(R600_CP_RB_RPTR_ADDR_HI)) << 32;
 		scratch_addr += R600_SCRATCH_REG_OFFSET;
 		scratch_addr >>= 8;

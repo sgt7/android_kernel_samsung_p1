@@ -64,19 +64,6 @@ int drm_getunique(struct drm_device *dev, void *data,
 	return 0;
 }
 
-static void
-drm_unset_busid(struct drm_device *dev,
-		struct drm_master *master)
-{
-	kfree(dev->devname);
-	dev->devname = NULL;
-
-	kfree(master->unique);
-	master->unique = NULL;
-	master->unique_len = 0;
-	master->unique_size = 0;
-}
-
 /**
  * Set the bus id.
  *
@@ -96,7 +83,7 @@ int drm_setunique(struct drm_device *dev, void *data,
 {
 	struct drm_unique *u = data;
 	struct drm_master *master = file_priv->master;
-	int ret;
+	int domain, bus, slot, func, ret;
 
 	if (master->unique_len || master->unique)
 		return -EBUSY;
@@ -104,35 +91,75 @@ int drm_setunique(struct drm_device *dev, void *data,
 	if (!u->unique_len || u->unique_len > 1024)
 		return -EINVAL;
 
-	if (!dev->driver->bus->set_unique)
+	master->unique_len = u->unique_len;
+	master->unique_size = u->unique_len + 1;
+	master->unique = kmalloc(master->unique_size, GFP_KERNEL);
+	if (!master->unique)
+		return -ENOMEM;
+	if (copy_from_user(master->unique, u->unique, master->unique_len))
+		return -EFAULT;
+
+	master->unique[master->unique_len] = '\0';
+
+	dev->devname = kmalloc(strlen(dev->driver->pci_driver.name) +
+			       strlen(master->unique) + 2, GFP_KERNEL);
+	if (!dev->devname)
+		return -ENOMEM;
+
+	sprintf(dev->devname, "%s@%s", dev->driver->pci_driver.name,
+		master->unique);
+
+	/* Return error if the busid submitted doesn't match the device's actual
+	 * busid.
+	 */
+	ret = sscanf(master->unique, "PCI:%d:%d:%d", &bus, &slot, &func);
+	if (ret != 3)
+		return -EINVAL;
+	domain = bus >> 8;
+	bus &= 0xff;
+
+	if ((domain != drm_get_pci_domain(dev)) ||
+	    (bus != dev->pdev->bus->number) ||
+	    (slot != PCI_SLOT(dev->pdev->devfn)) ||
+	    (func != PCI_FUNC(dev->pdev->devfn)))
 		return -EINVAL;
 
-	ret = dev->driver->bus->set_unique(dev, master, u);
-	if (ret)
-		goto err;
-
 	return 0;
-
-err:
-	drm_unset_busid(dev, master);
-	return ret;
 }
 
 static int drm_set_busid(struct drm_device *dev, struct drm_file *file_priv)
 {
 	struct drm_master *master = file_priv->master;
-	int ret;
+	int len;
 
 	if (master->unique != NULL)
-		drm_unset_busid(dev, master);
+		return -EBUSY;
 
-	ret = dev->driver->bus->set_busid(dev, master);
-	if (ret)
-		goto err;
+	master->unique_len = 40;
+	master->unique_size = master->unique_len;
+	master->unique = kmalloc(master->unique_size, GFP_KERNEL);
+	if (master->unique == NULL)
+		return -ENOMEM;
+
+	len = snprintf(master->unique, master->unique_len, "pci:%04x:%02x:%02x.%d",
+		       drm_get_pci_domain(dev),
+		       dev->pdev->bus->number,
+		       PCI_SLOT(dev->pdev->devfn),
+		       PCI_FUNC(dev->pdev->devfn));
+	if (len >= master->unique_len)
+		DRM_ERROR("buffer overflow");
+	else
+		master->unique_len = len;
+
+	dev->devname = kmalloc(strlen(dev->driver->pci_driver.name) +
+			       master->unique_len + 2, GFP_KERNEL);
+	if (dev->devname == NULL)
+		return -ENOMEM;
+
+	sprintf(dev->devname, "%s@%s", dev->driver->pci_driver.name,
+		master->unique);
+
 	return 0;
-err:
-	drm_unset_busid(dev, master);
-	return ret;
 }
 
 /**
@@ -268,28 +295,6 @@ int drm_getstats(struct drm_device *dev, void *data,
 }
 
 /**
- * Get device/driver capabilities
- */
-int drm_getcap(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	struct drm_get_cap *req = data;
-
-	req->value = 0;
-	switch (req->capability) {
-	case DRM_CAP_DUMB_BUFFER:
-		if (dev->driver->dumb_create)
-			req->value = 1;
-		break;
-	case DRM_CAP_VBLANK_HIGH_CRTC:
-		req->value = 1;
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
-
-/**
  * Setversion ioctl.
  *
  * \param inode device inode.
@@ -317,11 +322,8 @@ int drm_setversion(struct drm_device *dev, void *data, struct drm_file *file_pri
 		if (sv->drm_di_minor >= 1) {
 			/*
 			 * Version 1.1 includes tying of DRM to specific device
-			 * Version 1.4 has proper PCI domain support
 			 */
-			retcode = drm_set_busid(dev, file_priv);
-			if (retcode)
-				goto done;
+			drm_set_busid(dev, file_priv);
 		}
 	}
 

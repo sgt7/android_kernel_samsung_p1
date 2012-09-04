@@ -146,7 +146,7 @@ static void vmw_gmr_fire_descriptors(struct vmw_private *dev_priv,
  */
 
 static unsigned long vmw_gmr_count_descriptors(struct page *pages[],
-					unsigned long num_pages)
+					       unsigned long num_pages)
 {
 	unsigned long prev_pfn = ~(0UL);
 	unsigned long pfn;
@@ -163,32 +163,44 @@ static unsigned long vmw_gmr_count_descriptors(struct page *pages[],
 }
 
 int vmw_gmr_bind(struct vmw_private *dev_priv,
-		 struct page *pages[],
-		 unsigned long num_pages,
-		 int gmr_id)
+		 struct ttm_buffer_object *bo)
 {
-	struct list_head desc_pages;
+	struct ttm_tt *ttm = bo->ttm;
+	unsigned long descriptors;
 	int ret;
+	uint32_t id;
+	struct list_head desc_pages;
 
-	if (unlikely(!(dev_priv->capabilities & SVGA_CAP_GMR)))
+	if (!(dev_priv->capabilities & SVGA_CAP_GMR))
 		return -EINVAL;
 
-	if (vmw_gmr_count_descriptors(pages, num_pages) >
-	    dev_priv->max_gmr_descriptors)
-		return -EINVAL;
-
-	INIT_LIST_HEAD(&desc_pages);
-
-	ret = vmw_gmr_build_descriptors(&desc_pages, pages, num_pages);
+	ret = ttm_tt_populate(ttm);
 	if (unlikely(ret != 0))
 		return ret;
 
-	vmw_gmr_fire_descriptors(dev_priv, gmr_id, &desc_pages);
+	descriptors = vmw_gmr_count_descriptors(ttm->pages, ttm->num_pages);
+	if (unlikely(descriptors > dev_priv->max_gmr_descriptors))
+		return -EINVAL;
+
+	INIT_LIST_HEAD(&desc_pages);
+	ret = vmw_gmr_build_descriptors(&desc_pages, ttm->pages,
+					ttm->num_pages);
+	if (unlikely(ret != 0))
+		return ret;
+
+	ret = vmw_gmr_id_alloc(dev_priv, &id);
+	if (unlikely(ret != 0))
+		goto out_no_id;
+
+	vmw_gmr_fire_descriptors(dev_priv, id, &desc_pages);
 	vmw_gmr_free_descriptors(&desc_pages);
-
+	vmw_dmabuf_set_gmr(bo, id);
 	return 0;
-}
 
+out_no_id:
+	vmw_gmr_free_descriptors(&desc_pages);
+	return ret;
+}
 
 void vmw_gmr_unbind(struct vmw_private *dev_priv, int gmr_id)
 {

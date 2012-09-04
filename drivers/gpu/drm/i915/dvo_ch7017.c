@@ -165,44 +165,67 @@ struct ch7017_priv {
 static void ch7017_dump_regs(struct intel_dvo_device *dvo);
 static void ch7017_dpms(struct intel_dvo_device *dvo, int mode);
 
-static bool ch7017_read(struct intel_dvo_device *dvo, u8 addr, u8 *val)
+static bool ch7017_read(struct intel_dvo_device *dvo, int addr, uint8_t *val)
 {
+	struct i2c_adapter *adapter = dvo->i2c_bus;
+	struct intel_i2c_chan *i2cbus = container_of(adapter, struct intel_i2c_chan, adapter);
+	u8 out_buf[2];
+	u8 in_buf[2];
+
 	struct i2c_msg msgs[] = {
 		{
 			.addr = dvo->slave_addr,
 			.flags = 0,
 			.len = 1,
-			.buf = &addr,
+			.buf = out_buf,
 		},
 		{
 			.addr = dvo->slave_addr,
 			.flags = I2C_M_RD,
 			.len = 1,
-			.buf = val,
+			.buf = in_buf,
 		}
 	};
-	return i2c_transfer(dvo->i2c_bus, msgs, 2) == 2;
+
+	out_buf[0] = addr;
+	out_buf[1] = 0;
+
+	if (i2c_transfer(&i2cbus->adapter, msgs, 2) == 2) {
+		*val= in_buf[0];
+		return true;
+	};
+
+	return false;
 }
 
-static bool ch7017_write(struct intel_dvo_device *dvo, u8 addr, u8 val)
+static bool ch7017_write(struct intel_dvo_device *dvo, int addr, uint8_t val)
 {
-	uint8_t buf[2] = { addr, val };
+	struct i2c_adapter *adapter = dvo->i2c_bus;
+	struct intel_i2c_chan *i2cbus = container_of(adapter, struct intel_i2c_chan, adapter);
+	uint8_t out_buf[2];
 	struct i2c_msg msg = {
 		.addr = dvo->slave_addr,
 		.flags = 0,
 		.len = 2,
-		.buf = buf,
+		.buf = out_buf,
 	};
-	return i2c_transfer(dvo->i2c_bus, &msg, 1) == 1;
+
+	out_buf[0] = addr;
+	out_buf[1] = val;
+
+	if (i2c_transfer(&i2cbus->adapter, &msg, 1) == 1)
+		return true;
+
+	return false;
 }
 
 /** Probes for a CH7017 on the given bus and slave address. */
 static bool ch7017_init(struct intel_dvo_device *dvo,
 			struct i2c_adapter *adapter)
 {
+	struct intel_i2c_chan *i2cbus = container_of(adapter, struct intel_i2c_chan, adapter);
 	struct ch7017_priv *priv;
-	const char *str;
-	u8 val;
+	uint8_t val;
 
 	priv = kzalloc(sizeof(struct ch7017_priv), GFP_KERNEL);
 	if (priv == NULL)
@@ -214,27 +237,16 @@ static bool ch7017_init(struct intel_dvo_device *dvo,
 	if (!ch7017_read(dvo, CH7017_DEVICE_ID, &val))
 		goto fail;
 
-	switch (val) {
-	case CH7017_DEVICE_ID_VALUE:
-		str = "ch7017";
-		break;
-	case CH7018_DEVICE_ID_VALUE:
-		str = "ch7018";
-		break;
-	case CH7019_DEVICE_ID_VALUE:
-		str = "ch7019";
-		break;
-	default:
+	if (val != CH7017_DEVICE_ID_VALUE &&
+	    val != CH7018_DEVICE_ID_VALUE &&
+	    val != CH7019_DEVICE_ID_VALUE) {
 		DRM_DEBUG_KMS("ch701x not detected, got %d: from %s "
-			      "slave %d.\n",
-			      val, adapter->name,dvo->slave_addr);
+				"Slave %d.\n",
+			  val, i2cbus->adapter.name,dvo->slave_addr);
 		goto fail;
 	}
 
-	DRM_DEBUG_KMS("%s detected on %s, addr %d\n",
-		      str, adapter->name, dvo->slave_addr);
 	return true;
-
 fail:
 	kfree(priv);
 	return false;
@@ -242,7 +254,7 @@ fail:
 
 static enum drm_connector_status ch7017_detect(struct intel_dvo_device *dvo)
 {
-	return connector_status_connected;
+	return connector_status_unknown;
 }
 
 static enum drm_mode_status ch7017_mode_valid(struct intel_dvo_device *dvo,
@@ -356,7 +368,7 @@ static void ch7017_dpms(struct intel_dvo_device *dvo, int mode)
 	}
 
 	/* XXX: Should actually wait for update power status somehow */
-	msleep(20);
+	udelay(20000);
 }
 
 static void ch7017_dump_regs(struct intel_dvo_device *dvo)
