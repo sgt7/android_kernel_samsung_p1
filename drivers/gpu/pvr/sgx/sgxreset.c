@@ -169,7 +169,7 @@ static IMG_VOID SGXResetSleep(PVRSRV_SGXDEV_INFO	*psDevInfo,
 #endif 
 
 	
-	OSWaitus(0.5);
+	SGXWaitClocks(psDevInfo, 100);
 	if (bPDump)
 	{
 		PDUMPIDLWITHFLAGS(30, ui32PDUMPFlags);

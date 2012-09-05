@@ -109,8 +109,7 @@ pvrsrvkm-y := \
 	sgx/sgxkick.o \
 	sgx/sgxtransfer.o \
 	sgx/mmu.o \
-	sgx/pb.o \
-	pvr_oc.o
+	sgx/pb.o
 
 ccflags-$(CONFIG_ARCH_S5PV210) += \
 	-DPVR_BUILD_DIR="\"smdkc110_android\"" \
