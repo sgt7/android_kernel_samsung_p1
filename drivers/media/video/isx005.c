@@ -3990,6 +3990,10 @@ static int isx005_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 
 		case V4L2_CID_CAMERA_FLASH_MODE:
 			flash_mode = ctrl->value;
+			// torch
+			if (ctrl->value == FLASHMODE_TORCH)
+				isx005_flash(100, sd);
+
 			break;
 
 		case V4L2_CID_CAMERA_BRIGHTNESS:
