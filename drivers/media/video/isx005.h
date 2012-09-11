@@ -23,7 +23,7 @@
 #define FLASHMODE_AUTO	2
 #define FLASHMODE_ON	3
 #define FLASHMODE_OFF	1
-
+#define FLASHMODE_TORCH	4
 
 //	AE parameter
 #define	ERRSCL_AUTO			0x0284
