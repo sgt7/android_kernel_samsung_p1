@@ -3993,6 +3993,8 @@ static int isx005_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 			// torch
 			if (ctrl->value == FLASHMODE_TORCH)
 				isx005_flash(100, sd);
+			else if (ctrl->value == FLASHMODE_OFF)
+				isx005_flash(0, sd);
 
 			break;
 
