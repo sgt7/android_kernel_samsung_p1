@@ -7057,12 +7057,14 @@ static cntry_locales_custom_t crespo_wifi_translate_custom_table[] = {
 	{"CH", "CH", 0},
 	{"TR", "TR", 0},
 	{"NO", "NO", 0},
-	{"KR", "XY", 3},
+	{"KR", "KR", 25},
 	{"AU", "XY", 3},
-	{"CN", "XY", 3},  /* input ISO "CN" to : XY regrev 03 */
+	{"CN", "CN", 0},
 	{"TW", "XY", 3},
 	{"AR", "XY", 3},
-	{"MX", "XY", 3}
+	{"MX", "XY", 3},
+	{"JP", "EU", 0},
+	{"BR", "KR", 25}
 };
 
 static void *crespo_wifi_get_country_code(char *ccode)
