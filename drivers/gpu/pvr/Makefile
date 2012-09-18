@@ -10,6 +10,7 @@ ccflags-y := \
 	-Wstrict-prototypes\
 	-Wno-unused-parameter\
 	-Wno-sign-compare\
+	-Werror\
 	-fno-strict-aliasing\
 	-Wno-pointer-arith\
 	-Os
