@@ -9,7 +9,7 @@ busybox rm init
 busybox mount -t proc proc /proc
 busybox mount -t sysfs sysfs /sys
 
-busybox mount -t ext4 /dev/block/mmcblk0p2 /system
+busybox mount -t yaffs2 /dev/block/mtdblock2 /system
 busybox mount -t ext4 /dev/block/mmcblk0p3 /cache
 
 image=/stage1/boot.cpio
