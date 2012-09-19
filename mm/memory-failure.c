@@ -237,7 +237,7 @@ void shake_page(struct page *p, int access)
 			};
 
 			nr = shrink_slab(&shrink, 1000, 1000);
-			if (page_count(p) == 0)
+			if (page_count(p) == 1)
 				break;
 		} while (nr > 10);
 	}
