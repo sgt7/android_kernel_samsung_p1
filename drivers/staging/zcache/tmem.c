@@ -26,7 +26,7 @@
 
 #include <linux/list.h>
 #include <linux/spinlock.h>
-#include <linux/atomic.h>
+#include <asm/atomic.h>
 
 #include "tmem.h"
 
