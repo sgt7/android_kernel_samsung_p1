@@ -383,6 +383,7 @@ struct inodes_stat_t {
 #include <linux/capability.h>
 #include <linux/semaphore.h>
 #include <linux/fiemap.h>
+#include <linux/shrinker.h>
 
 #include <asm/atomic.h>
 #include <asm/byteorder.h>
@@ -1389,6 +1390,8 @@ struct super_block {
 	 * Saved pool identifier for cleancache (-1 means none)
 	 */
 	int cleancache_poolid;
+
+	struct shrinker s_shrink;	/* per-sb shrinker handle */
 };
 
 extern struct timespec current_fs_time(struct super_block *sb);
