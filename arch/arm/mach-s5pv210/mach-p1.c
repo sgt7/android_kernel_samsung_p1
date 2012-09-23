@@ -1170,11 +1170,13 @@ void lcd_cfg_gpio_early_suspend(void)
 	s3c_gpio_setpull(GPIO_DISPLAY_CLK, S3C_GPIO_PULL_NONE);
 	gpio_set_value(GPIO_DISPLAY_CLK, 0);
 
+	#if defined(CONFIG_MACH_P1_GSM)
 	/* DISPLAY_SO */
 	/*
 	s3c_gpio_cfgpin(S5PV210_MP04(2), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_MP04(2), S3C_GPIO_PULL_DOWN);
 	*/
+	#endif
 
 	/* DISPLAY_SI */
 	s3c_gpio_cfgpin(GPIO_DISPLAY_SI, S3C_GPIO_OUTPUT);
@@ -2557,11 +2559,6 @@ static struct i2c_board_info i2c_devs4[] __initdata = {
 		I2C_BOARD_INFO("SII9234C", 0xC8>>1),
 	},
 #endif	
-};
-
-static struct platform_device bma020_accel = {
-       .name  = "bma020-accelerometer",
-       .id    = -1,
 };
 
 static struct l3g4200d_platform_data l3g4200d_p1p2_platform_data = {
@@ -6659,12 +6656,7 @@ void s3c_config_sleep_gpio(void)
 	}
 
 
-	if(HWREV >= 0x4) {  // DET_3.5
-		//s3c_gpio_cfgpin(GPIO_DET_35_R04, S3C_GPIO_INPUT);
-		//s3c_gpio_setpull(GPIO_DET_35_R04, S3C_GPIO_PULL_NONE);
-		//s3c_gpio_setpin(GPIO_DET_35_R04, 0);
-	}
-	else {  // NC
+	if(HWREV < 0x4) { // NC
 		s3c_gpio_cfgpin(GPIO_GPH10, S3C_GPIO_OUTPUT);
 		s3c_gpio_setpull(GPIO_GPH10, S3C_GPIO_PULL_NONE);
 		s3c_gpio_setpin(GPIO_GPH10, 0);
@@ -6675,12 +6667,7 @@ void s3c_config_sleep_gpio(void)
 	s3c_gpio_setpull(GPIO_MHL_INT, S3C_GPIO_PULL_DOWN);
 
 
-	if(HWREV >= 0x4) {  // SEND_END
-		//s3c_gpio_cfgpin(GPIO_EAR_SEND_END_R04, S3C_GPIO_INPUT);
-		//s3c_gpio_setpull(GPIO_EAR_SEND_END_R04, S3C_GPIO_PULL_NONE);
-		//s3c_gpio_setpin(GPIO_EAR_SEND_END_R04, 0);
-	}
-	else {  // NC
+	if(HWREV < 0x4) { // NC
 		s3c_gpio_cfgpin(GPIO_GPH14, S3C_GPIO_OUTPUT);
 		s3c_gpio_setpull(GPIO_GPH14, S3C_GPIO_PULL_NONE);
 		s3c_gpio_setpin(GPIO_GPH14, 0);
@@ -6746,24 +6733,14 @@ void s3c_config_sleep_gpio(void)
 	s3c_gpio_setpull(GPIO_MSENSE_IRQ, S3C_GPIO_PULL_UP);
 #endif
 
-	if(HWREV >= 0x6) {  // SIM_DETECT
-		//s3c_gpio_cfgpin(GPIO_SIM_nDETECT, S3C_GPIO_INPUT);
-		//s3c_gpio_setpull(GPIO_SIM_nDETECT, S3C_GPIO_PULL_NONE);
-		//s3c_gpio_setpin(GPIO_SIM_nDETECT, 0);
-	}
-	else {  // NC
+	if(HWREV < 0x6) { // NC
 		s3c_gpio_cfgpin(GPIO_GPH33, S3C_GPIO_OUTPUT);
 		s3c_gpio_setpull(GPIO_GPH33, S3C_GPIO_PULL_NONE);
 		s3c_gpio_setpin(GPIO_GPH33, 0);
 	}
 
 
-	if(HWREV >= 11) {   // DOCK_INT (GT-P1000 Rev0.5)
-		//s3c_gpio_cfgpin(GPIO_DOCK_INT, S3C_GPIO_INPUT);
-		//s3c_gpio_setpull(GPIO_DOCK_INT, S3C_GPIO_PULL_NONE);
-		//s3c_gpio_setpin(GPIO_DOCK_INT, 0);
-	}
-	else {  // NC
+	if(HWREV < 11) { // NC
 		s3c_gpio_cfgpin(GPIO_GPH35, S3C_GPIO_OUTPUT);
 		s3c_gpio_setpull(GPIO_GPH35, S3C_GPIO_PULL_NONE);
 		s3c_gpio_setpin(GPIO_GPH35, 0);
