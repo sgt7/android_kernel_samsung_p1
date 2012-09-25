@@ -35,6 +35,8 @@
 #include <plat/regs-fb.h>
 #include <plat/pm.h>
 
+#define CPUFREQ_SAMPLING_RATE      40000
+
 static struct clk *mpu_clk;
 static struct regulator *arm_regulator;
 static struct regulator *internal_regulator;
@@ -55,7 +57,7 @@ extern int exp_UV_mV[7];
 extern int exp_int_UV_mV[7];
 
 unsigned int freq_uv_table[7][3] = {
-	{1400000, 1500, 1500},
+	{1300000, 1500, 1500},
 	{1200000, 1450, 1450},
 	{1000000, 1350, 1350},
 	{800000, 1275, 1275},
@@ -66,7 +68,7 @@ unsigned int freq_uv_table[7][3] = {
 
 /* frequency */
 static struct cpufreq_frequency_table freq_table[] = {
-	{OC0, 1400*1000},
+	{OC0, 1300*1000},
 	{OC1, 1200*1000},
 	{L0, 1000*1000},
 	{L1, 800*1000},
@@ -88,13 +90,13 @@ static unsigned int g_dvfslockval[DVFS_LOCK_TOKEN_NUM];
 
 #endif
 
-const unsigned long arm_volt_max = 1500001;
-const unsigned long int_volt_max = 1250001;
+const unsigned long arm_volt_max = 1500000;
+const unsigned long int_volt_max = 1250000;
 
 static struct s5pv210_dvs_conf dvs_conf[] = {
-	[OC0] = { /* 1.4GHz */
+	[OC0] = { /* 1.3GHz */
 		.arm_volt   = 1500000,
-		.int_volt   = 1250000,
+		.int_volt   = 1200000,
 	},
 	[OC1] = { /* 1.2GHz */
 		.arm_volt   = 1450000,
@@ -127,8 +129,8 @@ static u32 clkdiv_val[7][11] = {
 	 * HCLK_DSYS, PCLK_DSYS, HCLK_PSYS, PCLK_PSYS, ONEDRAM,
 	 * MFC, G3D }
 	 */
-	/* OC0 : [1400/200/200/100][166/83][133/66][200/200] */
-	{0, 6, 6, 1, 3, 1, 4, 1, 3, 0, 0},
+	/* OC0 : [1300/200/200/100][166/83][133/66][200/200] */
+	{0, 5, 5, 1, 3, 1, 4, 1, 3, 0, 0},
 	/* OC1 : [1200/200/200/100][166/83][133/66][200/200] */
 	{0, 5, 5, 1, 3, 1, 4, 1, 3, 0, 0},
 	/* L0 : [1000/200/200/100][166/83][133/66][200/200] */
@@ -144,9 +146,9 @@ static u32 clkdiv_val[7][11] = {
 };
 
 static struct s3c_freq clk_info[] = {
-	[OC0] = {    /* OC0: 1.4GHz */
-		.fclk       = 1400000,
-		.armclk     = 1400000,
+	[OC0] = {    /* OC0: 1.3GHz */
+		.fclk       = 1300000,
+		.armclk     = 1300000,
 		.hclk_tns   = 0,
 		.hclk       = 133000,
 		.pclk       = 66000,
@@ -395,8 +397,8 @@ static void s5pv210_cpufreq_clksrcs_MPLL2APLL(unsigned int index,
 	 */
 	switch ( index ) {
 		case OC0:
-			/* APLL FOUT becomes 1400 Mhz */
-			__raw_writel(PLL45XX_APLL_VAL_1400, S5P_APLL_CON);
+			/* APLL FOUT becomes 1300 Mhz */
+			__raw_writel(PLL45XX_APLL_VAL_1300, S5P_APLL_CON);
 			break;
 		case OC1:
 			/* APLL FOUT becomes 1200 Mhz */
@@ -790,7 +792,7 @@ static int __init s5pv210_cpufreq_driver_init(struct cpufreq_policy *policy)
 
 	cpufreq_frequency_table_get_attr(freq_table, policy->cpu);
 
-	policy->cpuinfo.transition_latency = 100000; //40000;	/* 1us */
+	policy->cpuinfo.transition_latency = CPUFREQ_SAMPLING_RATE;
 
 	rate = clk_get_rate(mpu_clk);
 	i = 0;
