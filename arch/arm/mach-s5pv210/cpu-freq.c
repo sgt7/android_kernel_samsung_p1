@@ -368,7 +368,6 @@ int s5pv210_unlock_dvfs_high_level(unsigned int nToken)
 	printk(KERN_DEBUG "%s : unlock with token(%d) current(%X)\n",
 			__func__, nToken, g_dvfs_high_lock_token);
 #endif
-	*/
 	/* Reevaluate cpufreq policy with the effect of calling the governor with a
 	 * CPUFREQ_GOV_LIMITS event, so that the governor sets its preferred
 	 * frequency with the new (or no) DVFS limit. */
