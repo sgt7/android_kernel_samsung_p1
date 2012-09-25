@@ -1610,7 +1610,8 @@ static inline void *__vmalloc_node_flags(unsigned long size,
  */
 void *vmalloc(unsigned long size)
 {
-	return __vmalloc_node_flags(size, -1, GFP_KERNEL | __GFP_HIGHMEM);
+	return __vmalloc_node(size, 1, GFP_KERNEL | __GFP_HIGHMEM, PAGE_KERNEL,
+					-1, __builtin_return_address(0));
 }
 EXPORT_SYMBOL(vmalloc);
 
