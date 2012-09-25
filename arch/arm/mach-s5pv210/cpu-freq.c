@@ -51,16 +51,15 @@ static unsigned int apll_freq_max; /* in MHz */
 static DEFINE_MUTEX(set_freq_lock);
 
 /* UV */
-extern int exp_UV_mV[9];
-extern int exp_int_UV_mV[9];
+extern int exp_UV_mV[8];
+extern int exp_int_UV_mV[8];
 
-unsigned int freq_uv_table[9][3] = {
+unsigned int freq_uv_table[8][3] = {
 	{1400000, 1500, 1500},
 	{1300000, 1450, 1450},
 	{1200000, 1450, 1450},
 	{1000000, 1350, 1350},
 	{800000, 1275, 1275},
-	{600000, 1200, 1200},
 	{400000, 1050, 1050},
 	{200000, 950, 950},
 	{100000, 950, 950}
@@ -73,7 +72,6 @@ static struct cpufreq_frequency_table freq_table[] = {
 	{OC2, 1200*1000},
 	{L0, 1000*1000},
 	{L1, 800*1000},
-	{O6, 600*1000},
 	{L2, 400*1000},
 	{L3, 200*1000},
 	{L4, 100*1000},
@@ -87,7 +85,7 @@ struct s5pv210_dvs_conf {
 
 #ifdef CONFIG_DVFS_LIMIT
 static unsigned int g_dvfs_high_lock_token = 0;
-static unsigned int g_dvfs_high_lock_limit = 8;
+static unsigned int g_dvfs_high_lock_limit = 7;
 static unsigned int g_dvfslockval[DVFS_LOCK_TOKEN_NUM];
 
 #endif
@@ -116,10 +114,6 @@ static struct s5pv210_dvs_conf dvs_conf[] = {
 		.arm_volt   = 1275000,
 		.int_volt   = 1100000,
 	},
-	[O6] = { /* 600MHz */
-		.arm_volt   = 1200000,
-		.int_volt   = 1100000,
-	},
 	[L2] = { /* 400MHz */
 		.arm_volt   = 1050000,
 		.int_volt   = 1100000,
@@ -134,7 +128,7 @@ static struct s5pv210_dvs_conf dvs_conf[] = {
 	},
 };
 
-static u32 clkdiv_val[9][11] = {
+static u32 clkdiv_val[8][11] = {
 	/*{ APLL, A2M, HCLK_MSYS, PCLK_MSYS,
 	 * HCLK_DSYS, PCLK_DSYS, HCLK_PSYS, PCLK_PSYS, ONEDRAM,
 	 * MFC, G3D }
@@ -149,8 +143,6 @@ static u32 clkdiv_val[9][11] = {
 	{0, 4, 4, 1, 3, 1, 4, 1, 3, 0, 0},
 	/* L1 : [800/200/200/100][166/83][133/66][200/200] */
 	{0, 3, 3, 1, 3, 1, 4, 1, 3, 0, 0},
-	/* O6 : [600/200/200/100][166/83][133/66][200/200] */
-	{0, 2, 2, 1, 3, 1, 4, 1, 3, 0, 0},
 	/* L2 : [400/200/200/100][166/83][133/66][200/200] */
 	{1, 3, 1, 1, 3, 1, 4, 1, 3, 0, 0},
 	/* L3 : [200/200/200/100][166/83][133/66][200/200] */
@@ -207,17 +199,6 @@ static struct s3c_freq clk_info[] = {
 	[L1] = {	/* L1: 800MHz */
 		.fclk       = 800000,
 		.armclk     = 800000,
-		.hclk_tns   = 0,
-		.hclk       = 133000,
-		.pclk       = 66000,
-		.hclk_msys  = 200000,
-		.pclk_msys  = 100000,
-		.hclk_dsys  = 166750,
-		.pclk_dsys  = 83375,
-	},
-	[O6] = {	/* O6: 600MHz */
-		.fclk       = 600000,
-		.armclk     = 600000,
 		.hclk_tns   = 0,
 		.hclk       = 133000,
 		.pclk       = 66000,
@@ -454,10 +435,6 @@ static void s5pv210_cpufreq_clksrcs_MPLL2APLL(unsigned int index,
 		case L0:
 			/* APLL FOUT becomes 1000 Mhz */
 			__raw_writel(PLL45XX_APLL_VAL_1000, S5P_APLL_CON);
-			break;
-		case O6:
-			/* APLL FOUT becomes 600 Mhz */
-			__raw_writel(PLL45XX_APLL_VAL_600, S5P_APLL_CON);
 			break;
 		default:
 			/* APLL FOUT becomes 800 Mhz */
