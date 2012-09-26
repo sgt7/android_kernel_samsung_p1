@@ -50,7 +50,6 @@
 #include <mach/sec_jack.h>
 #endif
 
-#include <linux/if.h>
 #include <linux/usb/gadget.h>
 #include <linux/fsa9480.h>
 #include <linux/notifier.h>
@@ -6924,10 +6923,10 @@ static int wlan_carddetect_en(int onoff)
 
 static struct resource wifi_resources[] = {
 	[0] = {
-		.name	= "bcmdhd_wlan_irq",
+		.name	= "bcm4329_wlan_irq",
 		.start	= IRQ_EINT(20),
 		.end	= IRQ_EINT(20),
-		.flags	= IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHLEVEL | IORESOURCE_IRQ_SHAREABLE,
+		.flags	= IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHLEVEL,
 	},
 };
 
@@ -6951,58 +6950,6 @@ static void *crespo_mem_prealloc(int section, unsigned long size)
 
 	return wifi_mem_array[section].mem_ptr;
 }
-
-static unsigned char crespo_mac_addr[IFHWADDRLEN] = { 0,0x90,0x4c,0,0,0 };
-
-static int __init crespo_mac_addr_setup(char *str)
-{
-	char macstr[IFHWADDRLEN*3];
-	char *macptr = macstr;
-	char *token;
-	int i = 0;
-
-	if (!str)
-		return 0;
-	pr_debug("wlan MAC = %s\n", str);
-	if (strlen(str) >= sizeof(macstr))
-		return 0;
-	strcpy(macstr, str);
-
-	while ((token = strsep(&macptr, ":")) != NULL) {
-		unsigned long val;
-		int res;
-
-		if (i >= IFHWADDRLEN)
-			break;
-		res = strict_strtoul(token, 0x10, &val);
-		if (res < 0)
-			return 0;
-		crespo_mac_addr[i++] = (u8)val;
-	}
-
-	return 1;
-}
-
-__setup("androidboot.macaddr=", crespo_mac_addr_setup);
-
-static int crespo_wifi_get_mac_addr(unsigned char *buf)
-{
-	uint rand_mac;
-
-	if (!buf)
-		return -EFAULT;
-
-	if ((crespo_mac_addr[4] == 0) && (crespo_mac_addr[5] == 0)) {
-		srandom32((uint)jiffies);
-		rand_mac = random32();
-		crespo_mac_addr[3] = (unsigned char)rand_mac;
-		crespo_mac_addr[4] = (unsigned char)(rand_mac >> 8);
-		crespo_mac_addr[5] = (unsigned char)(rand_mac >> 16);
-	}
-	memcpy(buf, crespo_mac_addr, IFHWADDRLEN);
-	return 0;
-}
-
 
 int __init crespo_init_wifi_mem(void)
 {
@@ -7112,18 +7059,17 @@ static void *crespo_wifi_get_country_code(char *ccode)
 }
 
 static struct wifi_platform_data wifi_pdata = {
-	.set_power			= wlan_power_en,
-	.set_reset			= wlan_reset_en,
+	.set_power		= wlan_power_en,
+	.set_reset		= wlan_reset_en,
 	.set_carddetect		= wlan_carddetect_en,
 	.mem_prealloc		= crespo_mem_prealloc,
-	.get_mac_addr		= crespo_wifi_get_mac_addr,
 	.get_country_code	= crespo_wifi_get_country_code,
 };
 
 static struct platform_device sec_device_wifi = {
-	.name			= "bcmdhd_wlan",
-	.id				= 1,
-	.num_resources	= ARRAY_SIZE(wifi_resources),
+	.name			= "bcm4329_wlan",
+	.id			= 1,
+	.num_resources		= ARRAY_SIZE(wifi_resources),
 	.resource		= wifi_resources,
 	.dev			= {
 		.platform_data = &wifi_pdata,
@@ -7136,8 +7082,8 @@ static struct platform_device watchdog_device = {
 };
 
 static struct platform_device p1_keyboard = {
-	.name  = "p1_keyboard",
-	.id    = -1,
+        .name  = "p1_keyboard",
+        .id    = -1,
 };
 
 static struct platform_device *crespo_devices[] __initdata = {
