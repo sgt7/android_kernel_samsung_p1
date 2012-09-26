@@ -83,7 +83,6 @@ static struct struct_marks_ver_mark marks_ver_mark = {
 	.this=&marks_ver_mark,
 	.first_size=128*1024*1024,
 	.first_start_addr=0x30000000,
-//	.second_size=256*1024*1024,
 	.second_size=512*1024*1024,
 	.second_start_addr=0x40000000
 };
@@ -372,7 +371,6 @@ static ssize_t do_write_log_from_user(struct logger_log *log,
 		if (copy_from_user(log->buffer, buf + len, count - len))
 			return -EFAULT;
 
-#if 1
 /* [LINUSYS] added by khoonk for calculating boot-time  on 20070508  */
 	memset(klog_buf,0,255);
 
@@ -384,18 +382,8 @@ static ssize_t do_write_log_from_user(struct logger_log *log,
 
 		klog_buf[255]=0;
 
-/* In case when shutdown process is started, disable watching reset upload */
-#ifdef CONFIG_TARGET_LOCALE_KOR
-#ifdef CONFIG_KERNEL_DEBUG_SEC
-    	if(strncmp(log->buffer + log->w_off, "!@ Notifying thread to start radio shutdown", 30) == 0) {
-    		printk("Disable Reset Upload \n");
-            kernel_sec_clear_upload_magic_number();
-    	}
-#endif /* CONFIG_KERNEL_DEBUG_SEC */
-#endif /* CONFIG_TARGET_LOCALE_KOR */
     }
 /* [LINUSYS] added by khoonk for calculating boot-time  on 20070508  */
-#endif
 
 	log->w_off = logger_offset(log->w_off + count);
 
@@ -464,14 +452,12 @@ ssize_t logger_aio_write(struct kiocb *iocb, const struct iovec *iov,
 	/* wake up any blocked readers */
 	wake_up_interruptible(&log->wq);
 
-#if 1
 /* [LINUSYS] added by khoonk for calculating boot-time  on 20070508  */
     if(strncmp(klog_buf, "!@", 2) == 0)
 	{
 		printk("%s\n",klog_buf);
 	}		
 /* [LINUSYS] added by khoonk for calculating boot-time  on 20070508  */
-#endif	
 
 	return ret;
 }
