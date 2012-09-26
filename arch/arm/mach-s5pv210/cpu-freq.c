@@ -316,10 +316,6 @@ static void s5pv210_cpufreq_clksrcs_APLL2MPLL(unsigned int index,
 #ifdef CONFIG_DVFS_LIMIT
 int s5pv210_lock_dvfs_high_level(uint nToken, uint perf_level)
 {
-#if 0 /* Remove debug message */
-	printk(KERN_DEBUG "%s : lock with token(%d) level(%d) current(%X)\n",
-			__func__, nToken, perf_level, g_dvfs_high_lock_token);
-#endif
 
 	if (g_dvfs_high_lock_token & (1 << nToken))
 		return 0;
@@ -327,15 +323,11 @@ int s5pv210_lock_dvfs_high_level(uint nToken, uint perf_level)
 	if (perf_level > (MAX_PERF_LEVEL - 1))
 		return 0;
 
-	//mutex_lock(&dvfs_high_lock);
-
 	g_dvfs_high_lock_token |= (1 << nToken);
 	g_dvfslockval[nToken] = perf_level;
 
 	if (perf_level <  g_dvfs_high_lock_limit)
 		g_dvfs_high_lock_limit = perf_level;
-
-	//mutex_unlock(&dvfs_high_lock);
 
 	/* Reevaluate cpufreq policy with the effect of calling the governor with a
 	 * CPUFREQ_GOV_LIMITS event, so that the governor sets its preferred
@@ -352,8 +344,6 @@ int s5pv210_unlock_dvfs_high_level(unsigned int nToken)
 {
 	unsigned int i;
 
-	//mutex_lock(&dvfs_high_lock);
-
 	g_dvfs_high_lock_token &= ~(1 << nToken);
 	g_dvfslockval[nToken] = MAX_PERF_LEVEL;
 	g_dvfs_high_lock_limit = MAX_PERF_LEVEL;
@@ -365,11 +355,6 @@ int s5pv210_unlock_dvfs_high_level(unsigned int nToken)
 		}
 	}
 
-	//mutex_unlock(&dvfs_high_lock);
-#if 0 /* Remove debug message */
-	printk(KERN_DEBUG "%s : unlock with token(%d) current(%X)\n",
-			__func__, nToken, g_dvfs_high_lock_token);
-#endif
 	/* Reevaluate cpufreq policy with the effect of calling the governor with a
 	 * CPUFREQ_GOV_LIMITS event, so that the governor sets its preferred
 	 * frequency with the new (or no) DVFS limit. */
@@ -860,8 +845,7 @@ static int s5pv210_cpufreq_notifier_event(struct notifier_block *this,
 		policy->min = policy->max = SLEEP_FREQ;
 
 		/* Call "internal" version as policy is already locked. */
-		ret = __cpufreq_driver_target(policy, SLEEP_FREQ,
-				DISABLE_FURTHER_CPUFREQ);
+		ret = __cpufreq_driver_target(policy, SLEEP_FREQ, DISABLE_FURTHER_CPUFREQ);
 
 		unlock_policy_rwsem_write(policy->cpu);
 suspend_lock_fail:

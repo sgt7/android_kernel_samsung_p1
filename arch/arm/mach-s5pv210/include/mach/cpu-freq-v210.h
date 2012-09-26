@@ -24,7 +24,7 @@
 #define APLL_VAL_800	((1<<31)|(200<<16)|(6<<8)|(1))
 
 enum perf_level {
-	OC0 = 0,	// 1.4GHz
+	OC0 = 0,	// 1.3GHz
 	OC1,		// 1.2GHz
 	L0,			// 1.0GHz
 	L1,			// 800MHz
