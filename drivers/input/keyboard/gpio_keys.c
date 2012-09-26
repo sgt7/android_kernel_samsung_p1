@@ -363,6 +363,9 @@ static void gpio_keys_report_event(struct gpio_button_data *bdata)
         /*workaround irq bug in p1*/
         if(!button->pressed)
         {
+        }
+        else
+        {
             input_event(input, type, button->code, 1);
             input_sync(input);
             msleep(1);
