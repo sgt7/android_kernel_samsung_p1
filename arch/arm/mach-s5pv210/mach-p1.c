@@ -137,6 +137,9 @@ EXPORT_SYMBOL(sec_get_param_value);
 #define KERNEL_REBOOT_MASK      0xFFFFFFFF
 #define REBOOT_MODE_FAST_BOOT		7
 
+
+#ifdef CONFIG_DHD_USE_STATIC_BUF
+
 #define PREALLOC_WLAN_SEC_NUM		4
 #define PREALLOC_WLAN_BUF_NUM		160
 #define PREALLOC_WLAN_SECTION_HEADER	24
@@ -150,6 +153,13 @@ EXPORT_SYMBOL(sec_get_param_value);
 
 static struct sk_buff *wlan_static_skb[WLAN_SKB_BUF_NUM];
 EXPORT_SYMBOL(wlan_static_skb);
+
+struct wifi_mem_prealloc {
+	void *mem_ptr;
+	unsigned long size;
+};
+
+#endif
 
 
 struct sec_battery_callbacks *callbacks;
@@ -166,11 +176,6 @@ int sec_switch_set_regulator(int mode);
 void otg_phy_init(void);
 
 extern bool keyboard_enable;
-
-struct wifi_mem_prealloc {
-	void *mem_ptr;
-	unsigned long size;
-};
 
 static int crespo_notifier_call(struct notifier_block *this,
 					unsigned long code, void *_cmd)
@@ -6934,6 +6939,7 @@ static struct resource wifi_resources[] = {
 	},
 };
 
+#ifdef CONFIG_DHD_USE_STATIC_BUF
 static struct wifi_mem_prealloc wifi_mem_array[PREALLOC_WLAN_SEC_NUM] = {
 	{NULL, (WLAN_SECTION_SIZE_0 + PREALLOC_WLAN_SECTION_HEADER)},
 	{NULL, (WLAN_SECTION_SIZE_1 + PREALLOC_WLAN_SECTION_HEADER)},
@@ -6954,9 +6960,11 @@ static void *crespo_mem_prealloc(int section, unsigned long size)
 
 	return wifi_mem_array[section].mem_ptr;
 }
+#endif
 
 int __init crespo_init_wifi_mem(void)
 {
+#ifdef CONFIG_DHD_USE_STATIC_BUF
 	int i;
 	int j;
 
@@ -6975,6 +6983,7 @@ int __init crespo_init_wifi_mem(void)
 		if (!wifi_mem_array[i].mem_ptr)
 			goto err_mem_alloc;
 	}
+
 	return 0;
 
  err_mem_alloc:
@@ -6990,6 +6999,9 @@ int __init crespo_init_wifi_mem(void)
 		dev_kfree_skb(wlan_static_skb[j]);
 
 	return -ENOMEM;
+#else
+	return 0;
+#endif
 }
 
 /* Customized Locale table : OPTIONAL feature */
@@ -7066,7 +7078,11 @@ static struct wifi_platform_data wifi_pdata = {
 	.set_power		= wlan_power_en,
 	.set_reset		= wlan_reset_en,
 	.set_carddetect		= wlan_carddetect_en,
+#ifdef CONFIG_DHD_USE_STATIC_BUF
 	.mem_prealloc		= crespo_mem_prealloc,
+#else
+	.mem_prealloc	= NULL,
+#endif
 	.get_country_code	= crespo_wifi_get_country_code,
 };
 
