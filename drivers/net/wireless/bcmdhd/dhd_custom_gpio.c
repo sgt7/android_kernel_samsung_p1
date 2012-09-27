@@ -199,10 +199,10 @@ dhd_custom_get_mac_address(unsigned char *buf)
 const struct cntry_locales_custom translate_custom_table[] = {
 /* Table should be filled out based on custom platform regulatory requirement */
 #ifdef EXAMPLE_TABLE
-	{"",   "XY", 4},  /* universal */
+	{"",   "XY", 4},  /* Universal if Country code is unknown or empty */
 	{"US", "US", 69}, /* input ISO "US" to : US regrev 69 */
 	{"CA", "US", 69}, /* input ISO "CA" to : US regrev 69 */
-	{"EU", "EU", 5},  /* European union countries */
+	{"EU", "EU", 5},  /* European union countries to : EU regrev 05 */
 	{"AT", "EU", 5},
 	{"BE", "EU", 5},
 	{"BG", "EU", 5},
@@ -230,17 +230,17 @@ const struct cntry_locales_custom translate_custom_table[] = {
 	{"SI", "EU", 5},
 	{"ES", "EU", 5},
 	{"SE", "EU", 5},
-	{"GB", "EU", 5},  /* input ISO "GB" to : EU regrev 05 */
+	{"GB", "EU", 5},
+	{"KR", "XY", 3},
+	{"AU", "XY", 3},
+	{"CN", "XY", 3}, /* input ISO "CN" to : XY regrev 03 */
+	{"TW", "XY", 3},
+	{"AR", "XY", 3},
+	{"MX", "XY", 3},
 	{"IL", "IL", 0},
 	{"CH", "CH", 0},
 	{"TR", "TR", 0},
 	{"NO", "NO", 0},
-	{"KR", "KR", 25},
-	{"AU", "XY", 3},
-	{"CN", "CN", 0},
-	{"TW", "XY", 3},
-	{"AR", "XY", 3},
-	{"MX", "XY", 3},
 	{"JP", "EU", 0},
 	{"BR", "KR", 25}
 #endif /* EXMAPLE_TABLE */
