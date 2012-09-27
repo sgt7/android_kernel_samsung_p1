@@ -1118,7 +1118,7 @@ static void qt602240_input_read(struct qt602240_data *data)
 					s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_7, L0); // 1000MHz
 					break;
 				case 3:
-					s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_7, OC1); // 1200MHz
+					s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_7, OC0); // 1200MHz
 					break;
 				default:
 					s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_7, L1); // 800MHz
