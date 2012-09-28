@@ -53,9 +53,6 @@ extern struct class *sec_class;
 
 //unsigned char maxim_chg_status(void);	// 1: TA or UST, 0: normal
 
-unsigned int touch_state_val = 0;
-EXPORT_SYMBOL(touch_state_val);
-
 struct qt602240_data * p_qt602240_data;
 #ifdef CONFIG_HAS_EARLYSUSPEND
 static void qt602240_early_suspend(struct early_suspend *);
@@ -1253,10 +1250,8 @@ static irqreturn_t qt602240_interrupt(int irq, void *dev_id)
     if(!leds_on) {
         leds_on = true;
         touch_led_on(255);
-		touch_state_val = 1;
     } else {
         mod_timer(&leds_timer, jiffies + msecs_to_jiffies(leds_timeout));
-		touch_state_val = 0;
     }
 
     qt602240_input_read(data);
@@ -2302,7 +2297,6 @@ static int __devexit qt602240_remove(struct i2c_client *client)
 
 	sysfs_remove_group(&client->dev.kobj, &qt602240_attr_group);
 	i2c_set_clientdata(client, NULL);
-	touch_state_val = 0;
 
 	return 0;
 }
@@ -2317,7 +2311,6 @@ static int qt602240_suspend(struct i2c_client *client, pm_message_t mesg)
 {
     struct qt602240_data *data = i2c_get_clientdata(client);
 #endif
-	touch_state_val = 0;
     disable_irq_nosync(data->irq);
 
     /* touch disable */
