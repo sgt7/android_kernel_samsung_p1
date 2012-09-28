@@ -422,7 +422,7 @@ void max17042_periodic_read(void)
 
 	getnstimeofday(&ts);
 	rtc_time_to_tm(ts.tv_sec, &tm);
-
+	/*
 	printk("[MAX17042] %d/%d/%d %02d:%02d,",
 		tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 2000, tm.tm_hour, tm.tm_min);
 
@@ -438,6 +438,7 @@ void max17042_periodic_read(void)
 		else
 			printk("%04xh,", fg_read_register(reg));
 	}
+	*/
 
 }
 
@@ -1614,8 +1615,10 @@ int max17042_check_cap_corruption(struct max17042_callbacks *ptr)
 	if( ((VfSOC >= 70) && ((RemCap >= (FullCapacity * 995 / 1000)) && (RemCap <= (FullCapacity * 1005 / 1000))))
 		|| low_batt_comp_flag || soc_restart_flag )
 	{
+		/*
 		printk("%s : RemCap(%d), FullCap(%d), SOC(%d), low_batt_comp_flag(%d), soc_restart_flag(%d)\n",
 			__func__, (RemCap/2), (FullCapacity/2), RepSOC, low_batt_comp_flag, soc_restart_flag);
+		*/
 		prevRepSOC = RepSOC;
 		prevRemCap = RemCap;
 		prevFullCapacity= FullCapacity;
@@ -1632,19 +1635,19 @@ int max17042_check_cap_corruption(struct max17042_callbacks *ptr)
 	temp = ((VfOCV & 0xF000) >> 4) * 78125;
 	temp2 = temp / 1000000;
 	pr_vfocv += (temp2 << 4);
-
+	/*
 	printk("%s : VfSOC(%d), RepSOC(%d), MixCap(%d), VfOCV(0x%04x, %d)\n",
 		__func__, VfSOC, RepSOC, (MixCap/2), VfOCV, pr_vfocv);
-
+	*/
 	if( ( ((VfSOC+5) < prevVfSOC) || (VfSOC > (prevVfSOC+5)) )
 		|| ( ((RepSOC+5) < prevRepSOC) || (RepSOC > (prevRepSOC+5)) )
 		|| ( ((MixCap+530) < prevMixCap) || (MixCap > (prevMixCap+530)) ) )  // MixCap differ is greater than 265mAh
 	{
 		max17042_periodic_read();
-
+		/*
 		printk("[FG_Recovery] (B) VfSOC(%d), prevVfSOC(%d), RepSOC(%d), prevRepSOC(%d), MixCap(%d), prevMixCap(%d)\n",
 			VfSOC, prevVfSOC, RepSOC, prevRepSOC, (MixCap/2), (prevMixCap/2));
-
+		*/
 		spin_lock_irqsave(&fg_lock, flag);
 
 		fg_write_and_verify_register(REMCAP_MIX_REG , prevMixCap);  // MixCap
@@ -1682,11 +1685,11 @@ int max17042_check_cap_corruption(struct max17042_callbacks *ptr)
 		temp = ((newVfOCV & 0xF000) >> 4) * 78125;
 		temp2 = temp / 1000000;
 		pr_vfocv += (temp2 << 4);
-
+		/*
 		printk("[FG_Recovery] (A) newVfSOC(%d), newRepSOC(%d), newMixCap(%d), newVfOCV(0x%04x, %d)\n",
 			max17042_get_vfsoc(chip->client), max17042_get_soc(chip->client),
 			(fg_read_register(REMCAP_MIX_REG)/2), newVfOCV, pr_vfocv);
-		
+		*/
 		max17042_periodic_read();
 
 		// Update with recoverd values.
@@ -1718,7 +1721,8 @@ int max17042_test_mode_request(
 		return -1;
 	}
 
-	printk("%s: test_mode(%d)\n", __func__, (int)mode);
+	printk(
+"%s: test_mode(%d)\n", __func__, (int)mode);
 
 	switch (mode) {
 	case TEST_MODE_FUEL_GAUGE_CHECK:
@@ -1833,13 +1837,13 @@ static void max17042_update_values(struct max17042_chip *chip)
 	ktime_get_ts(&chip->next_update_time);
 	monotonic_to_bootbased(&chip->next_update_time);
 	chip->next_update_time.tv_sec++;
-
+	/*
 	if(!(pr_cnt % 2)) {
 		printk("[MAX17042] Vcell(%d), SOC(%d), FullCap(%d), RemCap(%d), Current(%dmA), AvgCurrent(%dmA)\n",
 			chip->vcell, chip->soc, (fg_read_register(FULLCAP_REG) / 2),
 			(fg_read_register(REMCAP_REP_REG) / 2), chip->current_now, chip->current_avg);
 	}
-
+	*/
 	if(!(pr_cnt++ % 4))
 	{
 		max17042_periodic_read();
