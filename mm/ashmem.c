@@ -351,18 +351,17 @@ out:
  * chunks of ashmem regions LRU-wise one-at-a-time until we hit 'nr_to_scan'
  * pages freed.
  */
-static int ashmem_shrink(struct shrinker *s, struct shrink_control *sc)
+static int ashmem_shrink(struct shrinker *s, int nr_to_scan, gfp_t gfp_mask)
 {
 	struct ashmem_range *range, *next;
 
 	/* We might recurse into filesystem code, so bail out if necessary */
-	if (sc->nr_to_scan && !(sc->gfp_mask & __GFP_FS))
+	if (nr_to_scan && !(gfp_mask & __GFP_FS))
 		return -1;
-	if (!sc->nr_to_scan)
+	if (!nr_to_scan)
 		return lru_count;
 
-	if (!mutex_trylock(&ashmem_mutex))
-		return -1;
+	mutex_lock(&ashmem_mutex);
 	list_for_each_entry_safe(range, next, &ashmem_lru_list, lru) {
 		struct inode *inode = range->asma->file->f_dentry->d_inode;
 		loff_t start = range->pgstart * PAGE_SIZE;
@@ -372,8 +371,8 @@ static int ashmem_shrink(struct shrinker *s, struct shrink_control *sc)
 		range->purged = ASHMEM_WAS_PURGED;
 		lru_del(range);
 
-		sc->nr_to_scan -= range_size(range);
-		if (sc->nr_to_scan <= 0)
+		nr_to_scan -= range_size(range);
+		if (nr_to_scan <= 0)
 			break;
 	}
 	mutex_unlock(&ashmem_mutex);
@@ -742,13 +741,8 @@ static long ashmem_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	case ASHMEM_PURGE_ALL_CACHES:
 		ret = -EPERM;
 		if (capable(CAP_SYS_ADMIN)) {
-			struct shrink_control sc = {
-				.gfp_mask = GFP_KERNEL,
-				.nr_to_scan = 0,
-			};
-			ret = ashmem_shrink(&ashmem_shrinker, &sc);
-			sc.nr_to_scan = ret;
-			ashmem_shrink(&ashmem_shrinker, &sc);
+			ret = ashmem_shrink(&ashmem_shrinker, 0, GFP_KERNEL);
+			ashmem_shrink(&ashmem_shrinker, ret, GFP_KERNEL);
 		}
 		break;
 	case ASHMEM_CACHE_FLUSH_RANGE:
