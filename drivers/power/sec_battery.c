@@ -696,23 +696,23 @@ static void sec_bat_discharge_reason(struct chg_data *chg)
 
 	discharge_reason = chg->bat_info.dis_reason & 0xf;
 
-	if (discharge_reason == DISCONNECT_BAT_FULL &&
+	if (discharge_reason & DISCONNECT_BAT_FULL &&
 			chg->bat_info.batt_vcell < RECHARGE_COND_VOLTAGE) {
 		chg->bat_info.dis_reason &= ~DISCONNECT_BAT_FULL;
 		chg->is_recharging = true;
 	}
 
-	if (discharge_reason == DISCONNECT_TEMP_OVERHEAT &&
+	if (discharge_reason & DISCONNECT_TEMP_OVERHEAT &&
 			chg->bat_info.batt_temp <=
 			HIGH_RECOVER_TEMP)
 		chg->bat_info.dis_reason &= ~DISCONNECT_TEMP_OVERHEAT;
 
-	if (discharge_reason == DISCONNECT_TEMP_FREEZE &&
+	if (discharge_reason & DISCONNECT_TEMP_FREEZE &&
 			chg->bat_info.batt_temp >=
 			LOW_RECOVER_TEMP)
 		chg->bat_info.dis_reason &= ~DISCONNECT_TEMP_FREEZE;
 
-	if (discharge_reason == DISCONNECT_OVER_TIME &&
+	if (discharge_reason & DISCONNECT_OVER_TIME &&
 			chg->bat_info.batt_vcell < RECHARGE_COND_VOLTAGE)
 		chg->bat_info.dis_reason &= ~DISCONNECT_OVER_TIME;
 
