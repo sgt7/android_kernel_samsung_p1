@@ -51,9 +51,6 @@
 #ifdef CONFIG_FB_S3C_CMC623
 #include "tune_cmc623.h"
 #endif
-#ifdef CONFIG_MACH_P1
-#include "logo_rgb24_wvga_portrait.h"
-#endif
 
 #if defined(CONFIG_MACH_S5PC110_P1) && defined(CONFIG_TARGET_LOCALE_KOR)
 #define BOOTLOADER_INIT_LCD
@@ -182,10 +179,8 @@ MODULE_PARM_DESC(bootloaderfb, "Address of booting logo image in Bootloader");
 
 static int s3cfb_draw_logo(struct fb_info *fb)
 {
-	if (readl(S5P_INFORM5)) //LPM_CHARGING mode
-		memcpy(fb->screen_base, charging, fb->var.yres * fb->fix.line_length);
-	else
-		memcpy(fb->screen_base, LOGO_RGB24, fb->var.yres * fb->fix.line_length);
+     memcpy(fb->screen_base, \
+            phys_to_virt(LOGO_MEM_BASE), LOGO_MEM_SIZE);
  
         return 0;
 }
