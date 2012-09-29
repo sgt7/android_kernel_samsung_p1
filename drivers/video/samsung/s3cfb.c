@@ -40,6 +40,7 @@
 #endif
 #if defined(CONFIG_MACH_P1) || defined(CONFIG_MACH_HERRING)
 #include <linux/delay.h>
+#include <linux/sec_battery.h>
 #include <mach/gpio.h>
 #include <mach/gpio-p1.h>
 #include <mach/regs-clock.h>
@@ -57,13 +58,13 @@
 
 #if defined(CONFIG_MACH_S5PC110_P1) && defined(CONFIG_TARGET_LOCALE_KOR)
 #define BOOTLOADER_INIT_LCD
-#define DISPLAY_BOOT_PROGRESS
 #define __COPY_LOGO_FROM_BOOTLOADER__
-
-static int show_progress = 1;
 #endif
 
 #if defined(CONFIG_MACH_P1) || defined(CONFIG_MACH_HERRING)
+#define DISPLAY_BOOT_PROGRESS
+
+static int show_progress = 1;
 extern unsigned int HWREV;
 #endif
 
@@ -1068,11 +1069,13 @@ static DEVICE_ATTR(win_power, S_IRUGO | S_IWUSR,
 		   s3cfb_sysfs_show_win_power, s3cfb_sysfs_store_win_power);
 
 
-#if defined(CONFIG_MACH_S5PC110_P1)
+#if defined(CONFIG_MACH_P1)
 static void s3cfb_update_framebuffer(struct fb_info *fb,
 									int x, int y, void *buffer, 
 									int src_width, int src_height)
 {
+	struct s3cfb_global *fbdev =
+		platform_get_drvdata(to_platform_device(fb->device));
 	struct s3c_platform_fb *pdata = to_fb_plat(fbdev->dev);
 	struct fb_fix_screeninfo *fix = &fb->fix;
 	struct fb_var_screeninfo *var = &fb->var;
@@ -1097,7 +1100,7 @@ static void s3cfb_update_framebuffer(struct fb_info *fb,
 		pDst += fix->line_length;
 	}
 }
-#endif //defined(CONFIG_MACH_S5PC110_P1)
+#endif //defined(CONFIG_MACH_P1)
 
 #ifdef DISPLAY_BOOT_PROGRESS
 static void s3cfb_start_progress(struct fb_info *fb)
@@ -1647,7 +1650,7 @@ static void __init bootmode(char **p)
 {
 	show_progress = simple_strtoul(*p, p, 10);
 }
-__early_param("bootmode=", bootmode);
+//__early_param("bootmode=", bootmode);
 #endif
 
 module_init(s3cfb_register);
