@@ -149,3 +149,5 @@ enum {
 #define RECHARGE_COND_TIME		(30*1000)	/* 30 seconds */
 
 #endif
+
+int get_boot_charger_info(void);
