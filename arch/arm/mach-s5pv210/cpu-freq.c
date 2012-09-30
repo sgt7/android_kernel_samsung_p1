@@ -58,7 +58,7 @@ extern int exp_UV_mV[6];
 extern int exp_int_UV_mV[6];
 
 unsigned int freq_uv_table[6][3] = {
-	{1200000, 1450, 1450},
+	{1200000, 1400, 1400},
 	{1000000, 1350, 1350},
 	{800000, 1275, 1275},
 	{400000, 1050, 1050},
@@ -89,13 +89,13 @@ static unsigned int g_dvfslockval[DVFS_LOCK_TOKEN_NUM];
 
 #endif
 
-const unsigned long arm_volt_max = 1450000;
+const unsigned long arm_volt_max = 1400000;
 const unsigned long int_volt_max = 1250000;
 
 static struct s5pv210_dvs_conf dvs_conf[] = {
 	[OC0] = { /* 1.2GHz */
-		.arm_volt   = 1450000,
-		.int_volt   = 1175000,
+		.arm_volt   = 1400000,
+		.int_volt   = 1150000,
 	},
 	[L0] = { /* 1.0GHz */
 		.arm_volt   = 1350000,
