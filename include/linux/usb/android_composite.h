@@ -27,7 +27,12 @@ struct android_usb_function {
 };
 
 struct android_usb_product {
-	/* Default product ID. */
+	/* Vendor ID for this set of functions.
+	 * Default vendor_id in platform data will be used if this is zero.
+	 */
+	__u16 vendor_id;
+
+	/* Product ID for this set of functions. */
 	__u16 product_id;
 
 	/* List of function names associated with this product.
@@ -36,14 +41,6 @@ struct android_usb_product {
 	 */
 	int num_functions;
 	char **functions;
-#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
-/* soonyong.cho : Below variables are used for Samsung composite framework. */
-        __u8 bDeviceClass;
-	__u8 bDeviceSubClass;
-	__u8 bDeviceProtocol;
-	int  mode; /* if product id is same, you have to refer this mode value. */
-	char *s;
-#endif
 };
 
 struct android_usb_platform_data {

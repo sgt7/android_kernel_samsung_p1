@@ -355,17 +355,13 @@ struct usb_composite_dev {
 	spinlock_t			lock;
 
 	/* switch indicating connected/disconnected state */
-	struct switch_dev			sw_connected;
+	struct switch_dev		sw_connected;
 	/* switch indicating current configuration */
-	struct switch_dev			sw_config;
-	/* current connected state of sw_connected */
+	struct switch_dev		sw_config;
+	/* current connected state for sw_connected */
 	bool				connected;
+
 	struct work_struct switch_work;
-#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
-/* soonyong.cho : Below values are used for samsung composite framework. */
-	unsigned int			product_num; 	/* product number (ex : 0, 1, 2, ..) */
-	struct android_usb_product 	*products;	/* products list */
-#endif
 };
 
 extern int usb_string_id(struct usb_composite_dev *c);

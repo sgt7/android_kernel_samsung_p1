@@ -273,7 +273,6 @@ struct fsg_lun {
 	u32		sense_data;
 	u32		sense_data_info;
 	u32		unit_attention_data;
-	int 		id;
 
 	struct device	dev;
 };
@@ -297,7 +296,7 @@ static struct fsg_lun *fsg_lun_from_dev(struct device *dev)
 #define FSG_BUFLEN	((u32)16384)
 
 /* Maximal number of LUNs supported in mass storage function */
-//#define FSG_MAX_LUNS	8
+#define FSG_MAX_LUNS	8
 
 enum fsg_buffer_state {
 	BUF_STATE_EMPTY = 0,
@@ -605,9 +604,7 @@ static int fsg_lun_open(struct fsg_lun *curlun, const char *filename)
 	}
 	num_sectors = size >> 9;	/* File size in 512-byte blocks */
 	min_sectors = 1;
-//	if (curlun->cdrom) {
-#if (UMS_CDROM_LUNS > 0)
-        if (curlun->id == UMS_CDROM_ID) {
+	if (curlun->cdrom) {
 		num_sectors &= ~3;	/* Reduce to a multiple of 2048 */
 		min_sectors = 300*4;	/* Smallest track is 300 frames */
 		if (num_sectors >= 256*60*75*4) {
@@ -617,7 +614,6 @@ static int fsg_lun_open(struct fsg_lun *curlun, const char *filename)
 					(int) num_sectors);
 		}
 	}
-#endif
 	if (num_sectors < min_sectors) {
 		LINFO(curlun, "file too small: %s\n", filename);
 		rc = -ETOOSMALL;
@@ -747,7 +743,6 @@ static ssize_t fsg_store_ro(struct device *dev, struct device_attribute *attr,
 	return rc;
 }
 
-#if 0
 static ssize_t fsg_store_file(struct device *dev, struct device_attribute *attr,
 			      const char *buf, size_t count)
 {
@@ -787,4 +782,3 @@ static ssize_t fsg_store_file(struct device *dev, struct device_attribute *attr,
 	up_write(filesem);
 	return (rc < 0 ? rc : count);
 }
-#endif

@@ -50,7 +50,6 @@
 
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
-#include <linux/wakelock.h>
 
 /* Max packet size */
 #if defined(CONFIG_USB_GADGET_S3C_FS)
@@ -122,7 +121,7 @@ struct s3c_udc {
 	struct platform_device *dev;
 	spinlock_t lock;
 	u16 status;
-	unsigned int ep0state;
+	int ep0state;
 	struct s3c_ep ep[S3C_MAX_ENDPOINTS];
 
 	unsigned char usb_address;
@@ -131,8 +130,6 @@ struct s3c_udc {
 
 	struct regulator *udc_vcc_d, *udc_vcc_a;
 	int udc_enabled;
-
-	struct wake_lock	udc_wake_lock;
 };
 
 extern struct s3c_udc *the_controller;
@@ -145,22 +142,4 @@ extern struct i2c_driver fsa9480_i2c_driver;
 #define ep_index(EP)		((EP)->bEndpointAddress&0xF)
 #define ep_maxpacket(EP)	((EP)->ep.maxpacket)
 
-#if defined CONFIG_USB_S3C_OTG_HOST || defined CONFIG_USB_DWC_OTG
-#define USB_OTG_DRIVER_S3CHS 1
-#define USB_OTG_DRIVER_S3CFSLS 2
-#define USB_OTG_DRIVER_S3C USB_OTG_DRIVER_S3CHS | USB_OTG_DRIVER_S3CFSLS
-#define USB_OTG_DRIVER_DWC 4
-#endif
-extern atomic_t g_OtgHostMode; // actual mode: client (0) or host (1)
-extern atomic_t g_OtgOperationMode; // operation mode: 'c'lient, 'h'ost, 'o'tg or 'a'uto-host
-extern atomic_t g_OtgLastCableState; // last cable state: detached (0), client attached (1), otg attached (2)
-extern atomic_t g_OtgDriver; // driver to use: 0: S3C High-speed, 1: S3C Low-speed/Full-speed, 2: DWC
-#ifdef CONFIG_USB_S3C_OTG_HOST
-extern struct platform_driver s5pc110_otg_driver;
-#endif
-#ifdef CONFIG_USB_DWC_OTG
-extern struct platform_driver dwc_otg_driver;
-#endif
-extern int s3c_is_otgmode(void);
-extern int s3c_get_drivermode(void);
 #endif

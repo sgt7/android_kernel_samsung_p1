@@ -98,56 +98,6 @@ extern struct platform_device s5pc110_device_onenand;
 extern struct platform_device s3c_device_usbgadget;
 extern struct platform_device s3c_device_android_usb;
 extern struct platform_device s3c_device_usb_mass_storage;
-
-#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
-/* soonyong.cho : Define samsung product id and config string.
- *                Sources such as 'android.c' and 'devs.c' refered below define
- */
-#  define SAMSUNG_VENDOR_ID		0x04e8
-
-#  ifdef CONFIG_USB_ANDROID_SAMSUNG_ESCAPE
-	/* USE DEVGURU HOST DRIVER */
-	/* 0x6860 : MTP(0) + MS Composite (UMS) */
-	/* 0x685E : UMS(0) + MS Composite (ADB) */
-#    define SAMSUNG_KIES_PRODUCT_ID	0x685d	/* acm(0,1) + mtp */
-#    define SAMSUNG_DEBUG_PRODUCT_ID	0x685d	/* acm(0,1) + ums + adb */
-#    define SAMSUNG_UMS_PRODUCT_ID	0x685B  /* UMS Only */
-#    define SAMSUNG_MTP_PRODUCT_ID	0x685C  /* MTP Only */
-#    ifdef CONFIG_USB_ANDROID_SAMSUNG_RNDIS_WITH_MS_COMPOSITE
-#      define SAMSUNG_RNDIS_PRODUCT_ID	0x6861  /* RNDIS(0,1) + UMS (2) + MS Composite */
-#    else
-#      define SAMSUNG_RNDIS_PRODUCT_ID	0x6863  /* RNDIS only */
-#    endif
-#  else /* USE MCCI HOST DRIVER */
-#    define SAMSUNG_KIES_PRODUCT_ID	0x6877	/* Shrewbury ACM+MTP*/
-#    define SAMSUNG_DEBUG_PRODUCT_ID	0x681C	/* Shrewbury ACM+UMS+ADB*/
-#    define SAMSUNG_UMS_PRODUCT_ID	0x681D
-#    define SAMSUNG_MTP_PRODUCT_ID	0x68A9
-#    define SAMSUNG_RNDIS_PRODUCT_ID	0x6881
-#  endif
-#  define       ANDROID_DEBUG_CONFIG_STRING	 "ACM + UMS + ADB (Debugging mode)"
-#  define       ANDROID_KIES_CONFIG_STRING	 "ACM + MTP (SAMSUNG KIES mode)"
-#  define       ANDROID_UMS_CONFIG_STRING	 "UMS Only (Not debugging mode)"
-#  define       ANDROID_MTP_CONFIG_STRING	 "MTP Only (Not debugging mode)"
-#  ifdef CONFIG_USB_ANDROID_SAMSUNG_RNDIS_WITH_MS_COMPOSITE
-#    define       ANDROID_RNDIS_CONFIG_STRING	 "RNDIS + UMS (Not debugging mode)"
-#  else
-#    define       ANDROID_RNDIS_CONFIG_STRING	 "RNDIS Only (Not debugging mode)"
-#  endif
-	/* Refered from S1, P1 */
-#  define USBSTATUS_UMS				0x0
-#  define USBSTATUS_SAMSUNG_KIES 		0x1
-#  define USBSTATUS_MTPONLY			0x2
-#  define USBSTATUS_ASKON			0x4
-#  define USBSTATUS_VTP				0x8
-#  define USBSTATUS_ADB				0x10
-#  define USBSTATUS_DM				0x20
-#  define USBSTATUS_ACM				0x40
-#  define USBSTATUS_SAMSUNG_KIES_REAL		0x80
-#  define USBSTATUS_ADB_RNDIS			0x100
-
-#endif /* CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE */
-
 extern struct platform_device s3c_device_rndis;
 extern struct platform_device s3c_device_usb_hsotg;
 #if defined CONFIG_USB_S3C_OTG_HOST
