@@ -327,6 +327,8 @@ uint dhd_console_ms = 0;
 module_param(dhd_console_ms, uint, 0644);
 #endif /* defined(DHD_DEBUG) */
 
+#ifndef CONFIG_MACH_P1
+
 /* Control wifi power mode during sleep
  * /sys/module/bcmdhd/wifi_pm
  */
@@ -334,6 +336,8 @@ module_param(dhd_console_ms, uint, 0644);
 uint wifi_pm = 0;
 module_param(wifi_pm, uint, 0644);
 #endif /* defined(CONFIG_HAS_EARLYSUSPEND) */
+
+#endif
 
 /* ARP offload agent mode : enable ARP Peer Auto-Reply */
 uint dhd_arp_mode = ARP_OL_AGENT | ARP_OL_PEER_AUTO_REPLY;
@@ -536,9 +540,11 @@ static void dhd_set_packet_filter(int value, dhd_pub_t *dhd)
 
 static int dhd_set_suspend(int value, dhd_pub_t *dhd)
 {
+#ifndef CONFIG_MACH_P1
 	int power_mode = PM_MAX;
 	if (wifi_pm == 1)
 		power_mode = PM_FAST;
+#endif
 	/* wl_pkt_filter_enable_t	enable_parm; */
 	char iovbuf[32];
 	int bcn_li_dtim = 3;
@@ -554,8 +560,10 @@ static int dhd_set_suspend(int value, dhd_pub_t *dhd)
 			/* Kernel suspended */
 			DHD_ERROR(("%s: force extra Suspend setting\n", __FUNCTION__));
 
+#ifndef CONFIG_MACH_P1
 			dhd_wl_ioctl_cmd(dhd, WLC_SET_PM, (char *)&power_mode,
 			                 sizeof(power_mode), TRUE, 0);
+#endif
 
 			/* Enable packet filter, only allow unicast packet to send up */
 			dhd_set_packet_filter(1, dhd);
@@ -578,9 +586,11 @@ static int dhd_set_suspend(int value, dhd_pub_t *dhd)
 			/* Kernel resumed  */
 			DHD_ERROR(("%s: Remove extra suspend setting\n", __FUNCTION__));
 
+#ifndef CONFIG_MACH_P1
 			power_mode = PM_FAST;
 			dhd_wl_ioctl_cmd(dhd, WLC_SET_PM, (char *)&power_mode,
 			                 sizeof(power_mode), TRUE, 0);
+#endif
 
 			/* disable pkt filter */
 			dhd_set_packet_filter(0, dhd);
