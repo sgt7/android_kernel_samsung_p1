@@ -351,7 +351,7 @@ config USB_S3C2410_DEBUG
 
 config USB_GADGET_S3C_OTGD
 	boolean "S3C HS USB OTG Device"
-	depends on (ARCH_S5PV210)
+	depends on (ARCH_S5PV210) && !(USB_S3C_OTG_HOST)
 	help
 	  Samsung's S3C64XX processors include high speed USB OTG2.0
 	  controller. It has 15 configurable endpoints, as well as
@@ -564,7 +564,7 @@ comment "NOTE: S3C OTG device role enables the controller driver below"
 
 config USB_S3C_OTGD
 	tristate "S3C high speed(2.0, dual-speed) USB OTG device"
-	depends on USB_GADGET && USB_GADGET_S3C_OTGD
+	depends on USB_GADGET && USB_GADGET_S3C_OTGD && !(USB_S3C_OTG_HOST)
 	default y
 	default USB_GADGET
 	select USB_GADGET_SELECTED
@@ -902,12 +902,6 @@ config USB_ANDROID_ACM
 	help
 	  Provides ACM serial function for android gadget driver.
 
-config USB_DUN_SUPPORT
-	boolean "DUN support function"
-	depends on USB_ANDROID_ACM
-	help
-	  Provides USB modem serial driver.
-
 config USB_ANDROID_ADB
 	boolean "Android gadget adb function"
 	depends on USB_ANDROID
@@ -942,29 +936,17 @@ config USB_ANDROID_RNDIS_WCEIS
          If you enable this option, the device is no longer CDC ethernet
          compatible.
 
-config USB_ANDROID_SAMSUNG_COMPOSITE
-	boolean "Samsung Composite function"
-	depends on USB_ANDROID
-	help
-	  Provides SAMSUNG composite driver using ACM, UMS, ADB, MTP, RNDIS
-
-config USB_ANDROID_SAMSUNG_ESCAPE
-	boolean "Use escape usb host driver in PC side."
-	depends on USB_ANDROID_SAMSUNG_COMPOSITE
-	help
-	  If you enable this option, the device will setting custom IAD for Escape driver.
-
-config CONFIG_USB_ANDROID_SAMSUNG_RNDIS_WITH_MS_COMPOSITE
-	boolean "Use RNDIS with ms composite in PC side."
-	depends on USB_ANDROID_SAMSUNG_COMPOSITE
-	help
-	  If you enable this option, the device will setting custom IAD for to use ms composite.
-
-config USB_ANDROID_SAMSUNG_MTP
-	boolean "Samsung MTP function"
-	depends on USB_ANDROID
+config USB_ANDROID_RNDIS_DWORD_ALIGNED
+        boolean "Use double word aligned"
+        depends on USB_ANDROID_RNDIS
         help
-	  Provides Media Transfer Protocol (MTP) support for samsung gadget driver.
+	  Provides dword aligned for DMA controller.
+
+config USB_ANDROID_ACCESSORY
+	boolean "Android USB accessory function"
+	depends on USB_ANDROID
+	help
+	  Provides Android USB Accessory support for android gadget driver.
 
 config USB_CDC_COMPOSITE
 	tristate "CDC Composite Device (Ethernet and ACM)"

@@ -154,12 +154,6 @@ static int setdma_tx(struct s3c_ep *ep, struct s3c_request *req)
 		pktcnt = (length - 1)/(ep->ep.maxpacket) + 1;
 
 #ifdef DED_TX_FIFO
-	/* Flush the endpoint's Tx FIFO */
-	writel(ep_num<<6, S3C_UDC_OTG_GRSTCTL);
-	writel((ep_num<<6)|0x20, S3C_UDC_OTG_GRSTCTL);
-	while (readl(S3C_UDC_OTG_GRSTCTL) & 0x20)
-		;
-
 	/* Write the FIFO number to be used for this endpoint */
 	ctrl = readl(S3C_UDC_OTG_DIEPCTL(ep_num));
 	ctrl &= ~DEPCTL_TXFNUM_MASK;;
@@ -171,12 +165,6 @@ static int setdma_tx(struct s3c_ep *ep, struct s3c_request *req)
 	writel((pktcnt<<19)|(length<<0), S3C_UDC_OTG_DIEPTSIZ(ep_num));
 	ctrl = readl(S3C_UDC_OTG_DIEPCTL(ep_num));
 	writel(DEPCTL_EPENA|DEPCTL_CNAK|ctrl, S3C_UDC_OTG_DIEPCTL(ep_num));
-
-#ifndef DED_TX_FIFO
-	ctrl = readl(S3C_UDC_OTG_DIEPCTL(EP0_CON));
-	ctrl = (ctrl&~(EP_MASK<<DEPCTL_NEXT_EP_BIT))|(ep_num<<DEPCTL_NEXT_EP_BIT);
-	writel(ctrl, S3C_UDC_OTG_DIEPCTL(EP0_CON));
-#endif
 
 	DEBUG_IN_EP("%s:EP%d TX DMA start : DIEPDMA0 = 0x%x, DIEPTSIZ0 = 0x%x, DIEPCTL0 = 0x%x\n"
 			"\tbuf = 0x%p, pktcnt = %d, xfersize = %d\n",
@@ -361,7 +349,7 @@ static void process_ep_in_intr(struct s3c_udc *dev)
 
 static void process_ep_out_intr(struct s3c_udc *dev)
 {
-	u32 ep_intr, ep_intr_status;
+	u32 ep_intr, ep_intr_status, ep_ctrl;
 	u8 ep_num = 0;
 
 	ep_intr = readl(S3C_UDC_OTG_DAINT);
@@ -386,18 +374,16 @@ static void process_ep_out_intr(struct s3c_udc *dev)
 				}
 
 				if (ep_intr_status & TRANSFER_DONE) {
-					u32 ep_ctrl;
-
 					complete_rx(dev, ep_num);
-#if 0	// rndis patch by LSI on 2011.02.10
-					s3c_udc_pre_setup();
-#else
-					writel((3<<29)|(1 << 19)|sizeof(struct usb_ctrlrequest), S3C_UDC_OTG_DOEPTSIZ(EP0_CON));
-					writel(virt_to_phys(&usb_ctrl), S3C_UDC_OTG_DOEPDMA(EP0_CON));
+
+					writel((3<<29)|(1<<19)|sizeof(struct usb_ctrlrequest),
+						S3C_UDC_OTG_DOEPTSIZ(EP0_CON));
+					writel(virt_to_phys(&usb_ctrl),
+						S3C_UDC_OTG_DOEPDMA(EP0_CON));
 
 					ep_ctrl = readl(S3C_UDC_OTG_DOEPCTL(EP0_CON));
-					writel(ep_ctrl|DEPCTL_EPENA|DEPCTL_SNAK, S3C_UDC_OTG_DOEPCTL(EP0_CON));  
-#endif
+					writel(ep_ctrl|DEPCTL_EPENA|DEPCTL_SNAK,
+						S3C_UDC_OTG_DOEPCTL(EP0_CON));
 				}
 
 			} else {
