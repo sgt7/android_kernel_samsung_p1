@@ -36,7 +36,7 @@
 #include <plat/regs-fb.h>
 #include <plat/pm.h>
 
-#define CPUFREQ_SAMPLING_RATE      40000
+#define CPUFREQ_SAMPLING_RATE      100000
 
 static struct clk *mpu_clk;
 static struct regulator *arm_regulator;
