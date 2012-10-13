@@ -40,7 +40,7 @@
 
 //#define ISX005_DEBUG
 //#define CONFIG_LOAD_FILE	//For tunning binary
-//#define ISX005_TOUCH_AF
+#define ISX005_TOUCH_AF
 
 #ifdef ISX005_DEBUG
 #define isx005_msg	dev_err
