@@ -47,7 +47,7 @@ struct mtd_partition s3c_partition_info[] = {
 	{
 		.name		= "radio",
 		.offset		= (1866*SZ_256K),
-		.size		= (98*SZ_256K), //1953
+		.size		= (88*SZ_256K), //1953
 	},
 	{
 		.name		= "efs",
