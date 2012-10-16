@@ -473,7 +473,7 @@ static int mfc_mmap(struct file *filp, struct vm_area_struct *vma)
 		return -EINVAL;
 	}
 
-	mfc_ctx->port0_mmap_size = mfc_port0_memsize - firmware_size;
+	mfc_ctx->port0_mmap_size = (vir_size / 2);
 
 	vma->vm_flags |= VM_RESERVED | VM_IO;
 	if (mfc_ctx->buf_type != MFC_BUFFER_CACHE)
