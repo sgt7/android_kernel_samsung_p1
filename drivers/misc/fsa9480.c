@@ -31,6 +31,7 @@
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
+#include <linux/switch.h>
 #ifdef CONFIG_FAST_CHARGE
 #include <linux/fast_charge.h>
 #endif
@@ -122,7 +123,6 @@ struct fsa9480_usbsw {
 };
 
 static struct fsa9480_usbsw *local_usbsw;
-
 
 static ssize_t fsa9480_show_control(struct device *dev,
 				   struct device_attribute *attr,
@@ -452,7 +452,7 @@ static irqreturn_t fsa9480_irq_thread(int irq, void *data)
 {
 	struct fsa9480_usbsw *usbsw = data;
 	struct i2c_client *client = usbsw->client;
-	int intr;
+	int intr,ret;unsigned int value;
 
 	/* read and clear interrupt status bits */
 	intr = i2c_smbus_read_word_data(client, FSA9480_REG_INT1);
@@ -469,6 +469,16 @@ static irqreturn_t fsa9480_irq_thread(int irq, void *data)
 
 	/* device detection */
 	fsa9480_detect_dev(usbsw);
+
+	value = i2c_smbus_read_byte_data(client,FSA9480_REG_CTRL);
+ 	//value &= 0xFE;//unmask interrupts
+ 	if(value&0x01)
+  	{
+   		value &=0xFE;
+		ret = i2c_smbus_write_byte_data(client,FSA9480_REG_CTRL, value);
+   		if (ret < 0)
+   		printk("fsa9480_irq_thread: recovery failed\n");
+  	}
 
 	return IRQ_HANDLED;
 }
