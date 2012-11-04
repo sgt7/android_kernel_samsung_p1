@@ -4915,6 +4915,75 @@ unsigned long netdev_fix_features(unsigned long features, const char *name)
 }
 EXPORT_SYMBOL(netdev_fix_features);
 
+int __netdev_update_features(struct net_device *dev)
+{
+	u32 features;
+	int err = 0;
+
+	ASSERT_RTNL();
+
+	features = netdev_get_wanted_features(dev);
+
+	if (dev->netdev_ops->ndo_fix_features)
+		features = dev->netdev_ops->ndo_fix_features(dev, features);
+
+	/* driver might be less strict about feature dependencies */
+	features = netdev_fix_features(dev, features);
+
+	if (dev->features == features)
+		return 0;
+
+	netdev_dbg(dev, "Features changed: 0x%08x -> 0x%08x\n",
+		dev->features, features);
+
+	if (dev->netdev_ops->ndo_set_features)
+		err = dev->netdev_ops->ndo_set_features(dev, features);
+
+	if (unlikely(err < 0)) {
+		netdev_err(dev,
+			"set_features() failed (%d); wanted 0x%08x, left 0x%08x\n",
+			err, features, dev->features);
+		return -1;
+	}
+
+	if (!err)
+		dev->features = features;
+
+	return 1;
+}
+
+/**
+ *	netdev_update_features - recalculate device features
+ *	@dev: the device to check
+ *
+ *	Recalculate dev->features set and send notifications if it
+ *	has changed. Should be called after driver or hardware dependent
+ *	conditions might have changed that influence the features.
+ */
+void netdev_update_features(struct net_device *dev)
+{
+	if (__netdev_update_features(dev))
+		netdev_features_change(dev);
+}
+EXPORT_SYMBOL(netdev_update_features);
+
+/**
+ *	netdev_change_features - recalculate device features
+ *	@dev: the device to check
+ *
+ *	Recalculate dev->features set and send notifications even
+ *	if they have not changed. Should be called instead of
+ *	netdev_update_features() if also dev->vlan_features might
+ *	have changed to allow the changes to be propagated to stacked
+ *	VLAN devices.
+ */
+void netdev_change_features(struct net_device *dev)
+{
+	__netdev_update_features(dev);
+	netdev_features_change(dev);
+}
+EXPORT_SYMBOL(netdev_change_features);
+
 /**
  *	netif_stacked_transfer_operstate -	transfer operstate
  *	@rootdev: the root or lower level device to transfer state from
