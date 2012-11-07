@@ -112,7 +112,7 @@ static void touch_led_on(int val)
     if(val > 0)
         mod_timer(&leds_timer, jiffies + msecs_to_jiffies(leds_timeout));
     else
-        mod_timer(&leds_timer, jiffies - 1);
+        mod_timer(&leds_timer, jiffies + msecs_to_jiffies(999999999));
 
     if(val > 0 && buttons_enabled && leds_timeout != 0)
     {
