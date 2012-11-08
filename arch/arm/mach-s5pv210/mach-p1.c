@@ -30,6 +30,7 @@
 #include <linux/input.h>
 #include <linux/irq.h>
 #include <linux/skbuff.h>
+#include <linux/console.h>
 
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
@@ -181,11 +182,10 @@ static int crespo_notifier_call(struct notifier_block *this,
 	if ((code == SYS_RESTART) && _cmd) {
 		if (!strcmp((char *)_cmd, "recovery"))
 			mode = 2; // It's not REBOOT_MODE_RECOVERY, blame Samsung
-		else if (!strcmp((char *)_cmd, "download")) 
-			mode = REBOOT_MODE_DOWNLOAD;
 		else
 			mode = REBOOT_MODE_NONE;
 	}
+	__raw_writel(mode, S5P_INFORM6);
 	
 	if(code != SYS_POWER_OFF) {
 		if(sec_set_param_value)	{
@@ -7453,30 +7453,75 @@ static unsigned int p1_get_hwrev(void)
 	return hw_rev;
 }
 
+static bool console_flushed;
+
+static void flush_console(void)
+{
+	if (console_flushed)
+		return;
+
+	console_flushed = true;
+
+	printk("\n");
+	pr_emerg("Restarting %s\n", linux_banner);
+	if (!is_console_locked())
+		return;
+
+	mdelay(50);
+
+	local_irq_disable();
+	if (!try_acquire_console_sem())
+		pr_emerg("flush_console: console was locked! busting!\n");
+	else
+		pr_emerg("flush_console: console was locked!\n");
+	release_console_sem();
+}
+
+static void p1_pm_restart(char mode, const char *cmd)
+{
+	flush_console();
+
+	/* On a normal reboot, INFORM6 will contain a small integer
+	 * reason code from the notifier hook.  On a panic, it will
+	 * contain the 0xee we set at boot.  Write 0xbb to differentiate
+	 * a watchdog-timeout-and-reboot (0xee) from a controlled reboot
+	 * (0xbb)
+	 */
+	if (__raw_readl(S5P_INFORM6) == 0xee)
+		__raw_writel(0xbb, S5P_INFORM6);
+
+	arm_machine_restart(mode, cmd);
+}
+
 // Ugly hack to inject parameters (e.g. device serial, bootmode) into /proc/cmdline
 static void __init p1_inject_cmdline(void) {
-	char *new_command_line;
-	int bootmode = __raw_readl(S5P_INFORM6);
-	int size;
+	char* new_command_line = NULL;
+	char* bootmode = NULL;
+	int cmd_line_size = strlen(boot_command_line);
 
-	size = strlen(boot_command_line);
-	new_command_line = kmalloc(size + 40 + 11, GFP_KERNEL);
-	strcpy(new_command_line, saved_command_line);
-	size += sprintf(new_command_line + size, " androidboot.serialno=%08X%08X",
-				system_serial_high, system_serial_low);
-
-	// Only write bootmode when less than 10 to prevent confusion with watchdog
-	// reboot (0xee = 238)
-	if (bootmode < 10) {
-		size += sprintf(new_command_line + size, " bootmode=%d", bootmode);
+	/* Samsung value for recovery */
+	if(__raw_readl(S5P_INFORM6) == 2) {
+		new_command_line = kmalloc(cmd_line_size + 40 + 11, GFP_KERNEL);
+		bootmode = "bootmode=2";
+	} else if(__raw_readl(S5P_INFORM5)) {
+		new_command_line = kmalloc(cmd_line_size + 40 + 17, GFP_KERNEL);
+		bootmode = "bootmode=charger";
+	} else {
+		new_command_line = kmalloc(cmd_line_size + 40, GFP_KERNEL);
+		bootmode = "";
 	}
 
+	strcpy(new_command_line, saved_command_line);
+	sprintf(new_command_line + cmd_line_size,
+			" androidboot.serialno=%08X%08X %s",
+			system_serial_high, system_serial_low, bootmode);
 	saved_command_line = new_command_line;
 }
 
 
 static void __init p1_machine_init(void)
 {
+	arm_pm_restart = p1_pm_restart;
 	setup_ram_console_mem();
 	p1_inject_cmdline();
 	platform_add_devices(crespo_devices, ARRAY_SIZE(crespo_devices));
