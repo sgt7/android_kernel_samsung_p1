@@ -355,6 +355,7 @@ static struct s3cfb_lcd lvds = {
 };
 
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0 		(8192 * SZ_1K)
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC1 		(4 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC2 		(8192 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0 		(14336 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC1 		(21504 * SZ_1K)
@@ -362,7 +363,7 @@ static struct s3cfb_lcd lvds = {
 							(CONFIG_FB_S3C_NR_BUFFERS + \
 							(CONFIG_FB_S3C_NUM_OVLY_WIN * \
 							CONFIG_FB_S3C_NUM_BUF_OVLY_WIN)))
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_JPEG 		(4096 * SZ_1K)
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_JPEG 		(8192 * SZ_1K)
 #ifdef CONFIG_ANDROID_PMEM
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_PMEM         (8192 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_PMEM_GPU1    (4200 * SZ_1K)
@@ -392,6 +393,13 @@ static struct s5p_media_device crespo_media_devs[] = {
 		.paddr = 0,
 	},
 	[3] = {
+		.id = S5P_MDEV_FIMC1,
+		.name = "fimc1",
+		.bank = 1,
+		.memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC1,
+		.paddr = 0,
+	},
+	[4] = {
 		.id = S5P_MDEV_FIMC2,
 		.name = "fimc2",
 		.bank = 1,
@@ -6881,36 +6889,27 @@ static unsigned int wlan_sdio_off_table[][4] = {
 
 static int wlan_power_en(int onoff)
 {
-	printk(KERN_INFO"------------------------------------------------");
-	printk(KERN_INFO"------------------------------------------------\n");
-	printk(KERN_INFO"%s Enter: power %s\n", __func__, onoff ? "on" : "off");
-
 	if (onoff) {
 		s3c_gpio_cfgpin(GPIO_WLAN_HOST_WAKE, S3C_GPIO_SFN(GPIO_WLAN_HOST_WAKE_AF));
 		s3c_gpio_setpull(GPIO_WLAN_HOST_WAKE, S3C_GPIO_PULL_DOWN);
 
 		s3c_gpio_cfgpin(GPIO_WLAN_WAKE, S3C_GPIO_SFN(GPIO_WLAN_WAKE_AF));
 		s3c_gpio_setpull(GPIO_WLAN_WAKE, S3C_GPIO_PULL_NONE);
-
 		gpio_set_value(GPIO_WLAN_WAKE, GPIO_LEVEL_LOW);
 
 		s3c_gpio_cfgpin(GPIO_WLAN_nRST, S3C_GPIO_SFN(GPIO_WLAN_nRST_AF));
 		s3c_gpio_setpull(GPIO_WLAN_nRST, S3C_GPIO_PULL_NONE);
-
 		gpio_set_value(GPIO_WLAN_nRST, GPIO_LEVEL_HIGH);
-
 		s3c_gpio_slp_cfgpin(GPIO_WLAN_nRST, S3C_GPIO_SLP_OUT1);
 		s3c_gpio_slp_setpull_updown(GPIO_WLAN_nRST, S3C_GPIO_PULL_NONE);
 
 		s3c_gpio_cfgpin(GPIO_WLAN_BT_EN, S3C_GPIO_OUTPUT);
 		s3c_gpio_setpull(GPIO_WLAN_BT_EN, S3C_GPIO_PULL_NONE);
-
 		gpio_set_value(GPIO_WLAN_BT_EN, GPIO_LEVEL_HIGH);
-
 		s3c_gpio_slp_cfgpin(GPIO_WLAN_BT_EN, S3C_GPIO_SLP_OUT1);
 		s3c_gpio_slp_setpull_updown(GPIO_WLAN_BT_EN, S3C_GPIO_PULL_NONE);
 
-		msleep(80);
+		msleep(200);
 	} else {
 		gpio_set_value(GPIO_WLAN_nRST, GPIO_LEVEL_LOW);
 		s3c_gpio_slp_cfgpin(GPIO_WLAN_nRST, S3C_GPIO_SLP_OUT0);
@@ -6927,10 +6926,8 @@ static int wlan_power_en(int onoff)
 
 static int wlan_reset_en(int onoff)
 {
-	/*
 	gpio_set_value(GPIO_WLAN_nRST,
 			onoff ? GPIO_LEVEL_HIGH : GPIO_LEVEL_LOW);
-	*/
 	return 0;
 }
 
