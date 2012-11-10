@@ -50,6 +50,7 @@ obj-$(CONFIG_S5PC110_DEV_ONENAND)   += dev-onenand.o
 obj-$(CONFIG_S5P_ADC) += adc.o
 
 obj-$(CONFIG_S5PV210_SETUP_FB)		+= setup-fb.o
+obj-$(CONFIG_S5PV210_SETUP_FIMC)	+= setup-fimc.o
 obj-$(CONFIG_S5PV210_SETUP_FIMC0)	+= setup-fimc0.o
 obj-$(CONFIG_S5PV210_SETUP_FIMC1)	+= setup-fimc1.o
 obj-$(CONFIG_S5PV210_SETUP_FIMC2)	+= setup-fimc2.o

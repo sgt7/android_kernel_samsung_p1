@@ -47,6 +47,11 @@ config S5PV210_SETUP_SDHCI_GPIO
 	help
 	  Common setup code for SDHCI gpio.
 
+config S5PV210_SETUP_FIMC
+	bool
+	help
+	  Common setup code for the camera interfaces.
+
 config S5PV210_POWER_DOMAIN
 	bool
 	depends on REGULATOR
