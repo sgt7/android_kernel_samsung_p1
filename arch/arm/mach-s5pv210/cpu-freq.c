@@ -68,8 +68,8 @@ unsigned int freq_uv_table[7][3] = {
 };
 
 unsigned int freq_int_uv_table[6][3] = {
-  {1400000, 1250, 1250},
-  {1200000, 1150, 1150},
+  {1400000, 1195, 1195},
+  {1200000, 1180, 1180},
   {1000000, 1100, 1100},
   {800000, 1100, 1100},
   {400000, 1100, 1100},
@@ -118,11 +118,11 @@ const unsigned long int_volt_max = 1250000;
 static struct s5pv210_dvs_conf dvs_conf[] = {
 	[OC0] = { /* 1.4GHz */
 		.arm_volt   = 1500000,
-		.int_volt   = 1250000,
+		.int_volt   = 1195000,
 	},
 	[OC1] = { /* 1.2GHz */
 		.arm_volt   = 1450000,
-		.int_volt   = 1175000,
+		.int_volt   = 1180000,
 	},
 	[L0] = { /* 1.0GHz */
 		.arm_volt   = 1350000,
