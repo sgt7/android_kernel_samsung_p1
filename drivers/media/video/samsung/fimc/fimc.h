@@ -371,7 +371,7 @@ struct fimc_control {
 	atomic_t			in_use;
 	void __iomem			*regs;		/* register i/o */
 	struct clk			*clk;		/* interface clock */
-	struct regulator		*regulator;		/* pd regulator */
+	struct regulator	*regulator;		/* pd regulator */
 	struct fimc_meminfo		mem;		/* for reserved mem */
 
 	/* kernel helpers */
@@ -600,6 +600,7 @@ extern int fimc_hwset_enable_irq(struct fimc_control *ctrl,
 extern int fimc_hwset_disable_irq(struct fimc_control *ctrl);
 extern int fimc_hwset_clear_irq(struct fimc_control *ctrl);
 extern int fimc_hwset_reset(struct fimc_control *ctrl);
+extern int fimc_hwset_sw_reset(struct fimc_control *ctrl);
 extern int fimc_hwset_clksrc(struct fimc_control *ctrl, int src_clk);
 extern int fimc_hwget_overflow_state(struct fimc_control *ctrl);
 extern int fimc_hwset_camera_offset(struct fimc_control *ctrl);
