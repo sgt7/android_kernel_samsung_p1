@@ -321,37 +321,38 @@ static struct s3c2410_uartcfg crespo_uartcfgs[] __initdata = {
 	},
 };
 
+#define S5PV210_LCD_WIDTH 1024
+#define S5PV210_LCD_HEIGHT 600
+
 static struct s3cfb_lcd lvds = {
-        .width = 1024,
-        .height = 600,
-		.p_width = 154,
-		.p_height = 90,
-		.bpp = 24,
-        .freq = 60,
+	.width = S5PV210_LCD_WIDTH,
+	.height = S5PV210_LCD_HEIGHT,
+	.p_width = 154,
+	.p_height = 90,
+	.bpp = 24,
+	.freq = 60,
 
-        .timing = {
+	.timing = {
 #if defined(CONFIG_MACH_P1_GSM)
-                .h_fp = 142,    //50,	//179,	//.h_fp = 79,
-                .h_bp = 210,    //30,	//225,	//.h_bp = 200,
+		.h_fp = 142,    //50,	//179,	//.h_fp = 79,
+		.h_bp = 210,    //30,	//225,	//.h_bp = 200,
 #elif defined(CONFIG_MACH_P1_CDMA)
-                .h_fp = 100,    //50,	//179,	//.h_fp = 79,
-                .h_bp = 80,    //30,	//225,	//.h_bp = 200,
+		.h_fp = 100,    //50,	//179,	//.h_fp = 79,
+		.h_bp = 80,    //30,	//225,	//.h_bp = 200,
 #endif
-                .h_sw = 50,     //20,	//40,
-                .v_fp = 10,     //6,	//10,
-                .v_fpe = 1,
-                .v_bp = 11,     //5,	//11,
-                .v_bpe = 1,
-                .v_sw = 10,     // 4,	//10,
-
-        },
-
-        .polarity = {
-                .rise_vclk = 0,
-                .inv_hsync = 1,
-                .inv_vsync = 1,
-                .inv_vden = 0,
-        },
+		.h_sw = 50,     //20,	//40,
+		.v_fp = 10,     //6,	//10,
+		.v_fpe = 1,
+		.v_bp = 11,     //5,	//11,
+		.v_bpe = 1,
+		.v_sw = 10,     // 4,	//10,
+	},
+	.polarity = {
+		.rise_vclk = 0,
+		.inv_hsync = 1,
+		.inv_vsync = 1,
+		.inv_vden = 0,
+	},
 };
 
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0 (8192 * SZ_1K)
@@ -359,10 +360,11 @@ static struct s3cfb_lcd lvds = {
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC2 (8192 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0 (14336 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC1 (21504 * SZ_1K)
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMD (1024 * 600 * 4 * \
-					(CONFIG_FB_S3C_NR_BUFFERS + \
-					(CONFIG_FB_S3C_NUM_OVLY_WIN * \
-					CONFIG_FB_S3C_NUM_BUF_OVLY_WIN)))
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMD (S5PV210_LCD_WIDTH * \
+					     S5PV210_LCD_HEIGHT * 4 * \
+					     (CONFIG_FB_S3C_NR_BUFFERS + \
+						 (CONFIG_FB_S3C_NUM_OVLY_WIN * \
+						  CONFIG_FB_S3C_NUM_BUF_OVLY_WIN)))
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_JPEG (8192 * SZ_1K)
 #define  S5PV210_ANDROID_PMEM_MEMSIZE_PMEM (8192 * SZ_1K)
 #define  S5PV210_ANDROID_PMEM_MEMSIZE_PMEM_GPU1 (4200 * SZ_1K)
@@ -496,10 +498,6 @@ static struct regulator_consumer_supply ldo3_consumer[] = {
 	{	.supply	= "tv_pll", },
 };
 
-static struct regulator_consumer_supply ldo4_consumer[] = {
-                {       .supply = "v_adc", },
-};
-
 static struct regulator_consumer_supply ldo7_consumer[] = {
 	{	.supply	= "vcc_vtf", },
 };
@@ -545,10 +543,6 @@ static struct regulator_consumer_supply buck2_consumer[] = {
 	{	.supply	= "vddint", },
 };
 
-static struct regulator_consumer_supply buck3_consumer[] = {
-        {       .supply = "vcc_ram", },
-};
-
 static struct regulator_consumer_supply safeout1_consumer[] = {
 	{	.supply	= "vbus_ap", },
 };
@@ -591,18 +585,12 @@ static struct regulator_init_data crespo_ldo4_data = {
 		.min_uV		= 3300000,
 		.max_uV		= 3300000,
 		.apply_uV	= 1,
-		.boot_on    = 1,
 		.always_on	= 1,
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE |
-				  REGULATOR_CHANGE_STATUS,
-		.state_mem      = {
-			.uV     = 3300000,
-			.mode   = REGULATOR_MODE_NORMAL,
+		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
+		.state_mem	= {
 			.disabled = 1,
 		},
 	},
-        .num_consumer_supplies  = ARRAY_SIZE(ldo4_consumer),
-        .consumer_supplies      = ldo4_consumer,
 };
 
 static struct regulator_init_data crespo_ldo7_data = {
@@ -742,12 +730,9 @@ static struct regulator_init_data crespo_ldo17_data = {
 		.max_uV		= 3300000,
 		.apply_uV	= 1,
 		.boot_on	= 1,
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE |
-				  REGULATOR_CHANGE_STATUS,
+		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
-            .uV     = 3300000,
-            .mode   = REGULATOR_MODE_NORMAL,
-            .disabled = 1,
+			.disabled = 1,
 		},
 	},
 	.num_consumer_supplies	= ARRAY_SIZE(ldo17_consumer),
@@ -797,18 +782,8 @@ static struct regulator_init_data crespo_buck3_data = {
 		.min_uV		= 1800000,
 		.max_uV		= 1800000,
 		.apply_uV	= 1,
-		.boot_on    = 1,
 		.always_on	= 1,
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE |
-		                  REGULATOR_CHANGE_STATUS,
-		.state_mem      = {
-            .uV     = 1800000,
-			.mode   = REGULATOR_MODE_NORMAL,
-			.disabled = 1,
-        },
 	},
-    .num_consumer_supplies  = ARRAY_SIZE(buck3_consumer),
-    .consumer_supplies      = buck3_consumer,
 };
 
 static struct regulator_init_data crespo_safeout1_data = {

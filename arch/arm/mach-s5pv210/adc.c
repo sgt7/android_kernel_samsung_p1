@@ -202,7 +202,7 @@ s3c_adc_read(struct file *file, char __user *buffer,
 }
 
 
-static int s3c_adc_ioctl(struct inode *inode, struct file *file,
+static long s3c_adc_ioctl(struct inode *inode, struct file *file,
 	unsigned int cmd, unsigned long arg)
 {
 
