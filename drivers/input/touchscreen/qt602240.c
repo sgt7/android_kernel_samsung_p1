@@ -202,7 +202,7 @@ static ssize_t key_led_store(struct device *dev, struct device_attribute *attr,
     }
 
     if(i > 0)
-        touch_led_on(255);
+        touch_led_on(1);
     else
         touch_led_on(0);
 
@@ -987,7 +987,7 @@ static ssize_t buttons_enabled_status_write(struct device *dev,
 			if(data == 1) {
 				pr_info("%s: key function enabled\n", __FUNCTION__);
 				buttons_enabled = true;
-				touch_led_on(255);
+				touch_led_on(1);
 			}
 
 			if(data == 0) {
@@ -1249,7 +1249,7 @@ static irqreturn_t qt602240_interrupt(int irq, void *dev_id)
 
     if(!leds_on) {
         leds_on = true;
-        touch_led_on(255);
+        touch_led_on(1);
     } else {
         mod_timer(&leds_timer, jiffies + msecs_to_jiffies(leds_timeout));
     }
