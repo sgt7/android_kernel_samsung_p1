@@ -43,6 +43,7 @@ static int gFirmware_Update_State = FW_UPDATE_READY;
 
 static bool buttons_enabled = true;
 static int cpufreq_lock = 2;
+static int brightness = 1;
 
 static bool leds_on = true;
 static int leds_timeout = 1600;
@@ -103,11 +104,7 @@ void init_led(void)
 static void touch_led_on(int val)
 {
     static int preset = 0;
-    int set = 2;
 //    printk(KERN_DEBUG "[TSP] keyled : %d \n", val );
-
-    if(val < 42)
-        set = 1;
 
     if(val > 0)
         mod_timer(&leds_timer, jiffies + msecs_to_jiffies(leds_timeout));
@@ -116,26 +113,30 @@ static void touch_led_on(int val)
 
     if(val > 0 && buttons_enabled && leds_timeout != 0)
     {
-        if(set !=preset)
-        {
+        if( val != preset ) {
             //KEYLED is only working in low current mode.
             led_control(16);
             led_control(KEYLED_ADDRESS_MAX);      // [Address ] Max current setting
             led_control(KEYLED_DATA_LOW);           // [Data] Low current mode
             led_control(KEYLED_ADDRESS_LOW);      // [Address] Low current mode
-            if(set == 1)
-            {
-                led_control(2);                                     // [Data] 0.5mA
-                preset = 1;
-                //printk(KERN_DEBUG "[TSP] keyled : 0.5mA\n");
-            }
-            else
-            {
-                led_control(4);                                     // [Data] 2mA
-                preset = 2;
-                leds_on = true;
-                //printk(KERN_DEBUG "[TSP] keyled : 2mA\n");
-            }
+			switch( val ) {
+				case 1:
+		            led_control(2);		// [Data] 0.5mA
+		            preset = 1;
+					break;
+				case 2:
+		            led_control(3);		// [Data] 1mA
+		            preset = 2;
+					break;
+				case 3:
+		            led_control(4);		// [Data] 2mA
+		            preset = 3;
+					break;
+				default:
+		            led_control(2);		// [Data] 0.5mA
+		            preset = 1;
+					break;
+			}
         }
     }
     else
@@ -151,64 +152,32 @@ void leds_timer_callback(unsigned long data) {
     touch_led_on(0);
 }
 
-#if 0
-void touch_led_ctl(int type)
-{
-    int data =0;
-
-    switch(type)
-    {
-        case 0:
-            data = 1;
-            break;
-
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-            /*
-            Data      D4      D3      D2      D1
-            1           on      on      on      on
-            2           on      on      on      off
-            3           on      on      off     on
-            4           on      on      off     off
-            ....
-            16          off     off     off     off
-            */
-            data = ((0x1)<<(type-1)) + 1;
-            break;
-
-        default:
-            printk(KERN_DEBUG "[TSP] %s Unknown data\n", __func__);
-            break;
-    }
-
-    if(bLedOn)
-    {
-        // [Address ] Led on/off
-        led_control(KEYLED_ADDRESS_ONOFF);
-        led_control(data);
-    }
-}
-#endif
-
 static ssize_t key_led_store(struct device *dev, struct device_attribute *attr,
 		const char *buf, size_t size)
 {
-    int i = 0;
-    if(sscanf(buf,"%d",&i) !=1 )
-    {
-        printk(KERN_ERR"[TSP] keyled write error\n");
-    }
+	unsigned int value;
 
-    if(i > 0)
-        touch_led_on(1);
-    else
-        touch_led_on(0);
+	if ( sscanf( buf, "%du", &value ) == 1 ) {
 
-    return size;
+		if ( value >= 0 && value <= 3 ) {
+			brightness = value;
+			pr_info( "[TSP] keyled brightness - value: %d\n", brightness );
+		} else {
+			pr_info( "%s: invalid input range %u\n", __FUNCTION__, value );
+		}
+	} else {
+		pr_info( "%s: invalid input: \n", __FUNCTION__ );
+	}
+	touch_led_on( brightness );
+	return size;
 }
-static DEVICE_ATTR(brightness, S_IRUGO | S_IWUSR, NULL, key_led_store);
+
+static ssize_t key_led_read( struct device *dev,
+	struct device_attribute *attr, char *buf )
+{
+	return sprintf( buf, "%d\n", brightness );
+}
+static DEVICE_ATTR( brightness, S_IRUGO | S_IWUGO, key_led_read, key_led_store );
 
 #endif      //KEY_LED_CONTROL
 
@@ -380,8 +349,8 @@ static int QT602240_Multitouch_Config_Init(struct qt602240_data *data)
     touchscreen_config.ysize = 0x0b;
 
     touchscreen_config.akscfg = 1;
-    touchscreen_config.blen = 0x0f;//0x00;         // Gain of the analog circuits in front of the ADC [7:4]
-    touchscreen_config.tchthr = 22;//0x27;       // touch Threshold value
+    touchscreen_config.blen = 0x00;         // Gain of the analog circuits in front of the ADC [7:4]
+    touchscreen_config.tchthr = 28;//0x27;       // touch Threshold value
     touchscreen_config.orient = 0x04;       // 0x4 : Invert Y, 0x2 : Invert X, 0x1 : Switch
 
     touchscreen_config.mrgtimeout = 0x00;
@@ -389,7 +358,7 @@ static int QT602240_Multitouch_Config_Init(struct qt602240_data *data)
     touchscreen_config.movhystn = 10;  //0x1     // Move hysteresis, next
     touchscreen_config.movfilter = 0x0b;              // Filter Limit[6:4] , Adapt threshold [3:0]
     touchscreen_config.numtouch= 0x0a;
-    touchscreen_config.tchdi = 0x01;
+    touchscreen_config.tchdi = 0x02;
     touchscreen_config.mrghyst = 0x5;               // Merge hysteresis
     touchscreen_config.mrgthr = 0x5;//0xa            // Merge threshold
     touchscreen_config.amphyst = 0x0a;              // Amplitude hysteresis
@@ -987,7 +956,7 @@ static ssize_t buttons_enabled_status_write(struct device *dev,
 			if(data == 1) {
 				pr_info("%s: key function enabled\n", __FUNCTION__);
 				buttons_enabled = true;
-				touch_led_on(1);
+				touch_led_on(brightness);
 			}
 
 			if(data == 0) {
@@ -1249,7 +1218,7 @@ static irqreturn_t qt602240_interrupt(int irq, void *dev_id)
 
     if(!leds_on) {
         leds_on = true;
-        touch_led_on(1);
+        touch_led_on(brightness);
     } else {
         mod_timer(&leds_timer, jiffies + msecs_to_jiffies(leds_timeout));
     }
@@ -1795,6 +1764,7 @@ static DEVICE_ATTR(leds_timeout, S_IRUGO | S_IWUGO, leds_timeout_read, leds_time
 static struct attribute *qt602240_attrs[] = {
 	&dev_attr_buttons_enabled.attr,
 	&dev_attr_cpufreq_lock.attr,
+	&dev_attr_brightness.attr,
 	&dev_attr_info.attr,
 	&dev_attr_object_table.attr,
 	&dev_attr_object.attr,
@@ -2251,10 +2221,6 @@ static int __devinit qt602240_probe(struct i2c_client *client,
 
     led_dev = device_create(leds_class, NULL, 0, NULL, "button-backlight");
 
-    if (device_create_file(led_dev, &dev_attr_brightness) < 0)
-    {
-        pr_err("Failed to create device file(%s)!\n", dev_attr_brightness.attr.name);
-    }
 #endif		//KEY_LED_CONTROL
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
