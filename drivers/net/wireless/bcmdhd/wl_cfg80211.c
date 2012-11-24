@@ -1587,7 +1587,6 @@ __wl_cfg80211_scan(struct wiphy *wiphy, struct net_device *ndev,
 	/* Arm scan timeout timer */
 	mod_timer(&wl->scan_timeout, jiffies + msecs_to_jiffies(WL_SCAN_TIMER_INTERVAL_MS));
 	iscan_req = false;
-	wl->scan_request = request;
 	if (request) {		/* scan bss */
 		ssids = request->ssids;
 		if (wl->iscan_on && (!ssids || !ssids->ssid_len || request->n_ssids != 1)) {
@@ -1668,6 +1667,7 @@ __wl_cfg80211_scan(struct wiphy *wiphy, struct net_device *ndev,
 		/* we don't do iscan in ibss */
 		ssids = this_ssid;
 	}
+	wl->scan_request = request;
 	wl_set_drv_status(wl, SCANNING, ndev);
 	if (iscan_req) {
 		err = wl_do_iscan(wl, request);
@@ -1731,12 +1731,9 @@ __wl_cfg80211_scan(struct wiphy *wiphy, struct net_device *ndev,
 
 scan_out:
 	wl_clr_drv_status(wl, SCANNING, ndev);
-	if (wl->scan_request) {
-		if (timer_pending(&wl->scan_timeout))
-			del_timer_sync(&wl->scan_timeout);
-		cfg80211_scan_done(wl->scan_request, true);
-		wl->scan_request = NULL;
-	}
+	if (timer_pending(&wl->scan_timeout))
+		del_timer_sync(&wl->scan_timeout);
+	wl->scan_request = NULL;
 	return err;
 }
 
@@ -4810,7 +4807,7 @@ static s32 wl_inform_single_bss(struct wl_priv *wl, struct wl_bss_info *bi)
 	if (!mgmt->u.probe_resp.timestamp) {
 		struct timespec ts;
 
-		do_gettimeofday(&ts);
+		get_monotonic_boottime(&ts);
 		mgmt->u.probe_resp.timestamp = ((u64)ts.tv_sec * 1000000)
 						+ ts.tv_nsec / 1000;
 	}
