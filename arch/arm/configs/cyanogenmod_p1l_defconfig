@@ -1,25 +1,3 @@
-######################################################
-
-#ISDB-T
-CONFIG_ISDBT_NMI=y
-
-# For TSI
-CONFIG_VIDEO_TSI=y
-CONFIG_VIDEO_TSI_DEBUG=n
-CONFIG_TSI_LIST_DEBUG=n
-
-# latin_cam:kihyung.nam add for nmi625 sound [
-CONFIG_SND_S3C_I2S2=y
-CONFIG_SND_C110_IIS2=y
-CONFIG_SND_SOC_NMI625=y
-# latin_cam:kihyung.nam add for nmi625 sound ]
-
-# latin_atv [
-CONFIG_VIDEO_NM6XX=y
-# latin_atv ]
-
-######################################################
-
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.35.7
@@ -2262,16 +2240,15 @@ CONFIG_FRAME_POINTER=y
 # CONFIG_FAULT_INJECTION is not set
 # CONFIG_LATENCYTOP is not set
 CONFIG_SYSCTL_SYSCALL_CHECK=y
-CONFIG_SCHED_TRACER=y
-CONFIG_DYNAMIC_DEBUG=y
 # CONFIG_PAGE_POISONING is not set
 CONFIG_HAVE_FUNCTION_TRACER=y
 CONFIG_TRACING_SUPPORT=y
 CONFIG_FTRACE=y
-# CONFIG_FUNCTION_TRACER is not set
+CONFIG_FUNCTION_TRACER=y
+CONFIG_FUNCTION_GRAPH_TRACER=y
 # CONFIG_IRQSOFF_TRACER is not set
 # CONFIG_PREEMPT_TRACER is not set
-# CONFIG_SCHED_TRACER is not set
+CONFIG_SCHED_TRACER=y
 # CONFIG_ENABLE_DEFAULT_TRACERS is not set
 # CONFIG_BOOT_TRACER is not set
 CONFIG_BRANCH_PROFILE_NONE=y
@@ -2280,7 +2257,12 @@ CONFIG_BRANCH_PROFILE_NONE=y
 # CONFIG_STACK_TRACER is not set
 # CONFIG_KMEMTRACE is not set
 # CONFIG_WORKQUEUE_TRACER is not set
-# CONFIG_BLK_DEV_IO_TRACE is not set
+CONFIG_BLK_DEV_IO_TRACE=y
+CONFIG_DYNAMIC_FTRACE=y
+CONFIG_FUNCTION_PROFILER=y
+CONFIG_FTRACE_MCOUNT_RECORD=y
+# CONFIG_FTRACE_STARTUP_TEST is not set
+# CONFIG_RING_BUFFER_BENCHMARK is not set
 # CONFIG_DYNAMIC_DEBUG is not set
 # CONFIG_ATOMIC64_SELFTEST is not set
 # CONFIG_SAMPLES is not set
@@ -2438,3 +2420,23 @@ CONFIG_TEXTSEARCH_FSM=y
 CONFIG_HAS_IOMEM=y
 CONFIG_HAS_DMA=y
 CONFIG_NLATTR=y
+
+# p1l
+
+#ISDB-T
+CONFIG_ISDBT_NMI=y
+
+# For TSI
+CONFIG_VIDEO_TSI=y
+CONFIG_VIDEO_TSI_DEBUG=n
+CONFIG_TSI_LIST_DEBUG=n
+
+# latin_cam:kihyung.nam add for nmi625 sound [
+CONFIG_SND_S3C_I2S2=y
+CONFIG_SND_C110_IIS2=y
+CONFIG_SND_SOC_NMI625=y
+# latin_cam:kihyung.nam add for nmi625 sound ]
+
+# latin_atv [
+CONFIG_VIDEO_NM6XX=y
+# latin_atv ]
