@@ -2221,6 +2221,10 @@ static int __devinit qt602240_probe(struct i2c_client *client,
 
     led_dev = device_create(leds_class, NULL, 0, NULL, "button-backlight");
 
+    if (device_create_file(led_dev, &dev_attr_brightness) < 0)
+    {
+        pr_err("Failed to create device file(%s)!\n", dev_attr_brightness.attr.name);
+    }
 #endif		//KEY_LED_CONTROL
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
