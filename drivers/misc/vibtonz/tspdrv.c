@@ -87,8 +87,8 @@ static int g_nMajor = 0;
 #if defined(CONFIG_MACH_P1_GSM)
 
 #define PWM_PERIOD		44540
-#define PWM_DUTY_MAX	44500
-#define PWM_DUTY_MIN	22250
+#define PWM_DUTY_MAX	44400
+#define PWM_DUTY_MIN	22200
 
 #elif defined(CONFIG_MACH_P1_CDMA)
 
@@ -158,25 +158,13 @@ static enum hrtimer_restart vibetonz_timer_func(struct hrtimer *timer)
 
 static int get_time_for_vibetonz(struct timed_output_dev *dev)
 {
-	int remaining;
 
-	if (hrtimer_active(&timer))
-	{
+	if (hrtimer_active(&timer)) {
 		ktime_t r = hrtimer_get_remaining(&timer);
-		remaining = r.tv.sec * 1000 + r.tv.nsec / 1000000;
-	}
-	else
-	{
-		remaining = 0;
+		return ktime_to_ms(r);
 	}
 
-	if (pwm_value ==-1)
-	{
-		remaining = -1;
-	}
-
-	return remaining;
-
+	return 0;
 }
 
 static void enable_vibetonz_from_user(struct timed_output_dev *dev,int value)
