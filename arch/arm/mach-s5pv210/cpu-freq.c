@@ -54,11 +54,12 @@ static unsigned int apll_freq_max; /* in MHz */
 static DEFINE_MUTEX(set_freq_lock);
 
 /* UV */
-extern int exp_UV_mV[7];
-extern int exp_int_UV_mV[7];
+extern int exp_UV_mV[8];
+extern int exp_int_UV_mV[8];
 
-unsigned int freq_uv_table[7][3] = {
+unsigned int freq_uv_table[8][3] = {
 	{1400000, 1500, 1500},
+	{1300000, 1450, 1450},
 	{1200000, 1450, 1450},
 	{1000000, 1350, 1350},
 	{800000, 1275, 1275},
@@ -67,8 +68,9 @@ unsigned int freq_uv_table[7][3] = {
 	{100000, 950, 950}
 };
 
-unsigned int freq_int_uv_table[6][3] = {
+unsigned int freq_int_uv_table[8][3] = {
   {1400000, 1200, 1200},
+  {1300000, 1200, 1200},
   {1200000, 1200, 1200},
   {1000000, 1100, 1100},
   {800000, 1100, 1100},
@@ -80,7 +82,8 @@ unsigned int freq_int_uv_table[6][3] = {
 /* frequency */
 static struct cpufreq_frequency_table freq_table[] = {
 	{OC0, 1400*1000},
-	{OC1, 1200*1000},
+	{OC1, 1300*1000},
+	{OC2, 1200*1000},
 	{L0, 1000*1000},
 	{L1, 800*1000},
 	{L2, 400*1000},
@@ -90,7 +93,8 @@ static struct cpufreq_frequency_table freq_table[] = {
 };
 
 /* gpu frequency */
-unsigned int gpu[7][2] = {
+unsigned int gpu[8][2] = {
+	{200, 200},
 	{200, 200},
 	{200, 200},
 	{200, 200},
@@ -107,7 +111,7 @@ struct s5pv210_dvs_conf {
 
 #ifdef CONFIG_DVFS_LIMIT
 static unsigned int g_dvfs_high_lock_token = 0;
-static unsigned int g_dvfs_high_lock_limit = 6;
+static unsigned int g_dvfs_high_lock_limit = 7;
 static unsigned int g_dvfslockval[DVFS_LOCK_TOKEN_NUM];
 
 #endif
@@ -120,7 +124,11 @@ static struct s5pv210_dvs_conf dvs_conf[] = {
 		.arm_volt   = 1500000,
 		.int_volt   = 1200000,
 	},
-	[OC1] = { /* 1.2GHz */
+	[OC1] = { /* 1.3GHz */
+		.arm_volt   = 1450000,
+		.int_volt   = 1200000,
+	},
+	[OC2] = { /* 1.2GHz */
 		.arm_volt   = 1450000,
 		.int_volt   = 1200000,
 	},
@@ -146,14 +154,16 @@ static struct s5pv210_dvs_conf dvs_conf[] = {
 	},
 };
 
-static u32 clkdiv_val[7][11] = {
+static u32 clkdiv_val[8][11] = {
 	/*{ APLL, A2M, HCLK_MSYS, PCLK_MSYS,
 	 * HCLK_DSYS, PCLK_DSYS, HCLK_PSYS, PCLK_PSYS, ONEDRAM,
 	 * MFC, G3D }
 	 */
 	/* OC0 : [1400/200/200/100][166/83][133/66][200/200] */
 	{0, 6, 6, 1, 3, 1, 4, 1, 3, 0, 0},
-	/* OC1 : [1200/200/200/100][166/83][133/66][200/200] */
+	/* OC1 : [1300/200/200/100][166/83][133/66][200/200] */
+	{0, 5, 5, 1, 3, 1, 4, 1, 3, 0, 0},
+	/* OC2 : [1200/200/200/100][166/83][133/66][200/200] */
 	{0, 5, 5, 1, 3, 1, 4, 1, 3, 0, 0},
 	/* L0 : [1000/200/200/100][166/83][133/66][200/200] */
 	{0, 4, 4, 1, 3, 1, 4, 1, 3, 0, 0},
@@ -179,7 +189,18 @@ static struct s3c_freq clk_info[] = {
 		.hclk_dsys  = 166750,
 		.pclk_dsys  = 83375,
     },
-	[OC1] = {	/* OC1: 1.2GHz */
+	[OC1] = {	/* OC1: 1.3GHz */
+		.fclk       = 1300000,
+		.armclk     = 1300000,
+		.hclk_tns   = 0,
+		.hclk       = 133000,
+		.pclk       = 66000,
+		.hclk_msys  = 200000,
+		.pclk_msys  = 100000,
+		.hclk_dsys  = 166750,
+		.pclk_dsys  = 83375,
+	},
+	[OC2] = {	/* OC1: 1.2GHz */
 		.fclk       = 1200000,
 		.armclk     = 1200000,
 		.hclk_tns   = 0,
@@ -355,6 +376,10 @@ static void s5pv210_cpufreq_clksrcs_MPLL2APLL(unsigned int index,
 			__raw_writel(PLL45XX_APLL_VAL_1400, S5P_APLL_CON);
 			break;
 		case OC1:
+			/* APLL FOUT becomes 1300 Mhz */
+			__raw_writel(PLL45XX_APLL_VAL_1300, S5P_APLL_CON);
+			break;
+		case OC2:
 			/* APLL FOUT becomes 1200 Mhz */
 			__raw_writel(PLL45XX_APLL_VAL_1200, S5P_APLL_CON);
 			break;
@@ -565,23 +590,26 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 		case 1400000:
 			s3c_freqs.old.hclk_msys = gpu[0][1];
 			break;
-		case 1200000:
+		case 1300000:
 			s3c_freqs.old.hclk_msys = gpu[1][1];
 			break;
-		case 1000000:
+		case 1200000:
 			s3c_freqs.old.hclk_msys = gpu[2][1];
 			break;
-		case 8000000:
+		case 1000000:
 			s3c_freqs.old.hclk_msys = gpu[3][1];
 			break;
-		case 4000000:
+		case 8000000:
 			s3c_freqs.old.hclk_msys = gpu[4][1];
 			break;
-		case 2000000:
+		case 4000000:
 			s3c_freqs.old.hclk_msys = gpu[5][1];
 			break;
-		case 100000:
+		case 2000000:
 			s3c_freqs.old.hclk_msys = gpu[6][1];
+			break;
+		case 100000:
+			s3c_freqs.old.hclk_msys = gpu[7][1];
 			break;
     }
 
