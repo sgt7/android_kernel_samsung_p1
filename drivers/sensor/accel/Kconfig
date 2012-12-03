@@ -17,4 +17,11 @@ config ACCEL_BMA020
 	default y
 	help
 	  This option enables accelerometer sensors using bma020 driver.
+
+config ACCEL_BMA020_SWAPXY
+	depends on ACCEL_BMA020
+        bool "BMA020: Swap X and Y"
+	default n
+	help
+	  This option swaps x and y.
 	  
