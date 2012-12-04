@@ -726,11 +726,11 @@ int bma020_read_accel_xyz(bma020acc_t * acc)
 	
 	comres = p_bma020->BMA020_BUS_READ_FUNC(p_bma020->dev_addr, ACC_X_LSB__REG, &data[0],6);
 	
-	acc->x = BMA020_GET_BITSLICE(data[0],ACC_X_LSB) | (BMA020_GET_BITSLICE(data[3],ACC_X_MSB)<<ACC_X_LSB__LEN);
+	acc->x = BMA020_GET_BITSLICE(data[0],ACC_X_LSB) | (BMA020_GET_BITSLICE(data[1],ACC_X_MSB)<<ACC_X_LSB__LEN);
 	acc->x = acc->x << (sizeof(short)*8-(ACC_X_LSB__LEN+ACC_X_MSB__LEN));
 	acc->x = acc->x >> (sizeof(short)*8-(ACC_X_LSB__LEN+ACC_X_MSB__LEN));
 
-	acc->y = BMA020_GET_BITSLICE(data[2],ACC_Y_LSB) | (BMA020_GET_BITSLICE(data[1],ACC_Y_MSB)<<ACC_Y_LSB__LEN);
+	acc->y = BMA020_GET_BITSLICE(data[2],ACC_Y_LSB) | (BMA020_GET_BITSLICE(data[3],ACC_Y_MSB)<<ACC_Y_LSB__LEN);
 	acc->y = acc->y << (sizeof(short)*8-(ACC_Y_LSB__LEN + ACC_Y_MSB__LEN));
 	acc->y = acc->y >> (sizeof(short)*8-(ACC_Y_LSB__LEN + ACC_Y_MSB__LEN));
 
@@ -743,7 +743,7 @@ int bma020_read_accel_xyz(bma020acc_t * acc)
 	  acc->x = (-1)*(acc->x);
 #endif	
 	//acc->x = (-1)*(acc->x);  
-	//acc->y = (-1)*(acc->y);  
+	acc->y = (-1)*(acc->y);  
 	acc->z = (-1)*(acc->z);
 	return comres;
 }
