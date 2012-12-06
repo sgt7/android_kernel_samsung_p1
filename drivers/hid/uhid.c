@@ -10,7 +10,7 @@
  * any later version.
  */
 
-#include <linux/atomic.h>
+#include <asm/atomic.h>
 #include <linux/device.h>
 #include <linux/fs.h>
 #include <linux/hid.h>

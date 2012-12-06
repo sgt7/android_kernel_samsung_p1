@@ -839,6 +839,11 @@ int hid_pidff_init(struct hid_device *hid);
 #define hid_pidff_init NULL
 #endif
 
+#define hid_err(hid, fmt, arg...)			\
+	dev_err(&(hid)->dev, fmt, ##arg)
+#define hid_warn(hid, fmt, arg...)			\
+	dev_warn(&(hid)->dev, fmt, ##arg)
+
 #define dbg_hid(format, arg...) if (hid_debug) \
 				printk(KERN_DEBUG "%s: " format ,\
 				__FILE__ , ## arg)
